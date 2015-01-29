@@ -1,8 +1,8 @@
-<plugin name='ala-auth' version='0.7' grailsVersion='2.4 &gt; *'>
+<plugin name='ala-auth' version='1.0.0' grailsVersion='2.4 &gt; *'>
   <author>Nick dos Remedios</author>
   <authorEmail>nick.dosremedios@csiro.au</authorEmail>
   <title>Ala Auth Plugin</title>
-  <description>This plugin provides auth services for ALA apps.</description>
+  <description>This plugin provides auth services for ALA.</description>
   <documentation>http://code.google.com/p/ala/wiki/AlaAuth</documentation>
   <type>AlaAuthGrailsPlugin</type>
   <resources>
