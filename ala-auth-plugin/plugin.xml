@@ -1,0 +1,18 @@
+<plugin name='ala-auth' version='0.7' grailsVersion='2.4 &gt; *'>
+  <author>Nick dos Remedios</author>
+  <authorEmail>nick.dosremedios@csiro.au</authorEmail>
+  <title>Ala Auth Plugin</title>
+  <description>This plugin provides auth services for ALA apps.</description>
+  <documentation>http://code.google.com/p/ala/wiki/AlaAuth</documentation>
+  <type>AlaAuthGrailsPlugin</type>
+  <resources>
+    <resource>AlaAuthResources</resource>
+    <resource>au.org.ala.web.AlaSecuredFilters</resource>
+    <resource>au.org.ala.web.AuthTestController</resource>
+    <resource>au.org.ala.web.LogoutController</resource>
+    <resource>au.org.ala.web.AuthService</resource>
+    <resource>au.org.ala.web.HttpWebService</resource>
+    <resource>au.org.ala.web.UserListService</resource>
+    <resource>au.org.ala.web.auth.AuthTagLib</resource>
+  </resources>
+</plugin>
