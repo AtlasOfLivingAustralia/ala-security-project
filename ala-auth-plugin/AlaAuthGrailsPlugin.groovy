@@ -33,7 +33,7 @@ class AlaAuthGrailsPlugin {
     def issueManagement = [ system: "Google Code", url: "http://code.google.com/p/ala/issues/list" ]
 
     // Online location of the plugin's browseable source code.
-    def scm = [ url: "http://code.google.com/p/ala/source/browse/trunk/ala-auth" ]
+    def scm = [ url: "http://code.google.com/p/ala/source/browse/trunk/ala-auth-plugin" ]
 
     // Note: ONLY evaluated at compile time (not run time)
     def doWithWebDescriptor = { xml ->
