@@ -174,7 +174,7 @@ class AlaAuthGrailsPlugin {
         def config = application.config
 
         if (!config.userDetails.url) {
-            config.userDetails.url = "http://auth.ala.org.au/userdetails/userDetails/"
+            config.userDetails.url = Holders.config.security.casServerName + "/userdetails/userDetails/"
         }
 
         if (!config.userDetails.path) {
