@@ -1,3 +1,4 @@
+<%@ page import="org.codehaus.groovy.grails.commons.ConfigurationHolder" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,37 +13,36 @@
     <title><g:layoutTitle /></title>
 
 <%-- Do not include JS & CSS files here - add them to your app's "application" module (in "Configuration/ApplicationResources.groovy") --%>
-    <r:require modules="bootstrap, application, jqueryui"/>
+    <r:require modules="bootstrap, application"/>
 
     <r:script disposition='head'>
         // initialise plugins
-        jQuery(function() {
-
+        jQuery(function(){
             // autocomplete on navbar search input
-            $("form#search-form-2011 input#search-2011, form#search-inpage input#search").autocomplete({
-                disabled: false,
-                minLength: 3,
-                delay: 200,
-                select: function(event, ui) { },
-                source: function(request, response) {
-                    $.ajax('http://bie.ala.org.au/search/auto.jsonp?limit=100&q=' + request.term, {dataType:'jsonp'}).done(function(data) {
-                        var rows = new Array();
-                        if (data.autoCompleteList) {
-                            var list = data.autoCompleteList;
-                            for (var i = 0; i < list.length; i++) {
-                                rows[i] = {
-                                    value: list[i].matchedNames[0],
-                                    label: list[i].matchedNames[0],
-                                    data: list[i]
-                                };
-                            }
-                        }
-
-                        if (response) {
-                            response(rows);
-                        }
-                    });
-                }
+            jQuery("form#search-form-2011 input#search-2011, form#search-inpage input#search, input#search-2013").autocomplete('http://bie.ala.org.au/search/auto.jsonp', {
+                extraParams: {limit: 100},
+                dataType: 'jsonp',
+                parse: function(data) {
+                    var rows = new Array();
+                    data = data.autoCompleteList;
+                    for(var i=0; i<data.length; i++) {
+                        rows[i] = {
+                            data:data[i],
+                            value: data[i].matchedNames[0],
+                            result: data[i].matchedNames[0]
+                        };
+                    }
+                    return rows;
+                },
+                matchSubset: false,
+                formatItem: function(row, i, n) {
+                    return row.matchedNames[0];
+                },
+                cacheLength: 10,
+                minChars: 3,
+                scroll: false,
+                max: 10,
+                selectFirst: false
             });
 
             // Mobile/desktop toggle

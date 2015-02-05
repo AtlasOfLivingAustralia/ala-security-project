@@ -53,22 +53,20 @@ class AlaSecuredFilters {
 
                     boolean error = false
 
-                    if (effectiveAnnotation.value()) {
-                        if (effectiveAnnotation.anyRole() && effectiveAnnotation.notRoles()) {
-                            throw new IllegalArgumentException("Only one of anyRole and notRoles should be specified")
-                        }
+                    if (effectiveAnnotation.anyRole() && effectiveAnnotation.notRoles()) {
+                        throw new IllegalArgumentException("Only one of anyRole and notRoles should be specified")
+                    }
 
-                        def roles = effectiveAnnotation.value().toList()
+                    def roles = effectiveAnnotation.value()?.toList()
 
-                        if (effectiveAnnotation.anyRole() && !securityPrimitives.isAnyGranted(roles)) {
-                            error = true
-                        } else if (effectiveAnnotation.notRoles() && !securityPrimitives.isNotGranted(roles)) {
-                            error = true
-                        } else if (!effectiveAnnotation.anyRole() && !securityPrimitives.isAllGranted(roles)) {
-                            error = true
-                        }
-                    } else {
-                        log.warn "No roles specified for @AlaSecured, controller ${controllerName}, action ${actionName}"
+                    if ((roles == null || roles.empty) && securityPrimitives.isNotLoggedIn(request)) {
+                        error = true
+                    } else if (effectiveAnnotation.anyRole() && !securityPrimitives.isAnyGranted(roles)) {
+                        error = true
+                    } else if (effectiveAnnotation.notRoles() && !securityPrimitives.isNotGranted(roles)) {
+                        error = true
+                    } else if (!effectiveAnnotation.anyRole() && !securityPrimitives.isAllGranted(roles)) {
+                        error = true
                     }
 
                     if (error) {
@@ -83,12 +81,10 @@ class AlaSecuredFilters {
                         } else if (effectiveAnnotation.redirectUri()) {
                             redirect(uri: effectiveAnnotation.redirectUri())
                         } else {
-                            def redirectController =  effectiveAnnotation.redirectController()
-                            if (!redirectController) {
-                                if (!actionAnnotation) {
-                                    log.warn('Redirecting to the current controller with a Controller level @AlaSecured, this is likely to result in a redirect loop!')
-                                }
-                                redirectController = controllerName
+                            def redirectController =  effectiveAnnotation.redirectController() ?: controllerName
+
+                            if (controllerName == redirectController && !actionAnnotation) {
+                                log.warn('Redirecting to the current controller with a Controller level @AlaSecured, this is likely to result in a redirect loop!')
                             }
                             redirect(controller: redirectController, action: effectiveAnnotation.redirectAction())
                         }

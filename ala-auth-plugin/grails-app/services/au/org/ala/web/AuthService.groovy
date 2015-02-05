@@ -1,6 +1,8 @@
 package au.org.ala.web
 
 import au.org.ala.cas.util.AuthenticationUtils
+import com.google.gson.Gson
+import grails.converters.JSON
 import net.sf.json.JSONArray
 import net.sf.json.JSONObject
 import org.springframework.cache.annotation.Cacheable
@@ -45,7 +47,7 @@ class AuthService {
         def inRole = AuthenticationUtils.isUserInRole(RequestContextHolder.currentRequestAttributes().getRequest(), role)
         def bypass = grailsApplication.config.security.cas.bypass
         log.debug("userInRole(${role}) - ${inRole} (bypassing CAS - ${bypass})")
-        return bypass || inRole
+        return bypass as Boolean || inRole
     }
 
     def userDetails() {
@@ -71,11 +73,7 @@ class AuthService {
             if (!results.error) {
                 def ud = results.resp
                 if (ud?.userName && ud?.userId) {
-                    return new UserDetails(
-                        userId: ud.userId?.toString(),
-                        userName: ud.userName?.toString()?.toLowerCase(),
-                        displayName: "${ud.firstName ?: ""} ${ud.lastName ?: ""}".trim()
-                    )
+                    return createUserDetailsFromJson(ud)
                 }
             } else {
                 log.warn("Failed to retrieve user details. Error message was: ${results.error}")
@@ -90,6 +88,52 @@ class AuthService {
     UserDetails getUserForEmailAddress(String emailAddress) {
         // The user details service lookup service should accept either a numerical id or email address and respond appropriately
         return getUserForUserId(emailAddress)
+    }
+
+    def createUserDetailsFromJson(json) {
+        new UserDetails(
+                userId: json.userId?.toString(),
+                userName: json.userName?.toString()?.toLowerCase(),
+                displayName: "${json.firstName ?: ""} ${json.lastName ?: ""}".trim()
+        )
+    }
+
+    /**
+     *
+     * Do a bulk lookup of user ids from the userdetails service.  Accepts a list of numeric user ids and returns a
+     * map that looks like this:
+     *
+     * <pre>
+[
+  users:[
+     "546": UserDetails(userId: "546", userName: "user1@gmail.com", displayName: "First User"),
+     "4568": UserDetails(userId: "4568", userName: "user2@hotmail.com", displayName: "Second User"),
+     "8744": UserDetails(userId: "8744", userName: "user3@fake.edu.au", displayName: "Third User")
+  ],
+  invalidIds:[ 575 ],
+  success: true
+]
+     </pre>
+     *
+     * @param userIds
+     * @return
+     */
+    @Cacheable("userDetailsCache")
+    def getUserDetailsById(List<String> userIds) {
+        //def json = ([userIds: userIds] as JSON).toString()
+        def json = Gson.newInstance().toJson([userIds: userIds])  // above doesn't work in unit tests :(
+        def results = httpWebService.doPost(grailsApplication.config.userDetails.url + grailsApplication.config.userDetailsById.bulkPath, '', '', json, 'application/json')
+        try {
+            if (!results.error) {
+                def resp = results.resp
+                return [users: resp.users.collectEntries { [(it.key) :createUserDetailsFromJson(it.value)] }, invalidIds: resp.invalidIds.collect { it }, success: resp.success ]
+            } else {
+                log.warn("Failed to retrieve bulk user details.  Error message was: ${results.error}")
+            }
+        } catch (Exception e) {
+            log.error("Exception caught retrieving userdetails for ${userIds}", e)
+        }
+        return null
     }
 
     /**

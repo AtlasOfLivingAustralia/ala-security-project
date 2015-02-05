@@ -14,9 +14,10 @@ import java.lang.annotation.*;
 @Inherited
 public @interface AlaSecured {
     /**
-     * A list of roles that the user must have to have access to the method
+     * A list of roles that the user must have to have access to the method, if omitted then the user must be
+     * logged in.
      */
-    public String[] value();
+    public String[] value() default {};
 
     /**
      * Change the behaviour such that the user must have only one role from the roles list to have access to the method
