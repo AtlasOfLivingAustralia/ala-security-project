@@ -2,7 +2,7 @@
 grails.hostname = "devt.ala.org.au"
 grails.serverURL = "http://${grails.hostname}:8080/" + appName
 // CAS security conf
-security.cas.casServerName = 'https://nci-auth.ala.org.au'
+security.cas.casServerName = 'https://auth.ala.org.au'
 security.cas.uriFilterPattern = "/admin/.*, /testAuth,/authTest/.*" // pattern for pages that require authentication
 security.cas.uriExclusionFilterPattern = '/images.*,/css.*,/js.*,/less.*'
 security.cas.authenticateOnlyIfLoggedInPattern = "" // pattern for pages that can optionally display info about the logged-in user
