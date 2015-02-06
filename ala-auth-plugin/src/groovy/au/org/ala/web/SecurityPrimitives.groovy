@@ -1,5 +1,6 @@
 package au.org.ala.web
 
+import au.org.ala.cas.util.AuthenticationCookieUtils
 import org.codehaus.groovy.grails.commons.GrailsApplication
 
 /**
@@ -23,10 +24,30 @@ class SecurityPrimitives {
     }
 
     /**
+     * Is the current user logged in?  Bypasses the authService and checks the request details instead.
+     *
+     * @param request The http request object
+     * @return true if logged in
+     */
+    boolean isLoggedIn(request) {
+        AuthenticationCookieUtils.cookieExists(request, AuthenticationCookieUtils.ALA_AUTH_COOKIE) || request.userPrincipal
+    }
+
+    /**
      * Is the current user not logged in?
      */
     boolean isNotLoggedIn() {
         return authService.userDetails() == null
+    }
+
+    /**
+     * Is the current user not logged in?  Bypasses the authService and checks the request details instead.
+     *
+     * @param request The http request object
+     * @return true if logged out
+     */
+    boolean isNotLoggedIn(request) {
+        !isLoggedIn(request)
     }
 
     /**

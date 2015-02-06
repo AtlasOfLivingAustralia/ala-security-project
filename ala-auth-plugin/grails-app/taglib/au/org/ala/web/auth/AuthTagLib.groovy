@@ -3,7 +3,7 @@ package au.org.ala.web.auth
 class AuthTagLib {
 
     def authService
-    def securityPrimitives // gets injected in AlaAuthPlugin 'doWithSpring' section
+    def securityPrimitives // gets injected in AlaWebThemeGrailsPlugin 'doWithSpring' section
 
     static namespace = "auth"
     //static encodeAsForTags = [tagName: 'raw']
@@ -12,14 +12,14 @@ class AuthTagLib {
      * Is the user logged in?
      */
     def ifLoggedIn = { attrs, body ->
-        if (securityPrimitives.loggedIn) out << body()
+        if (securityPrimitives.isLoggedIn(request)) out << body()
     }
 
     /**
      * Is the user not logged in?
      */
-    def ifNotLoggedIn = {
-        if (securityPrimitives.notLoggedIn) out << body()
+    def ifNotLoggedIn = { attrs, body ->
+        if (securityPrimitives.isNotLoggedIn(request)) out << body()
     }
 
     /**
