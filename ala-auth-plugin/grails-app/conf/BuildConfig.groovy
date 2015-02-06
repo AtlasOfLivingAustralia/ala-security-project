@@ -32,13 +32,12 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        runtime ":ala-bootstrap2:1.0-SNAPSHOT"
+        runtime ":ala-bootstrap2:1.0"
         compile(":tomcat:7.0.55",
                 ":release:3.0.1",
                 ":rest-client-builder:2.0.3") {
             export = false
         }
-        compile ":cache-ehcache:1.0.2"
         compile ":rest:0.8"
     }
 }
