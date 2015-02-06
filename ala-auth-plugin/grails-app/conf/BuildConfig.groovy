@@ -24,24 +24,21 @@ grails.project.dependency.resolution = {
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
         // runtime 'mysql:mysql-connector-java:5.1.18'
-        compile group: 'au.org.ala',
-                name: 'ala-cas-client',
-                version:'2.1-SNAPSHOT',
-                transitive:false
+        compile ('au.org.ala:ala-cas-client:2.1-SNAPSHOT') {
+            // Ivy only
+            transitive = false
+        }
         compile 'org.jasig.cas.client:cas-client-core:3.1.12'
-        compile "org.tmatesoft.svnkit:svnkit:1.8.5"
     }
 
     plugins {
-        runtime ":jquery:1.11.1"
-        runtime ":resources:1.2.8"
+        runtime ":ala-bootstrap2:1.0"
         compile(":tomcat:7.0.55",
-                ":release:3.0.1") {
+                ":release:3.0.1",
+                ":rest-client-builder:2.0.3") {
             export = false
         }
-        compile ":cache-ehcache:1.0.2"
         compile ":rest:0.8"
-        compile ":svn:1.0.2"
     }
 }
 

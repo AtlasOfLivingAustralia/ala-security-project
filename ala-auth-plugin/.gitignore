@@ -3,3 +3,7 @@
 *.xml
 *.iml
 *.sha1
+*.tld
+
+.idea/
+target/
