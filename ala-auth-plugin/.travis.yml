@@ -1,5 +1,5 @@
 language: groovy
-
+sudo: false
 jdk:
 - oraclejdk7
 
@@ -8,6 +8,8 @@ branches:
   - master
 
 before_install:
+- export TZ=Australia/Canberra
+- date
 - rm -rf ~/.gvm
 - curl -s get.gvmtool.net > ~/install_gvm.sh
 - chmod 775 ~/install_gvm.sh
@@ -26,7 +28,9 @@ before_script:
 - echo "GRAILS_SETTINGS_FILE:$GRAILS_SETTINGS_FILE"
 - mkdir -p ~/.grails; wget -q -O ~/.grails/settings.groovy https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/$GRAILS_SETTINGS_FILE
 - MAVEN_REPO="ala-repo-snapshot"
-- grep '^\s*def\s*version' *GrailsPlugin.groovy | sed -e 's/^.*= *"//g' | sed -e 's/".*$//g' | tr -d "\r" | grep -q "\-SNAPSHOT"; if [ "$?" = "1" ]; then MAVEN_REPO="ala-repo-release"; fi;
+- APP_VERSION=`grep '^\s*def\s*version' *GrailsPlugin.groovy | sed -e 's/^.*= *"//g' | sed -e 's/".*$//g' | tr -d "\r"`
+- echo $APP_VERSION | grep -q "\-SNAPSHOT"; if [ "$?" = "1" ]; then MAVEN_REPO="ala-repo-release"; fi;
+- echo "APP_VERSION:$APP_VERSION"
 - echo "MAVEN_REPO:$MAVEN_REPO"
 
 script:
@@ -34,5 +38,5 @@ script:
 
 env:
   global:
-  - secure: zOh/X8ONilUFXYbUeFp2R0Mb22dy5z3r5MTIJVY+ePKFGCPEIsRuMNvyn4kePkN6C1A0a9Yg+r1odrMGeug6fggvP51oO/kZhu3QpfROZXPt7fejTl7GkwAx+OmCbYs5jgKTWC3b02rKQEx3m2rk7plifmbJVYM60Cl7aPSiQYQ=
-  - secure: m9GrfHDbHf/7K8fnmmzcN8f4/AfpDbK5nlsC1vaQ/MDBzk3ztAhTYcaPJ0OcnjGFTu7ZZTsCkKFbNjOWSEu0KcK28xw76U8pLqOdnVpivRrkB0VS6NyhV3Bp+QbWa4sG4u6BUcPxIaZ2nVIUSWfY5KoBnOsJep0a4qn+EESHq6w=
+  - secure: UHC6qsBSvqs6VQbP1WWCDUtt+PXssJLlK3s8/1VB7TmIJEHy/f6r7HSZoFPA9p9UrAPWpeS0w1uiETKjhhC+842b/hNCa/0e4aM8hE/S8WQ9ic72T7DSnxx7s2tSBVANr/Qd9o2drbyophRVCFL7In2meaFIzAApmBI2aZ/Wn2w=
+  - secure: AZdwRjNv371AiUx1b7YdPhIjAY0aE74UQYS8arU46ony3FQObwGoiqii/qP7yKo+EynZvPR21azGC5FWAIInvy7rht6qiO1euQj9jK99H035nDd+OpWev54W1Fu7NlFgA44EQiPbCt1FtdI0BamgMs3OmyY4+wpj1pJBp7FwdPk=
