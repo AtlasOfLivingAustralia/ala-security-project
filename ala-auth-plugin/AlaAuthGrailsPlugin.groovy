@@ -18,7 +18,7 @@ class AlaAuthGrailsPlugin {
     def description = "This plugin provides auth services for ALA."
 
     // URL to the plugin's documentation
-    def documentation = "http://code.google.com/p/ala/wiki/AlaAuth"
+    def documentation = "https://github.com/AtlasOfLivingAustralia/ala-auth-plugin"
 
     // License: one of 'APACHE', 'GPL2', 'GPL3'
     def license = "MPL2"
@@ -30,10 +30,10 @@ class AlaAuthGrailsPlugin {
     def developers = [ [ name: "Nick dos Remedios", email: "nick.dosremedios@csiro.au" ], [ name: "Dave Martin", email: "david.martin@csiro.au" ]]
 
     // Location of the plugin's issue tracker.
-    def issueManagement = [ system: "Google Code", url: "http://code.google.com/p/ala/issues/list" ]
+    def issueManagement = [ system: "github", url: "https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/issues" ]
 
     // Online location of the plugin's browseable source code.
-    def scm = [ url: "http://code.google.com/p/ala/source/browse/trunk/ala-auth-plugin" ]
+    def scm = [ url: "https://github.com/AtlasOfLivingAustralia/ala-auth-plugin" ]
 
     // Note: ONLY evaluated at compile time (not run time)
     def doWithWebDescriptor = { xml ->
