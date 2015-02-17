@@ -1,10 +1,9 @@
 import au.org.ala.web.SecurityPrimitives
-import grails.util.Environment
 import grails.util.Holders
 
 class AlaAuthGrailsPlugin {
     // the plugin version
-    def version = "1.0-SNAPSHOT"
+    def version = "1.0"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.2 > *"
     // the other plugins this plugin depends on
