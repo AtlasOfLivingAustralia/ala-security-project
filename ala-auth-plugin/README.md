@@ -8,7 +8,9 @@ runtime ":ala-auth:1.1"
 ALA authentication/authorization plugin interface to CAS
 
 ## Changelog
+- **Version 1.2** (24/02/2015):
+  - Excludes the servlet-api dependency from being resolved as a dependency in the host app
 - **Version 1.1** (23/02/2015):
-  - Added `loginLogout` taglib method 
+  - Added `loginLogout` taglib method
 - **Version 1.0** (18/02/2015):
   - Initial release.
