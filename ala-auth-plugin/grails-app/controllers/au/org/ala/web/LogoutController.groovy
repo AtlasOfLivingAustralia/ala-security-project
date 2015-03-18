@@ -11,6 +11,7 @@ class LogoutController {
      */
     def logout = {
         session.invalidate()
+        def appUrl = URLEncoder.encode(params.appUrl, "UTF-8")
         redirect(url:"${params.casUrl}?url=${params.appUrl}")
     }
 
