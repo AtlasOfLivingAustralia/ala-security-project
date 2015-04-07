@@ -184,6 +184,9 @@ class AlaAuthGrailsPlugin {
             config.userDetailsById.path = "getUserDetails"
         }
 
+        if (!config.userDetailsById.bulkPath) {
+            config.userDetailsById.bulkPath = 'getUserDetailsFromIdList'
+        }
 
         if (!config.grails.cache.config) {
             config.grails.cache.config = {
