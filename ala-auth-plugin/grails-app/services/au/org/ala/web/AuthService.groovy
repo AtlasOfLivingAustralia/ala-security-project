@@ -67,7 +67,7 @@ class AuthService {
 
     @Cacheable("userDetailsCache")
     UserDetails getUserForUserId(String userId) {
-        def results = httpWebService.doPost(grailsApplication.config.userDetails.url + grailsApplication.config.userDetailsById.path + "?userName=${userId}", "", "", "")
+        def results = httpWebService.doPost(grailsApplication.config.userDetails.url + grailsApplication.config.userDetailsById.path + "?userName=${URLEncoder.encode(userId, 'UTF-8')}", "", "", "")
         try {
 
             if (!results.error) {
