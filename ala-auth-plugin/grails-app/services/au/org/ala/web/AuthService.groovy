@@ -66,8 +66,8 @@ class AuthService {
     }
 
     @Cacheable("userDetailsCache")
-    UserDetails getUserForUserId(String userId) {
-        def results = httpWebService.doPost(grailsApplication.config.userDetails.url + grailsApplication.config.userDetailsById.path + "?userName=${URLEncoder.encode(userId, 'UTF-8')}", "", "", "")
+    UserDetails getUserForUserId(String userId, boolean includeProps = false) {
+        def results = httpWebService.doPost(grailsApplication.config.userDetails.url + grailsApplication.config.userDetailsById.path + "?userName=${URLEncoder.encode(userId, 'UTF-8')}&includeProps=${includeProps}", "", "", "")
         try {
 
             if (!results.error) {
@@ -85,17 +85,28 @@ class AuthService {
     }
 
     @Cacheable("userDetailsCache")
-    UserDetails getUserForEmailAddress(String emailAddress) {
+    UserDetails getUserForEmailAddress(String emailAddress, boolean includeProps = false) {
         // The user details service lookup service should accept either a numerical id or email address and respond appropriately
-        return getUserForUserId(emailAddress)
+        return getUserForUserId(emailAddress, includeProps)
     }
 
     def createUserDetailsFromJson(json) {
-        new UserDetails(
+        def ud = new UserDetails(
                 userId: json.userId?.toString(),
                 userName: json.userName?.toString()?.toLowerCase(),
                 displayName: "${json.firstName ?: ""} ${json.lastName ?: ""}".trim()
         )
+
+        if (json.props) {
+            ud.primaryUserType = json.props.primaryUserType
+            ud.secondaryUserType = json.props.secondaryUserType
+            ud.organisation = json.props.organisation
+            ud.city = json.props.city
+            ud.state = json.props.state
+            ud.telephone = json.props.telephone
+        }
+
+        return ud
     }
 
     /**
@@ -119,9 +130,9 @@ class AuthService {
      * @return
      */
     @Cacheable("userDetailsCache")
-    def getUserDetailsById(List<String> userIds) {
-        //def json = ([userIds: userIds] as JSON).toString()
-        def json = Gson.newInstance().toJson([userIds: userIds])  // above doesn't work in unit tests :(
+    def getUserDetailsById(List<String> userIds, boolean includeProps = false) {
+        //def json = ([userIds: userIds, includeProps: includeProps] as JSON).toString()
+        def json = Gson.newInstance().toJson([userIds: userIds, includeProps: includeProps])  // above doesn't work in unit tests :(
         def results = httpWebService.doPost(grailsApplication.config.userDetails.url + grailsApplication.config.userDetailsById.bulkPath, '', '', json, 'application/json')
         try {
             if (!results.error) {
