@@ -2,7 +2,6 @@ package au.org.ala.ws.security
 
 import au.ala.org.ws.security.RequireApiKey
 import au.org.ala.ws.security.service.ApiKeyService
-import grails.converters.JSON
 
 import javax.servlet.http.HttpServletRequest
 
@@ -72,7 +71,7 @@ class ApiKeyFilters {
     }
 
     def getClientIP(HttpServletRequest request) {
-        // External requests may be are proxied by Apache, which uses X-Forwarded-For to identify the original IP.
+        // External requests may be proxied by Apache, which uses X-Forwarded-For to identify the original IP.
         String ip = request.getHeader("X-Forwarded-For")
         if (!ip || LOOPBACK_ADDRESSES.contains(ip)) {
             // don't accept localhost from the X-Forwarded-For header, since it can be easily spoofed.
