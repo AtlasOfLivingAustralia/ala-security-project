@@ -22,7 +22,7 @@ On the server side, annotate protected controllers (either the class or individu
 - ```security.apikey.ip.whitelist``` - comma separated list of IP Addresses that are exempt from the API key security check.
 - ```security.apikey.header.override ``` - override the default request header name (apiKey) to use a different name.
 
-### Changelog
+## Changelog
 - **Version 1.0** (2/7/2015)
   - Initial release.
   - Includes a grails filter and a ```RequireApiKey``` annotation for securing web service calls via the ALA API Key infrastructure.
