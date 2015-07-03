@@ -61,8 +61,9 @@ class ApiKeyFilters {
     }
 
     def buildWhiteList() {
-        List whiteList = LOOPBACK_ADDRESSES // allow calls from localhost to make testing easier
-        String config = grailsApplication.config.security.apikey.ip.whitelist as String
+        List whiteList = []
+        whiteList.addAll(LOOPBACK_ADDRESSES) // allow calls from localhost to make testing easier
+        def config = grailsApplication.config.security.apikey.ip.whitelist
         if (config) {
             whiteList.addAll(config.split(',').collect({ it.trim() }))
         }
