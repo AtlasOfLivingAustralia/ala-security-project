@@ -35,9 +35,7 @@ before_script:
 - echo "APP_VERSION:$APP_VERSION"
 - echo "MAVEN_REPO:$MAVEN_REPO"
 script:
-- grails clean && grails refresh-dependencies --non-interactive && grails test-app
-  --non-interactive && grails prod maven-install --non-interactive && grails prod
-  maven-deploy --repository=$MAVEN_REPO --non-interactive
+- grails clean && grails refresh-dependencies --non-interactive && grails test-app --non-interactive && grails prod maven-install --non-interactive && grails prod maven-deploy --repository=$MAVEN_REPO --non-interactive
 env:
   global:
   - secure: q/jEBUHRPYsdt0sq9IrIzK4PwmTgGr7NJ3f+ugXJTjBVDSesIOcTRpZYlvq7pIkBZzm1O+/V5YhqxhVGjIMGyzYYVefDwBn60Lws9JGHb5/lsHvEOrh65Wvk8Ozj4ICwMu54MUOiln5DtR/BOehERv4fmf+knMrDnD/DXkJuZI8lsbBt7c60yK9wUC+gMgnjHumHINtVBQfM/BrSjRRm8D6qDGb/Vkmi6/PdLVbAVA8b79fVP5JFvS4s5pRzxlVnkC4q3leEH3O/kzBSiG8Gkmz7BqYhCVDr/6KAWMk+Kz1ThvuediI0ysaDNdkNrBajoingtTXtiBR+R8oqsWL4BudWreJkQVef/LQXvHtbjoHZ51/jBPGjJvq5NgwsuZdTx7q0hlTIeljVbsAjDHVMF3b0V698qDdoH+w/aw2vcN+gmWZ8HLdNwS8Y3hbrdJIaTw61Wg9Jax7uj3jfpn08QNwNv7VABtIGoWjocxGD6yyNrWIT31Ii0YgTc8Kgb0jzTpUa7wMhpT1G81w0LZhJzn5+YiU18t8dIgaPo3hfQum+xdwmo21Evh4Ca2cQgPegmCt2uj1XAzRoPhSKMAT2Tu0XV8vYb4sn1Ds3XSVaAHvGCDexkXkrW4D39TtMz6naIGUjON6XGhkQhl84Iwp0cIynzKuDOJO28CJdwu8TKyQ=
