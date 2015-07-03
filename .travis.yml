@@ -34,7 +34,7 @@ before_script:
   fi;
 - echo "APP_VERSION:$APP_VERSION"
 - echo "MAVEN_REPO:$MAVEN_REPO"
-script:
+script: 
 - grails clean && grails refresh-dependencies --non-interactive && grails test-app --non-interactive && grails prod maven-install --non-interactive && grails prod maven-deploy --repository=$MAVEN_REPO --non-interactive
 env:
   global:
