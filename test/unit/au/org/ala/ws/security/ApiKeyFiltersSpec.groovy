@@ -1,6 +1,7 @@
 package au.org.ala.ws.security
 
 import au.ala.org.ws.security.RequireApiKey
+import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.ws.security.service.ApiKeyService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -79,6 +80,30 @@ class ApiKeyFiltersSpec extends Specification {
         action          | responseCode
         "securedAction" | UNAUTHORISED
         "publicAction"  | OK
+    }
+
+    void "Methods annotated with SkipApiKeyCheck should be accessible even when the class is annotated with RequireApiKey"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClassController)
+
+        AnnotatedClassController controller = new AnnotatedClassController()
+
+        defineBeans {
+            apiKeyService(MockApiKeyService)
+        }
+
+        when:
+        request.addHeader("apiKey", "invalid")
+
+        withFilters(controller: "annotatedClass", action: "action3") {
+            controller.action3()
+        }
+
+        then:
+        response.status == OK
+
     }
 
     void "Secured methods should be accessible when given a valid key"() {
@@ -208,6 +233,11 @@ class AnnotatedClassController {
     }
 
     def action2() {
+
+    }
+
+    @SkipApiKeyCheck
+    def action3() {
 
     }
 }
