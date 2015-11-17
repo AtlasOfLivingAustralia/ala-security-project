@@ -1,6 +1,7 @@
 package au.org.ala.ws.security
 
 import au.ala.org.ws.security.RequireApiKey
+import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.ws.security.service.ApiKeyService
 
 import javax.servlet.http.HttpServletRequest
@@ -22,7 +23,8 @@ class ApiKeyFilters {
                 Class controllerClass = controller?.clazz
                 def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
 
-                if (controllerClass?.isAnnotationPresent(RequireApiKey) || method?.isAnnotationPresent(RequireApiKey)) {
+                if ((controllerClass?.isAnnotationPresent(RequireApiKey) && !method?.isAnnotationPresent(SkipApiKeyCheck))
+                        || method?.isAnnotationPresent(RequireApiKey)) {
                     List whiteList = buildWhiteList()
                     String clientIp = getClientIP(request)
                     boolean ipOk = checkClientIp(clientIp, whiteList)
