@@ -37,6 +37,7 @@ class ApiKeyFilters {
                                     "Non-authorised IP address - ${clientIp}")
                             response.status = STATUS_UNAUTHORISED
                             response.sendError(STATUS_UNAUTHORISED, "Forbidden")
+                            return false
                         }
                     } else {
                         log.debug("IP ${clientIp} is exempt from the API Key check. Authorising.")
