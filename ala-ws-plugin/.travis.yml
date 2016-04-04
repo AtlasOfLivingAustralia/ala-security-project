@@ -1,0 +1,18 @@
+language: groovy
+jdk:
+- oraclejdk7
+sudo: false
+branches:
+  only:
+  - master
+before_install:
+- wget -q https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/ala_common.sh
+- chmod +x ala_common.sh
+- source ./ala_common.sh
+- ala_travis_grails_setup_env
+script:
+- grails clean && grails refresh-dependencies --non-interactive && grails test-app --non-interactive && grails prod maven-install --non-interactive && grails prod maven-deploy --repository=$MAVEN_REPO --non-interactive
+env:
+  global:
+  - secure: Wz5z+3RtS1H2uOUvT6ZQm0lxwNvR2PSgsTak99nGHVqrfpzQWXy0NcuoO309WrcfHvLHkVzjzfIBrkECH+l+8gPs7K0mElxLt1PMC/kYD+Tw/Yv6mj3ZCOb+NT2GYBbBDDHysMgFk4WZ4oGBK6jvgiThW+5MECwZ4Fo7pQpLbxo5pe2kPjRQ26fzef89eNHb7oTfUE2l26PSR/ndj5xkyeS5U1YtCDJVQIJal8nZ7RMd74c7NpuepxF/AenJPtOSKREwWETlaWnnwoFsxNOJpNEzxFalkH2R1fpT9AFU/D+1Egub3C+FVHalFNb/njHD07ui4nE8G61/AGk/c+VXW0qbqL58ZZWzCrBHTVFEqYWjsCke39lz58NkJ8j9TxVten4XFCUgb/oPA7N2KvIqHAWtQPPYGg3vojnXZSvihMQ0K7S5A/j+7lH2eALGUiif9pHeHDZFaGhG7yIwroW264fXs01G8bD1inVwrsukq7T52+K9sDuFu9suPbD4CNVobpuaI/qLNzkWxo9hWx/8MHPIKIsU7BtAs/kn6KZypneNZzkY+wpWCWmMURtdGF9lpjDY6Oc0lgGGhWh9koeS+iWYGSWtxNXcPb7fEKdk15dACRX4vvDZ2hmvKzVFe0djn+7rlieoTAr9UinciDsdRjdVLEFuct8DN3xOcx+N9d8=
+  - secure: F22yWqwhD1Q7hG/LQibxHRHuCuQHzV9yyj0Br9ot43x8GMAm+2OUmOUpXDXP1/4fzM9B6Qt9329Yrph2WX9lBgpmcwyCORNl2JISYgpxZEy3txJvjY3CJV7YJwQp+BABHZi4T9e+mR2IsDN7QKhbFFTFIv1c7G5B6GSgKVrWwuK8PNx+yG44kDvvls7TG2LFeGOAWzi2T9X0Y1KTCpDyxbuNtfKQ6bVuMk1Y/WvXooA1P3fZE554rU9eSI2DRzia8rtInt6IwQ1O/m/sScZLt9SwlseDaO3tBRBdm/E7k3plH74BuwlPyiN36U5WBhcHLPPABGqKmr3TNs4F8SffxoD2t7aGzY88th7AxtokbuirZZTBr9LZe6V89gXPkZaV0ylg6fl5xYZsN+VGBlkP/8cth56f4iAq8Qy/GSHzRFJxjGuIgmgHtoWhI+BqSgXHn+u3KNofRx6arlPMuJyEp0rJIsznQuoKefjYyJxb+vfJ9PI6xPTTy0/dR9qeu96DM5gRXRwyOG83y95b5bLuWQCCBVm4Y0sGHct7hCjDsOsV0WqGpe9e2NjkxFIycEnWrEeZm6qno47IbOPaKambZZ0TjfwTvz44yVq0842fGtU2ane4PkfSm8G39vmobMcCntx6VfKvQeYjHnXOX4Ql6HiHKYrEIy78UqXZm/gh2M4=
