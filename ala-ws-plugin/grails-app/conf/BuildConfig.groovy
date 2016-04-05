@@ -34,6 +34,11 @@ grails.project.dependency.resolution = {
     }
     dependencies {
         compile "org.apache.httpcomponents:httpmime:4.3.3"
+
+        test "io.ratpack:ratpack-core:1.2.0"
+        test "io.ratpack:ratpack-test:1.2.0"
+        test "io.ratpack:ratpack-groovy:1.2.0"
+        test "io.ratpack:ratpack-groovy-test:1.2.0"
     }
 
     plugins {

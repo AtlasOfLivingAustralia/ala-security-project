@@ -202,7 +202,7 @@ class WebService {
         Map user = authService.userDetails()
 
         if (user && includeUser) {
-            headers.put(grailsApplication.config.app.http.header.userId ?: DEFAULT_AUTH_HEADER, user.userId as String)
+            headers.put(grailsApplication.config.app?.http?.header?.userId ?: DEFAULT_AUTH_HEADER, user.userId as String)
             headers.put("Cookie", "ALA-Auth=${URLEncoder.encode(user.email, CHAR_ENCODING)}")
         }
     }
@@ -225,12 +225,12 @@ class WebService {
     private URLConnection configureConnection(String url, boolean includeApiKey = true, boolean includeUser = true) {
         URLConnection conn = new URL(url).openConnection()
 
-        conn.setConnectTimeout((grailsApplication.config.webservice.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
-        conn.setReadTimeout((grailsApplication.config.webservice.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
+        conn.setConnectTimeout((grailsApplication.config.webservice?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
+        conn.setReadTimeout((grailsApplication.config.webservice?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
         Map user = authService.userDetails()
 
         if (user && includeUser) {
-            conn.setRequestProperty(grailsApplication.config.app.http.header.userId as String, user.userId as String)
+            conn.setRequestProperty(grailsApplication.config.app?.http?.header?.userId as String, user.userId as String)
             conn.setRequestProperty("Cookie", "ALA-Auth=${URLEncoder.encode(user.userName, CHAR_ENCODING)}")
         }
 

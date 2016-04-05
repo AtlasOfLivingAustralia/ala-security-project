@@ -2,7 +2,7 @@
 Grails plugin containing common REST and general webservice functionality
 
 # Status
-[![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-ws-plugin.svg?branch=dev)](https://travis-ci.org/AtlasOfLivingAustralia/ala-ws-plugin)
+[![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-ws-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-ws-plugin)
 
 
 # Usage
