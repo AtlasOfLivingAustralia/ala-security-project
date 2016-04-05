@@ -149,13 +149,13 @@ class WebService {
                 configureRequestTimeouts(request)
                 configureRequestHeaders(headers, includeApiKey, includeUser)
 
+                // NOTE: order is important - Content-Type MUST be set BEFORE the body
+                contentType = ContentType.APPLICATION_JSON
+
                 if (files != null) {
                     request.entity = constructMultiPartEntity(data, files)
                 } else if (data != null) {
-                    contentType = ContentType.APPLICATION_JSON
                     body = data
-                } else {
-                    contentType = ContentType.APPLICATION_JSON
                 }
 
                 response.success = { resp, json ->

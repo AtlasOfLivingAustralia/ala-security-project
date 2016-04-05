@@ -141,11 +141,11 @@ class WebServiceSpec extends IntegrationSpec {
         result.resp.bodyText == '{"foo":"bar"}'
     }
 
-//    def "Passing a list of files to postMultipart() should result in a MultiPart request"() {
-//        when:
-//        Map result = service.postMultipart("${url}/postMultipart", [foo: "bar"], ["file1".bytes, "file2".bytes])
-//
-//        then:
-//        result.resp.files.length == 2
-//    }
+    def "Passing a list of files to postMultipart() should result in a MultiPart request"() {
+        when:
+        Map result = service.postMultipart("${url}/postMultipart", [foo: "bar"], ["file1".bytes, "file2".bytes])
+
+        then:
+        result.resp.files.size() == 2
+    }
 }
