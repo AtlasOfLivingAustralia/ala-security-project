@@ -10,6 +10,8 @@ import org.apache.http.client.config.RequestConfig
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.ByteArrayBody
+import org.apache.http.entity.mime.content.FileBody
+import org.apache.http.entity.mime.content.InputStreamBody
 import org.apache.http.entity.mime.content.StringBody
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import javax.servlet.http.HttpServletResponse
@@ -36,8 +38,8 @@ class WebService {
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map get(String url, boolean includeApiKey = true, boolean includeUser = true) {
-        send(GET, url, null, null, includeApiKey, includeUser)
+    Map get(String url, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
+        send(GET, url, contentType, null, null, includeApiKey, includeUser)
     }
 
     /**
@@ -51,8 +53,8 @@ class WebService {
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map put(String url, Map data, boolean includeApiKey = true, boolean includeUser = true) {
-        send(PUT, url, data, null, includeApiKey, includeUser)
+    Map put(String url, Map data, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
+        send(PUT, url, contentType, data, null, includeApiKey, includeUser)
     }
 
     /**
@@ -66,14 +68,23 @@ class WebService {
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map post(String url, Map data, boolean includeApiKey = true, boolean includeUser = true) {
-        send(POST, url, data, null, includeApiKey, includeUser)
+    Map post(String url, Map data, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
+        send(POST, url, contentType, data, null, includeApiKey, includeUser)
     }
 
     /**
      * Sends a multipart HTTP POST request to the specified URL.
      *
      * The data map will be sent as the JSON body of the request (i.e. use request.getJSON() on the receiving end).
+     *
+     * Files can be one of the following types:
+     * <ul>
+     * <li>byte[]</li>
+     * <li>CommonsMultipartFile</li>
+     * <li>InputStream</li>
+     * <li>File</li>
+     * <li>Anything that supports the .bytes accessor</li>
+     * </ul>
      *
      * @param url The url-encoded url to send the request to
      * @param data Map containing the data to be sent as the post body
@@ -82,8 +93,8 @@ class WebService {
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map postMultipart(String url, Map data, List files, boolean includeApiKey = true, boolean includeUser = true) {
-        send(POST, url, data, files, includeApiKey, includeUser)
+    Map postMultipart(String url, Map data, ContentType contentType = ContentType.APPLICATION_JSON, List files, boolean includeApiKey = true, boolean includeUser = true) {
+        send(POST, url, contentType, data, files, includeApiKey, includeUser)
     }
 
     /**
@@ -94,8 +105,8 @@ class WebService {
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map delete(String url, boolean includeApiKey = true, boolean includeUser = true) {
-        send(DELETE, url, null, null, includeApiKey, includeUser)
+    Map delete(String url, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
+        send(DELETE, url, contentType, null, null, includeApiKey, includeUser)
     }
 
     /**
@@ -137,20 +148,20 @@ class WebService {
         }
     }
 
-    private Map send(Method method, String url, Map data = null, List files = null, boolean includeApiKey = true, boolean includeUser = true) {
+    private Map send(Method method, String url, ContentType contentType = ContentType.APPLICATION_JSON, Map data = null, List files = null, boolean includeApiKey = true, boolean includeUser = true) {
         log.debug("${method} request to ${url}")
 
         Map result = [:]
 
         try {
-            HTTPBuilder http = new HTTPBuilder(url)
+            HTTPBuilder http = new HTTPBuilder(url, contentType)
 
-            http.request(method) { request ->
+            http.request(method, contentType) { request ->
                 configureRequestTimeouts(request)
                 configureRequestHeaders(headers, includeApiKey, includeUser)
 
                 // NOTE: order is important - Content-Type MUST be set BEFORE the body
-                contentType = ContentType.APPLICATION_JSON
+                delegate.contentType = contentType
 
                 if (files != null) {
                     request.entity = constructMultiPartEntity(data, files)
@@ -183,12 +194,14 @@ class WebService {
     }
 
     private void configureRequestTimeouts(request) {
-        int timeout = (grailsApplication.config.webservice.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int
+        int connectTimeout = (grailsApplication.config.webservice?.connect?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int
+        int readTimeout = (grailsApplication.config.webservice?.read?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int
+        int socketTimeout = (grailsApplication.config.webservice?.socket?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int
 
         RequestConfig.Builder config = RequestConfig.custom()
-        config.setConnectTimeout(timeout)
-        config.setSocketTimeout(timeout)
-        config.setConnectionRequestTimeout(timeout)
+        config.setConnectTimeout(connectTimeout)
+        config.setSocketTimeout(socketTimeout)
+        config.setConnectionRequestTimeout(readTimeout)
 
         request?.config = config.build()
     }
@@ -214,7 +227,11 @@ class WebService {
             if (it instanceof byte[]) {
                 entityBuilder.addPart("file${index}", new ByteArrayBody(it, "file${index}"))
             } else if (it instanceof CommonsMultipartFile) {
-                entityBuilder.addPart(it.originalFilename, new ByteArrayBody(it.bytes, it.contentType, it.originalFilename))
+                entityBuilder.addPart(it.originalFilename, new InputStreamBody(it.inputStream, it.contentType, it.originalFilename))
+            } else if (it instanceof InputStream) {
+                entityBuilder.addPart("file${index}", new InputStreamBody(it, "file${index}"))
+            }  else if (it instanceof File) {
+                entityBuilder.addPart(it.getName(), new FileBody(it, it.getName()))
             } else {
                 entityBuilder.addPart("file${index}", new ByteArrayBody(it.bytes, "file${index}"))
             }
@@ -225,8 +242,8 @@ class WebService {
     private URLConnection configureConnection(String url, boolean includeApiKey = true, boolean includeUser = true) {
         URLConnection conn = new URL(url).openConnection()
 
-        conn.setConnectTimeout((grailsApplication.config.webservice?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
-        conn.setReadTimeout((grailsApplication.config.webservice?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
+        conn.setConnectTimeout((grailsApplication.config.webservice?.connect?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
+        conn.setReadTimeout((grailsApplication.config.webservice?.read?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
         Map user = authService.userDetails()
 
         if (user && includeUser) {

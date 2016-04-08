@@ -3,6 +3,7 @@ package au.org.ala.ws.service
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.test.spock.IntegrationSpec
+import groovy.json.JsonSlurper
 import org.apache.commons.logging.Log
 import org.apache.http.HttpStatus
 import org.apache.http.entity.ContentType
@@ -41,9 +42,9 @@ class WebServiceSpec extends IntegrationSpec {
                 post("post") {
                     Promise body = context.getRequest().getBody()
                     body.then { TypedData b ->
-                        def json = [contentType: b.getContentType()?.getType(), bodyText: b.getText()] as JSON
+                        def json = [contentType: b.getContentType()?.toString(), bodyText: b.getText()] as JSON
 
-                        render json.toString(true)
+                        context.getResponse().send(b.getContentType()?.toString(), json.toString(true))
                     }
                 }
                 post("postMultipart") {
@@ -51,7 +52,7 @@ class WebServiceSpec extends IntegrationSpec {
                     body.then { Form f ->
                         List files = []
                         f.files().each { files << it.value.fileName }
-                        def json = [files: files] as JSON
+                        def json = [files: files, data: f.data] as JSON
 
                         render json.toString(true)
                     }
@@ -87,7 +88,7 @@ class WebServiceSpec extends IntegrationSpec {
         service.log = Mock(Log)
 
         when: "the call results in a 404 (i.e. there is no server running)"
-        Map result = service.get("http://localhost:123123")
+        Map result = service.get("http://localhost:3123")
 
         then:
         result.error != null
@@ -117,7 +118,7 @@ class WebServiceSpec extends IntegrationSpec {
 
     def "a request should include the ALA auth header and cookie if includeUser = true"() {
         when:
-        Map result = service.get("${url}/headers", false, true)
+        Map result = service.get("${url}/headers", ContentType.APPLICATION_JSON, false, true)
 
         then:
         result.resp.headers['Cookie'] == "ALA-Auth=fred%40bla.com" // url encoded email address
@@ -126,19 +127,28 @@ class WebServiceSpec extends IntegrationSpec {
 
     def "a request should include the ALA API Key header if includeApiKey = true"() {
         when:
-        Map result = service.get("${url}/headers", true, false)
+        Map result = service.get("${url}/headers", ContentType.APPLICATION_JSON, true, false)
 
         then:
         result.resp.headers['apiKey'] == "myApiKey"
     }
 
-    def "The request content type should be JSON"() {
+    def "The request's content type should match the specified type - JSON"() {
         when:
-        Map result = service.post("${url}/post", [foo: "bar"])
+        Map result = service.post("${url}/post", [foo: "bar"], ContentType.APPLICATION_JSON)
 
         then:
-        result.resp.contentType == ContentType.APPLICATION_JSON.getMimeType()
+        result.resp.contentType.toLowerCase() == ContentType.APPLICATION_JSON.toString()?.toLowerCase()
         result.resp.bodyText == '{"foo":"bar"}'
+    }
+
+    def "The request's content type should match the specified type - HTML"() {
+        when:
+        def result = new JsonSlurper().parseText(service.post("${url}/post", [foo: "bar"], ContentType.TEXT_HTML)?.resp?.toString())
+
+        then:
+        result.contentType.toLowerCase() == ContentType.TEXT_HTML.toString()?.toLowerCase()
+        result.bodyText == '{foo=bar}'
     }
 
     def "Passing a list of files to postMultipart() should result in a MultiPart request"() {
@@ -147,5 +157,6 @@ class WebServiceSpec extends IntegrationSpec {
 
         then:
         result.resp.files.size() == 2
+        result.resp.data == '{"foo":"bar"}'
     }
 }
