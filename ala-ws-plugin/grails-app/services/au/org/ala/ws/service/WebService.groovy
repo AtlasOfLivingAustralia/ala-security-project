@@ -4,6 +4,8 @@ import au.org.ala.web.AuthService
 import grails.converters.JSON
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
+import net.sf.json.JSONArray
+import net.sf.json.JSONObject
 import org.apache.http.HttpEntity
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.RequestConfig
@@ -35,6 +37,7 @@ class WebService {
      *
      * @param url The url-encoded URL to send the request to
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
+     * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
@@ -49,6 +52,7 @@ class WebService {
      *
      * @param url The url-encoded url to send the request to
      * @param data Map containing the data to be sent as the post body
+     * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
@@ -60,10 +64,11 @@ class WebService {
     /**
      * Sends an HTTP POST request to the specified URL.
      *
-     * The data map will be sent as the JSON body of the request (i.e. use request.getJSON() on the receiving end).
+     * The data map will be sent as the body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
      * @param data Map containing the data to be sent as the post body
+     * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
@@ -75,7 +80,8 @@ class WebService {
     /**
      * Sends a multipart HTTP POST request to the specified URL.
      *
-     * The data map will be sent as the JSON body of the request (i.e. use request.getJSON() on the receiving end).
+     * Each item in the data map will be sent as a separate Part in the Multipart Request. To send the entire map as a
+     * single part, you will need too use the format [data: data].
      *
      * Files can be one of the following types:
      * <ul>
@@ -88,6 +94,7 @@ class WebService {
      *
      * @param url The url-encoded url to send the request to
      * @param data Map containing the data to be sent as the post body
+     * @param contentType the desired content type for the request. Defaults to application/json
      * @param files List of 0 or more files to be included in the multipart request (note: if files is null, then the request will NOT be multipart)
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
@@ -101,6 +108,7 @@ class WebService {
      * Sends a HTTP DELETE request to the specified URL. Any parameters must already be URL-encoded.
      *
      * @param url The url-encoded url to send the request to
+     * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
@@ -220,9 +228,12 @@ class WebService {
         }
     }
 
-    private HttpEntity constructMultiPartEntity(Map data, List files) {
+    private HttpEntity constructMultiPartEntity(Map data, List files, ContentType contentType = ContentType.APPLICATION_JSON) {
         MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create()
-        entityBuilder.addPart("data", new StringBody((data as JSON) as String))
+        data?.each { key, value ->
+            def val = contentType == ContentType.APPLICATION_JSON && !(value instanceof net.sf.json.JSON) ? value as JSON : value
+            entityBuilder.addPart(key?.toString(), new StringBody((val) as String))
+        }
         files.eachWithIndex { it, index ->
             if (it instanceof byte[]) {
                 entityBuilder.addPart("file${index}", new ByteArrayBody(it, "file${index}"))

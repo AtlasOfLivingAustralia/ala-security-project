@@ -52,7 +52,7 @@ class WebServiceSpec extends IntegrationSpec {
                     body.then { Form f ->
                         List files = []
                         f.files().each { files << it.value.fileName }
-                        def json = [files: files, data: f.data] as JSON
+                        def json = [files: files, data: f.data, foo: f.foo, bar: f.bar] as JSON
 
                         render json.toString(true)
                     }
@@ -153,10 +153,20 @@ class WebServiceSpec extends IntegrationSpec {
 
     def "Passing a list of files to postMultipart() should result in a MultiPart request"() {
         when:
-        Map result = service.postMultipart("${url}/postMultipart", [foo: "bar"], ["file1".bytes, "file2".bytes])
+        Map result = service.postMultipart("${url}/postMultipart", [data: [foo: "bar"]], ["file1".bytes, "file2".bytes])
 
         then:
         result.resp.files.size() == 2
         result.resp.data == '{"foo":"bar"}'
+    }
+
+    def "postMultipart() should send each element of the data map as a separate part"() {
+        when:
+        Map result = service.postMultipart("${url}/postMultipart", [foo: [a: "b"], bar: [c: "d"]], ["file1".bytes, "file2".bytes])
+
+        then:
+        result.resp.files.size() == 2
+        result.resp.foo == '{"a":"b"}'
+        result.resp.bar == '{"c":"d"}'
     }
 }
