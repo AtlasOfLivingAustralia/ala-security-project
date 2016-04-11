@@ -42,7 +42,7 @@ class WebServiceSpec extends IntegrationSpec {
                 post("post") {
                     Promise body = context.getRequest().getBody()
                     body.then { TypedData b ->
-                        def json = [contentType: b.getContentType()?.toString(), bodyText: b.getText()] as JSON
+                        def json = [contentType: b.getContentType()?.toString(), bodyText: b.getText(), query: context.getRequest().getQuery()] as JSON
 
                         context.getResponse().send(b.getContentType()?.toString(), json.toString(true))
                     }
@@ -54,7 +54,7 @@ class WebServiceSpec extends IntegrationSpec {
                         f.files().each { files << it.value.fileName }
                         def json = [files: files, data: f.data, foo: f.foo, bar: f.bar] as JSON
 
-                        render json.toString(true)
+                        context.getResponse().send(ContentType.APPLICATION_JSON.getMimeType(), json.toString(true))
                     }
                 }
             }
@@ -118,7 +118,7 @@ class WebServiceSpec extends IntegrationSpec {
 
     def "a request should include the ALA auth header and cookie if includeUser = true"() {
         when:
-        Map result = service.get("${url}/headers", ContentType.APPLICATION_JSON, false, true)
+        Map result = service.get("${url}/headers", [:], ContentType.APPLICATION_JSON, false, true)
 
         then:
         result.resp.headers['Cookie'] == "ALA-Auth=fred%40bla.com" // url encoded email address
@@ -127,15 +127,33 @@ class WebServiceSpec extends IntegrationSpec {
 
     def "a request should include the ALA API Key header if includeApiKey = true"() {
         when:
-        Map result = service.get("${url}/headers", ContentType.APPLICATION_JSON, true, false)
+        Map result = service.get("${url}/headers", [:], ContentType.APPLICATION_JSON, true, false)
 
         then:
         result.resp.headers['apiKey'] == "myApiKey"
     }
 
+    def "The request should set the params as the url query string when there is no existing query string"() {
+        when:
+        Map result = service.post("${url}/post", [foo: "bar"], [a: "b", c: "d"], ContentType.APPLICATION_JSON)
+
+        then:
+        result.resp.contentType.toLowerCase() == ContentType.APPLICATION_JSON.toString()?.toLowerCase()
+        result.resp.query == 'a=b&c=d'
+    }
+
+    def "The request should append all params to the url query string if there is an existing query string"() {
+        when:
+        Map result = service.post("${url}/post?x=y", [foo: "bar"], [a: "b", c: "d"], ContentType.APPLICATION_JSON)
+
+        then:
+        result.resp.contentType.toLowerCase() == ContentType.APPLICATION_JSON.toString()?.toLowerCase()
+        result.resp.query == 'x=y&a=b&c=d'
+    }
+
     def "The request's content type should match the specified type - JSON"() {
         when:
-        Map result = service.post("${url}/post", [foo: "bar"], ContentType.APPLICATION_JSON)
+        Map result = service.post("${url}/post", [foo: "bar"], [:], ContentType.APPLICATION_JSON)
 
         then:
         result.resp.contentType.toLowerCase() == ContentType.APPLICATION_JSON.toString()?.toLowerCase()
@@ -144,29 +162,49 @@ class WebServiceSpec extends IntegrationSpec {
 
     def "The request's content type should match the specified type - HTML"() {
         when:
-        def result = new JsonSlurper().parseText(service.post("${url}/post", [foo: "bar"], ContentType.TEXT_HTML)?.resp?.toString())
+        def result = new JsonSlurper().parseText(service.post("${url}/post", [foo: "bar"], [:], ContentType.TEXT_HTML)?.resp?.toString())
 
         then:
         result.contentType.toLowerCase() == ContentType.TEXT_HTML.toString()?.toLowerCase()
         result.bodyText == '{foo=bar}'
     }
 
-    def "Passing a list of files to postMultipart() should result in a MultiPart request"() {
+    def "The request's content type should match the specified type - TEXT"() {
         when:
-        Map result = service.postMultipart("${url}/postMultipart", [data: [foo: "bar"]], ["file1".bytes, "file2".bytes])
+        def result = new JsonSlurper().parseText(service.post("${url}/post", [foo: "bar"], [:], ContentType.TEXT_PLAIN)?.resp?.toString())
 
         then:
+        result.contentType.toLowerCase() == ContentType.TEXT_PLAIN.toString()?.toLowerCase()
+        result.bodyText == '{foo=bar}'
+    }
+
+    def "Passing a list of files to postMultipart() should result in a MultiPart request"() {
+        when:
+        Map result = service.postMultipart("${url}/postMultipart", [data: [foo: "bar"]], [:], ["file1".bytes, "file2".bytes])
+
+        then:
+        !result.error
         result.resp.files.size() == 2
         result.resp.data == '{"foo":"bar"}'
     }
 
-    def "postMultipart() should send each element of the data map as a separate part"() {
-        when:
-        Map result = service.postMultipart("${url}/postMultipart", [foo: [a: "b"], bar: [c: "d"]], ["file1".bytes, "file2".bytes])
+    def "postMultipart() should send each element of the data map as a separate part - JSON"() {
+        when: "the partContentType parameter is set to JSON"
+        Map result = service.postMultipart("${url}/postMultipart", [foo: [a: "b"], bar: [c: "d"]], [:], ["file1".bytes, "file2".bytes])
 
-        then:
+        then: "the response object will be a JSON Object"
+        !result.error
         result.resp.files.size() == 2
         result.resp.foo == '{"a":"b"}'
         result.resp.bar == '{"c":"d"}'
+    }
+
+    def "postMultipart() should send each element of the data map as a separate part - TEXT"() {
+        when: "the partContentType parameter is set to TEXT"
+        Map result = service.postMultipart("${url}/postMultipart", [foo: [a: "b"], bar: [c: "d"]], [:], ["file1".bytes, "file2".bytes], ContentType.TEXT_PLAIN)
+
+        then: "the response will be the plain-text representation of the json object returned by the dummy service"
+        !result.error
+        result.resp.replaceAll("\\s", "") == '{"bar": "[c:d]", "data": null, "foo": "[a:b]", "files": ["file0", "file1"]}'.replaceAll("\\s", "")
     }
 }

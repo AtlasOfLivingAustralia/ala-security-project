@@ -4,12 +4,11 @@ import au.org.ala.web.AuthService
 import grails.converters.JSON
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
-import net.sf.json.JSONArray
-import net.sf.json.JSONObject
 import org.apache.http.HttpEntity
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.entity.ContentType
+import org.apache.http.entity.mime.HttpMultipartMode
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.ByteArrayBody
 import org.apache.http.entity.mime.content.FileBody
@@ -36,52 +35,55 @@ class WebService {
      * Sends an HTTP GET request to the specified URL. Any parameters must already be URL-encoded.
      *
      * @param url The url-encoded URL to send the request to
+     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map get(String url, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
-        send(GET, url, contentType, null, null, includeApiKey, includeUser)
+    Map get(String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
+        send(GET, url, params, contentType, null, null, includeApiKey, includeUser)
     }
 
     /**
      * Sends an HTTP PUT request to the specified URL.
      *
-     * The data map will be sent as the JSON body of the request (i.e. use request.getJSON() on the receiving end).
+     * The body map will be sent as the JSON body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
-     * @param data Map containing the data to be sent as the post body
+     * @param body Map containing the data to be sent as the post body
+     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map put(String url, Map data, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
-        send(PUT, url, contentType, data, null, includeApiKey, includeUser)
+    Map put(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
+        send(PUT, url, params, contentType, body, null, includeApiKey, includeUser)
     }
 
     /**
      * Sends an HTTP POST request to the specified URL.
      *
-     * The data map will be sent as the body of the request (i.e. use request.getJSON() on the receiving end).
+     * The body map will be sent as the body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
-     * @param data Map containing the data to be sent as the post body
+     * @param body Map containing the data to be sent as the post body
+     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map post(String url, Map data, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
-        send(POST, url, contentType, data, null, includeApiKey, includeUser)
+    Map post(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
+        send(POST, url, params, contentType, body, null, includeApiKey, includeUser)
     }
 
     /**
      * Sends a multipart HTTP POST request to the specified URL.
      *
-     * Each item in the data map will be sent as a separate Part in the Multipart Request. To send the entire map as a
-     * single part, you will need too use the format [data: data].
+     * Each item in the body map will be sent as a separate Part in the Multipart Request. To send the entire map as a
+     * single part, you will need too use the format [data: body].
      *
      * Files can be one of the following types:
      * <ul>
@@ -93,28 +95,30 @@ class WebService {
      * </ul>
      *
      * @param url The url-encoded url to send the request to
-     * @param data Map containing the data to be sent as the post body
-     * @param contentType the desired content type for the request. Defaults to application/json
+     * @param body Map containing the data to be sent as the post body
+     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
      * @param files List of 0 or more files to be included in the multipart request (note: if files is null, then the request will NOT be multipart)
+     * @param partContentType the desired content type for the request PARTS (the request itself will always be sent as multipart/form-data). Defaults to application/json. All non-file parts will have the same content type.
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map postMultipart(String url, Map data, ContentType contentType = ContentType.APPLICATION_JSON, List files, boolean includeApiKey = true, boolean includeUser = true) {
-        send(POST, url, contentType, data, files, includeApiKey, includeUser)
+    Map postMultipart(String url, Map body, Map params = [:], List files = [], ContentType partContentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
+        send(POST, url, params, partContentType, body, files, includeApiKey, includeUser)
     }
 
     /**
      * Sends a HTTP DELETE request to the specified URL. Any parameters must already be URL-encoded.
      *
      * @param url The url-encoded url to send the request to
+     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map delete(String url, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
-        send(DELETE, url, contentType, null, null, includeApiKey, includeUser)
+    Map delete(String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
+        send(DELETE, url, params, contentType, null, null, includeApiKey, includeUser)
     }
 
     /**
@@ -156,30 +160,35 @@ class WebService {
         }
     }
 
-    private Map send(Method method, String url, ContentType contentType = ContentType.APPLICATION_JSON, Map data = null, List files = null, boolean includeApiKey = true, boolean includeUser = true) {
+    private Map send(Method method, String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, Map body = null, List files = null, boolean includeApiKey = true, boolean includeUser = true) {
         log.debug("${method} request to ${url}")
 
         Map result = [:]
 
         try {
+            url = appendQueryString(url, params)
             HTTPBuilder http = new HTTPBuilder(url, contentType)
 
             http.request(method, contentType) { request ->
                 configureRequestTimeouts(request)
                 configureRequestHeaders(headers, includeApiKey, includeUser)
 
-                // NOTE: order is important - Content-Type MUST be set BEFORE the body
-                delegate.contentType = contentType
-
                 if (files != null) {
-                    request.entity = constructMultiPartEntity(data, files)
-                } else if (data != null) {
-                    body = data
+                    // NOTE: order is important - Content-Type MUST be set BEFORE the body
+                    request.entity = constructMultiPartEntity(body, files, contentType)
+                } else if (body != null) {
+                    // NOTE: order is important - Content-Type MUST be set BEFORE the body
+                    delegate.contentType = contentType
+                    delegate.body = body
                 }
 
-                response.success = { resp, json ->
+                response.success = { resp, data ->
                     result.statusCode = resp.status
-                    result.resp = json
+                    if (data instanceof InputStreamReader) {
+                        result.resp = data.text
+                    } else {
+                        result.resp = data
+                    }
                 }
                 response.failure = { resp ->
                     result.statusCode = resp.status
@@ -189,12 +198,25 @@ class WebService {
                 result
             } as Map
         } catch (Exception e) {
+            e.printStackTrace()
             log.error("Failed sending ${method} request to ${url}", e)
             result.statusCode = HttpStatus.SC_INTERNAL_SERVER_ERROR
             result.error = "Failed calling web service. ${e.getClass()} ${e.getMessage()} URL= ${url}, method ${method}."
         }
 
         result
+    }
+
+    private String appendQueryString(String url, Map params) {
+        if (params) {
+            url += url.contains("?") ? '&' : '?'
+
+            url += params.inject([]) { result, entry ->
+                result << "${entry.key}=${entry.value?.toString()}"
+            }?.join("&")
+        }
+
+        url
     }
 
     private String getApiKey() {
@@ -228,12 +250,15 @@ class WebService {
         }
     }
 
-    private HttpEntity constructMultiPartEntity(Map data, List files, ContentType contentType = ContentType.APPLICATION_JSON) {
+    private HttpEntity constructMultiPartEntity(Map parts, List files, ContentType partContentType = ContentType.APPLICATION_JSON) {
         MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create()
-        data?.each { key, value ->
-            def val = contentType == ContentType.APPLICATION_JSON && !(value instanceof net.sf.json.JSON) ? value as JSON : value
-            entityBuilder.addPart(key?.toString(), new StringBody((val) as String))
+        entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+
+        parts?.each { key, value ->
+            def val = partContentType == ContentType.APPLICATION_JSON && !(value instanceof net.sf.json.JSON) ? value as JSON : value
+            entityBuilder.addPart(key?.toString(), new StringBody((val) as String, partContentType))
         }
+
         files.eachWithIndex { it, index ->
             if (it instanceof byte[]) {
                 entityBuilder.addPart("file${index}", new ByteArrayBody(it, "file${index}"))
