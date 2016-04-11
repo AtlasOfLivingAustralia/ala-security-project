@@ -51,7 +51,7 @@ class WebServiceSpec extends IntegrationSpec {
                     Promise body = context.parse(Form)
                     body.then { Form f ->
                         List files = []
-                        f.files().each { files << it.value.fileName }
+                        f.files().each { files << it.value.fileName }.sort()
                         def json = [files: files, data: f.data, foo: f.foo, bar: f.bar] as JSON
 
                         context.getResponse().send(ContentType.APPLICATION_JSON.getMimeType(), json.toString(true))
