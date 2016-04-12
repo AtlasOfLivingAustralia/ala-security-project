@@ -51,8 +51,8 @@ class WebServiceSpec extends IntegrationSpec {
                     Promise body = context.parse(Form)
                     body.then { Form f ->
                         List files = []
-                        f.files().each { files << it.value.fileName }.sort()
-                        def json = [files: files, data: f.data, foo: f.foo, bar: f.bar] as JSON
+                        f.files().each { files << it.value.fileName }
+                        def json = [files: files.sort(), data: f.data, foo: f.foo, bar: f.bar] as JSON
 
                         context.getResponse().send(ContentType.APPLICATION_JSON.getMimeType(), json.toString(true))
                     }
@@ -149,6 +149,15 @@ class WebServiceSpec extends IntegrationSpec {
         then:
         result.resp.contentType.toLowerCase() == ContentType.APPLICATION_JSON.toString()?.toLowerCase()
         result.resp.query == 'x=y&a=b&c=d'
+    }
+
+    def "The request should URL-encode all params in the query string"() {
+        when:
+        Map result = service.post("${url}/post", [foo: "bar"], [a: "!", c: "&"], ContentType.APPLICATION_JSON)
+
+        then: "! should be encoded as %21 and & should be encoded as %26"
+        result.resp.contentType.toLowerCase() == ContentType.APPLICATION_JSON.toString()?.toLowerCase()
+        result.resp.query == 'a=%21&c=%26'
     }
 
     def "The request's content type should match the specified type - JSON"() {

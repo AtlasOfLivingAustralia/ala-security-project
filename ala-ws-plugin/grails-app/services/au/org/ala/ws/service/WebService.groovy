@@ -32,10 +32,10 @@ class WebService {
     AuthService authService
 
     /**
-     * Sends an HTTP GET request to the specified URL. Any parameters must already be URL-encoded.
+     * Sends an HTTP GET request to the specified URL. The URL must already be URL-encoded (if necessary).
      *
      * @param url The url-encoded URL to send the request to
-     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
+     * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
@@ -46,13 +46,13 @@ class WebService {
     }
 
     /**
-     * Sends an HTTP PUT request to the specified URL.
+     * Sends an HTTP PUT request to the specified URL. The URL must already be URL-encoded (if necessary).
      *
      * The body map will be sent as the JSON body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
      * @param body Map containing the data to be sent as the post body
-     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
+     * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
@@ -63,13 +63,13 @@ class WebService {
     }
 
     /**
-     * Sends an HTTP POST request to the specified URL.
+     * Sends an HTTP POST request to the specified URL. The URL must already be URL-encoded (if necessary).
      *
      * The body map will be sent as the body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
      * @param body Map containing the data to be sent as the post body
-     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
+     * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
@@ -80,7 +80,7 @@ class WebService {
     }
 
     /**
-     * Sends a multipart HTTP POST request to the specified URL.
+     * Sends a multipart HTTP POST request to the specified URL. The URL must already be URL-encoded (if necessary).
      *
      * Each item in the body map will be sent as a separate Part in the Multipart Request. To send the entire map as a
      * single part, you will need too use the format [data: body].
@@ -96,7 +96,7 @@ class WebService {
      *
      * @param url The url-encoded url to send the request to
      * @param body Map containing the data to be sent as the post body
-     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
+     * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param files List of 0 or more files to be included in the multipart request (note: if files is null, then the request will NOT be multipart)
      * @param partContentType the desired content type for the request PARTS (the request itself will always be sent as multipart/form-data). Defaults to application/json. All non-file parts will have the same content type.
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
@@ -108,10 +108,10 @@ class WebService {
     }
 
     /**
-     * Sends a HTTP DELETE request to the specified URL. Any parameters must already be URL-encoded.
+     * Sends a HTTP DELETE request to the specified URL. The URL must already be URL-encoded (if necessary).
      *
      * @param url The url-encoded url to send the request to
-     * @param params Map of parameters to be appended to the query string. Parameters must already be URL-encoded.
+     * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
@@ -211,8 +211,10 @@ class WebService {
         if (params) {
             url += url.contains("?") ? '&' : '?'
 
+            def enc = { str -> URLEncoder.encode(str, CHAR_ENCODING) }
+
             url += params.inject([]) { result, entry ->
-                result << "${entry.key}=${entry.value?.toString()}"
+                result << "${enc(entry.key)}=${enc(entry.value?.toString())}"
             }?.join("&")
         }
 
