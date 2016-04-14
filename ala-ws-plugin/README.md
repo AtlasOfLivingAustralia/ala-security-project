@@ -36,6 +36,7 @@ For JSON request types:
 # External configuration properties
  
 * ```webservice.apiKey``` The ALA api key to be included in each request (in the ```apiKey``` header field) when ```includeApiKey = true```. API Keys are intended to be used with the [ALA WS Security Plugin](https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin).
+* ```webservice.apiKeyHeader``` Override the default name of the apiKey header. This applied to all service calls - if you need to change the name for a single service, then you'll need to pass in the api key in a custom header via the API.
 * ```webservice.connect.timeout``` The connect timeout setting for all web service requests (default is 5 minutes). 
 * ```webservice.read.timeout``` The read timeout setting for all web service requests (default is 5 minutes). 
 * ```webservice.socket.timeout``` The socket timeout setting for all web service requests (default is 5 minutes).

@@ -27,6 +27,7 @@ class WebService {
 
     static final int DEFAULT_TIMEOUT_MILLIS = 600000; // five minutes
     static final String DEFAULT_AUTH_HEADER = "X-ALA-userId"
+    static final String DEFAULT_API_KEY_HEADER = "apiKey"
 
     def grailsApplication
     AuthService authService
@@ -39,10 +40,11 @@ class WebService {
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map get(String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
-        send(GET, url, params, contentType, null, null, includeApiKey, includeUser)
+    Map get(String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+        send(GET, url, params, contentType, null, null, includeApiKey, includeUser, customHeaders)
     }
 
     /**
@@ -56,10 +58,11 @@ class WebService {
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map put(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
-        send(PUT, url, params, contentType, body, null, includeApiKey, includeUser)
+    Map put(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+        send(PUT, url, params, contentType, body, null, includeApiKey, includeUser, customHeaders)
     }
 
     /**
@@ -73,10 +76,11 @@ class WebService {
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map post(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
-        send(POST, url, params, contentType, body, null, includeApiKey, includeUser)
+    Map post(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+        send(POST, url, params, contentType, body, null, includeApiKey, includeUser, customHeaders)
     }
 
     /**
@@ -101,10 +105,11 @@ class WebService {
      * @param partContentType the desired content type for the request PARTS (the request itself will always be sent as multipart/form-data). Defaults to application/json. All non-file parts will have the same content type.
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map postMultipart(String url, Map body, Map params = [:], List files = [], ContentType partContentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
-        send(POST, url, params, partContentType, body, files, includeApiKey, includeUser)
+    Map postMultipart(String url, Map body, Map params = [:], List files = [], ContentType partContentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+        send(POST, url, params, partContentType, body, files, includeApiKey, includeUser, customHeaders)
     }
 
     /**
@@ -115,10 +120,11 @@ class WebService {
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map delete(String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true) {
-        send(DELETE, url, params, contentType, null, null, includeApiKey, includeUser)
+    Map delete(String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+        send(DELETE, url, params, contentType, null, null, includeApiKey, includeUser, customHeaders)
     }
 
     /**
@@ -160,7 +166,9 @@ class WebService {
         }
     }
 
-    private Map send(Method method, String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, Map body = null, List files = null, boolean includeApiKey = true, boolean includeUser = true) {
+    private Map send(Method method, String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON,
+                     Map body = null, List files = null, boolean includeApiKey = true, boolean includeUser = true,
+                     Map customHeaders = [:]) {
         log.debug("${method} request to ${url}")
 
         Map result = [:]
@@ -171,7 +179,7 @@ class WebService {
 
             http.request(method, contentType) { request ->
                 configureRequestTimeouts(request)
-                configureRequestHeaders(headers, includeApiKey, includeUser)
+                configureRequestHeaders(headers, includeApiKey, includeUser, customHeaders)
 
                 if (files != null) {
                     // NOTE: order is important - Content-Type MUST be set BEFORE the body
@@ -238,10 +246,10 @@ class WebService {
         request?.config = config.build()
     }
 
-    private void configureRequestHeaders(Map headers, boolean includeApiKey = true, boolean includeUser = true) {
+    private void configureRequestHeaders(Map headers, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
         String apiKey = getApiKey()
         if (apiKey && includeApiKey) {
-            headers.apiKey = apiKey
+            headers[grailsApplication.config.webservice.apiKeyHeader ?: DEFAULT_API_KEY_HEADER] = apiKey
         }
 
         Map user = authService.userDetails()
@@ -249,6 +257,10 @@ class WebService {
         if (user && includeUser) {
             headers.put(grailsApplication.config.app?.http?.header?.userId ?: DEFAULT_AUTH_HEADER, user.userId as String)
             headers.put("Cookie", "ALA-Auth=${URLEncoder.encode(user.email, CHAR_ENCODING)}")
+        }
+
+        if (customHeaders) {
+            headers.putAll(customHeaders)
         }
     }
 

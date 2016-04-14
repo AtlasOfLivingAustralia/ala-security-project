@@ -133,6 +133,27 @@ class WebServiceSpec extends IntegrationSpec {
         result.resp.headers['apiKey'] == "myApiKey"
     }
 
+    def "a request should include the ALA API Key header with the overridden name if webservice.apiKeyHeader is set in the grails config"() {
+        setup:
+        service.grailsApplication.config.webservice.apiKeyHeader = "customApiKeyHeader"
+
+        when:
+        Map result = service.get("${url}/headers", [:], ContentType.APPLICATION_JSON, true, false)
+
+        then:
+        result.resp.headers['customApiKeyHeader'] == "myApiKey"
+        !result.resp.headers['apiKey']
+    }
+
+    def "a request should include any custom headers that were provided"() {
+        when:
+        Map result = service.get("${url}/headers", [:], ContentType.APPLICATION_JSON, true, false, [header1: "foo", header2: "bar"])
+
+        then:
+        result.resp.headers['header1'] == "foo"
+        result.resp.headers['header2'] == "bar"
+    }
+
     def "The request should set the params as the url query string when there is no existing query string"() {
         when:
         Map result = service.post("${url}/post", [foo: "bar"], [a: "b", c: "d"], ContentType.APPLICATION_JSON)
