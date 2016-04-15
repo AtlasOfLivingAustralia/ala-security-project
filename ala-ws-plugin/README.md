@@ -33,6 +33,53 @@ For JSON request types:
 ```[statusCode: int, resp: [:]]``` on success, where ```resp``` is a Map containing the JSON response object, or ```[statusCode: int, error: string]``` on error, where ```error``` is the error message or HTTP status message.
 
 
+## Request Validation
+
+The Grails recommended way to validate request parameters is to use either a Domain or a Command object, and implement the ```static constraints = {...}``` closure. E.g.
+
+```
+class MyController {
+  def action1(ActionCommand command) {
+    if (command.hasErrors()) {
+      response.status = HttpStatus.SC_BAD_REQUEST
+      response.sendError(HttpStatus.SC_BAD_REQUEST, command.errors.join(";"))
+    } else {
+      // do stuff
+    }
+  }
+}
+
+@grails.validation.Validateable
+class ActionCommand {
+  String param1
+  String param2
+  
+  static constraints = {
+    param1 nullable: true
+    params2 minSize: 6
+  }
+}
+```
+ 
+A more generalised validation approach is to use the [Bean Validation](http://beanvalidation.org/) standard. 
+See [the JavaEE 6 doco](http://docs.oracle.com/javaee/6/api/javax/validation/constraints/package-summary.html) for a 
+list of available annotations.
+
+This plugin provides a basic implementation of a grails filter that will valid requests using JSR-303 annotations. 
+Any validation errors will result in a HTTP 400 (BAD_REQUEST). This pulls the validation code and the subsequent error
+handling out of the controller, allowing you to just annotate your actions and otherwise ignore validation. E.g.
+
+```
+class MyController {
+  def action1(@NotNull String param1, @Min(6) String param2) {
+    // do stuff
+  }
+```
+This is equivalent in functionality to the Command Object example above, except you'll get a better error message.
+
+As per the bean validation spec, any validation constraint annotation (including custom annotations, as long as the 
+annotation is annotated with @Constrain meta-annotation) can be used to validate the request parameters.
+
 # External configuration properties
  
 * ```webservice.apiKey``` The ALA api key to be included in each request (in the ```apiKey``` header field) when ```includeApiKey = true```. API Keys are intended to be used with the [ALA WS Security Plugin](https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin).

@@ -34,6 +34,13 @@ grails.project.dependency.resolution = {
     }
     dependencies {
         compile "org.apache.httpcomponents:httpmime:4.3.3"
+        compile "javax.validation:validation-api:1.1.0.Final"
+        compile "javax.el:javax.el-api:2.2.4"
+
+        compile "org.glassfish.web:javax.el:2.2.4"
+        compile "org.hibernate:hibernate-validator:5.1.3.Final"
+        compile "org.hibernate:hibernate-validator-annotation-processor:5.1.3.Final"
+
 
         test ("io.ratpack:ratpack-core:1.2.0") {
             excludes "io.ratpack:ratpack-guice:1.2.0"
