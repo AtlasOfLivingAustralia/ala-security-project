@@ -55,7 +55,7 @@ class ActionCommand {
   String param2
   
   static constraints = {
-    param1 nullable: true
+    param1 nullable: false
     params2 minSize: 6
   }
 }
@@ -74,6 +74,8 @@ class MyController {
   }
 ```
 This is equivalent in functionality to the Command Object example above, except you'll get a better error message.
+
+Note: bean validation support is only available for action _methods_. Action closures are NOT supported (because they are not the recommended way to implement controller actions).
 
 ## Supported constraints
 

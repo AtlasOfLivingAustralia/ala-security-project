@@ -21,30 +21,32 @@ import javax.validation.Constraint
 class BeanValidationAST implements ASTTransformation {
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
-        source.AST.classes.each { clazz ->
+        source?.AST?.classes?.each { clazz ->
             if (clazz.nameWithoutPackage.endsWith("Controller")) {
                 List methods = clazz.methods
 
                 methods.each { MethodNode method ->
                     method.getParameters()?.each { Parameter parameter ->
-                        List<AnnotationNode> validators = []
+                        AnnotationNode validator = null
 
-                        parameter.getAnnotations()?.each { AnnotationNode annotation ->
-                            if (annotation.classNode.getAnnotations(ClassHelper.make(Constraint))) {
-                                String paramName = getParamName(parameter)
+                        if (!parameter.getAnnotations(ClassHelper.make(ValidatedParameter))) {
+                            parameter.getAnnotations()?.each { AnnotationNode annotation ->
+                                if (annotation.classNode.getAnnotations(ClassHelper.make(Constraint))) {
+                                    String paramName = getParamName(parameter)
 
-                                if (!annotation.getMember("message")) {
-                                    annotation.setMember("message", new ConstantExpression("${paramName} {${annotation.classNode.name}.message}".toString()))
+                                    if (!annotation.getMember("message")) {
+                                        annotation.setMember("message", new ConstantExpression("${paramName} {${annotation.classNode.name}.message}".toString()))
+                                    }
+
+                                    AnnotationNode validatorAnnotation = new AnnotationNode(ClassHelper.make(ValidatedParameter))
+                                    validatorAnnotation.addMember("paramName", new ConstantExpression(paramName))
+                                    validator = validatorAnnotation
                                 }
-
-                                AnnotationNode validatorAnnotation = new AnnotationNode(ClassHelper.make(ValidatedParameter))
-                                validatorAnnotation.addMember("paramName", new ConstantExpression(paramName))
-                                validators << validatorAnnotation
                             }
-                        }
 
-                        validators?.each { AnnotationNode node ->
-                            parameter.addAnnotation(node)
+                            if (validator) {
+                                parameter.addAnnotation(validator)
+                            }
                         }
                     }
                 }
@@ -58,7 +60,7 @@ class BeanValidationAST implements ASTTransformation {
 
         List<AnnotationNode> requestParamAnnotations = parameter.getAnnotations(ClassHelper.make(RequestParameter))
         if (requestParamAnnotations) {
-            paramName = requestParamAnnotations[0].getMember("value")
+            paramName = ((ConstantExpression)requestParamAnnotations[0].getMember("value"))?.value
         }
 
         paramName
