@@ -25,16 +25,19 @@ class WSFilters {
                 // will only ever have 1 declared method of a given name.
                 Method method = controllerClass?.getDeclaredMethods()?.find { it.name == actionName }
 
-                List<Annotation> validators = method.getParameterAnnotations()*.find { it instanceof ValidatedParameter }.flatten()
+                List<Annotation> validators = method.getParameterAnnotations()*.find { it instanceof ValidatedParameter }?.flatten()?.findResults { it }
 
                 if (validators) {
                     List parameterValues = []
                     validators.each {
                         if (it) {
-                            parameterValues << params[it.paramName()]
+                            parameterValues << (params.containsKey(it.paramName()) ? params[it.paramName()] : null)
                         }
                     }
 
+                    // We need to validate against a dummy instance of the concrete controller class, because the
+                    // instance available to the filter is a DefaultGrailsControllerClass, which is not actually
+                    // validateable (fails the hasConstraints check in the validator implementation)
                     def dummyControllerImpl = dummyControllers[controllerClass]
                     if (!dummyControllerImpl) {
                         dummyControllerImpl = controllerClass.newInstance()

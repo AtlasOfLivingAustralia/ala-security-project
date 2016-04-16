@@ -65,20 +65,20 @@ A more generalised validation approach is to use the [Bean Validation](http://be
 See [the JavaEE 6 doco](http://docs.oracle.com/javaee/6/api/javax/validation/constraints/package-summary.html) for a 
 list of available annotations.
 
-This plugin provides a basic implementation of a grails filter that will valid requests using JSR-303 annotations. 
+This plugin provides a basic implementation of a grails filter that will validate requests using JSR-303 annotations. 
 Any validation errors will result in a HTTP 400 (BAD_REQUEST). This pulls the validation code and the subsequent error
 handling out of the controller, allowing you to just annotate your actions and otherwise ignore validation. E.g.
 
 ```
 class MyController {
-  def action1(@NotNull String param1, @Min(6) String param2) {
+  def action1(@NotNull String param1, @Size(min = 6) String param2) {
     // do stuff
   }
 ```
 This is equivalent in functionality to the Command Object example above, except you'll get a better error message.
 
 As per the bean validation spec, any validation constraint annotation (including custom annotations, as long as the 
-annotation is annotated with @Constrain meta-annotation) can be used to validate the request parameters.
+annotation is itself annotated with @Constraint meta-annotation) can be used to validate the request parameters.
 
 # External configuration properties
  
