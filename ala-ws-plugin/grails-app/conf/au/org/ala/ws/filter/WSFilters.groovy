@@ -1,7 +1,8 @@
 package au.org.ala.ws.filter
 
+import org.apache.http.HttpStatus
+
 import javax.validation.ConstraintViolation
-import javax.validation.ConstraintViolationException
 import java.lang.reflect.Method
 import java.lang.annotation.Annotation
 import au.org.ala.ws.validation.ValidatedParameter
@@ -46,7 +47,9 @@ class WSFilters {
 
                     Set<ConstraintViolation> violations = validator.validateParameters(dummyControllerImpl, method, parameterValues as Object[])
                     if (violations) {
-                        throw new ConstraintViolationException(violations)
+                        log.debug("Request validation failed: ${violations}")
+                        response.status = HttpStatus.SC_BAD_REQUEST
+                        response.sendError(HttpStatus.SC_BAD_REQUEST, "Request validation failed: ${violations*.message.join("; ")}")
                     }
                 }
             }

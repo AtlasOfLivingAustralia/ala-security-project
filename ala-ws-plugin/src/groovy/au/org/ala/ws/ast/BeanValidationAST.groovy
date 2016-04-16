@@ -1,6 +1,7 @@
 package au.org.ala.ws.ast
 
 import au.org.ala.ws.validation.ValidatedParameter
+import grails.web.RequestParameter
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassHelper
@@ -28,12 +29,16 @@ class BeanValidationAST implements ASTTransformation {
                     method.getParameters()?.each { Parameter parameter ->
                         List<AnnotationNode> validators = []
 
-                        // TODO add support for @RequestParameter grails annotation
-                        // TODO check for support for cross-field annotations and method level constraints?
                         parameter.getAnnotations()?.each { AnnotationNode annotation ->
                             if (annotation.classNode.getAnnotations(ClassHelper.make(Constraint))) {
+                                String paramName = getParamName(parameter)
+
+                                if (!annotation.getMember("message")) {
+                                    annotation.setMember("message", new ConstantExpression("${paramName} {${annotation.classNode.name}.message}".toString()))
+                                }
+
                                 AnnotationNode validatorAnnotation = new AnnotationNode(ClassHelper.make(ValidatedParameter))
-                                validatorAnnotation.addMember("paramName", new ConstantExpression(parameter.getName()))
+                                validatorAnnotation.addMember("paramName", new ConstantExpression(paramName))
                                 validators << validatorAnnotation
                             }
                         }
@@ -45,5 +50,17 @@ class BeanValidationAST implements ASTTransformation {
                 }
             }
         }
+    }
+
+    // grails allows method parameter names to be explicitly mapped to request parameters where the names do not match
+    private String getParamName(Parameter parameter) {
+        String paramName = parameter.name
+
+        List<AnnotationNode> requestParamAnnotations = parameter.getAnnotations(ClassHelper.make(RequestParameter))
+        if (requestParamAnnotations) {
+            paramName = requestParamAnnotations[0].getMember("value")
+        }
+
+        paramName
     }
 }
