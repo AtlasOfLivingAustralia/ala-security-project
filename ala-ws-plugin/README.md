@@ -96,6 +96,34 @@ As per the bean validation spec, any validation constraint annotation (including
 * ```webservice.socket.timeout``` The socket timeout setting for all web service requests (default is 5 minutes).
 * ```app.http.header.userId``` The header name for the ALA user details (used by the auth framework). Defaults to X-ALA-userId.
 
+# Traits & Base classes 
+
+## BasicWSController
+
+Provides convenience methods for sending common errors (not found, bad request, etc), and for handling the response from the ```au.ala.org.service.WebService``` class.
+
+E.g.
+
+```
+class MyController implements BasicWSController {
+    WebService webService
+    
+    def getSomething() {
+        handleWSResponse webService.get(...)
+    }
+    
+    def lookup(String id) {
+        MyEntity m = MyEntity.findById(id)
+        
+        if (m) {
+            ...
+        } else {
+            notFound "No record was found with id ${id}"
+        }
+    }   
+}
+```
+
 # Integration Testing
 
 This plugin uses [Ratpack](http://ratpack.io) to set up an embedded http server for the tests. Ratpack makes doing this extremely easy, and allows us to write integration tests which invoke real http services so we can check that the WebService class has set the appropriate headers, cookies, etc.

@@ -1,0 +1,5 @@
+class AlaWsPluginUrlMappings {
+
+	static mappings = {
+	}
+}
