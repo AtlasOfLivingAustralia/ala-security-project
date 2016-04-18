@@ -87,6 +87,10 @@ list of available annotations.
 
 As per the bean validation spec, any validation constraint annotation (including custom annotations, as long as the annotation is itself annotated with @Constraint meta-annotation) can be used to validate the request parameters.
 
+In addition to the JavaEE 6 core constraints, this plugin provides a number of custom constraints in the ```au.org.ala.ws.validation.constraints``` package, such as
+ 
+* UUID - performs a regex pattern match to ensure the parameter is a valid UUID
+
 # External configuration properties
  
 * ```webservice.apiKey``` The ALA api key to be included in each request (in the ```apiKey``` header field) when ```includeApiKey = true```. API Keys are intended to be used with the [ALA WS Security Plugin](https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin).

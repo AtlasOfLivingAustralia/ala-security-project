@@ -51,6 +51,8 @@ class WSFilters {
                         response.status = HttpStatus.SC_BAD_REQUEST
                         response.sendError(HttpStatus.SC_BAD_REQUEST, "Request validation failed: ${violations*.message.join("; ")}")
                     }
+
+                    return violations == null || violations.isEmpty()
                 }
             }
 
