@@ -1,6 +1,6 @@
 eventCompileStart = {
     println "Compiling Bean Validation AST Transformation (must happen before the classes being transformed)..."
-    println "Compiling classes to ${classesDir}"
+    println "Compiling AST classes to ${classesDir}"
     def sourcePath = "${alaWsPluginPluginDir}/src"
     def destPath = "${classesDir}"
 
@@ -12,6 +12,10 @@ eventCompileStart = {
 
     ant.copy(todir: "${destPath}/META-INF") {
         fileset dir: "${sourcePath}/groovy/META-INF"
+    }
+
+    ant.copy(todir: "${destPath}") {
+        fileset dir: "${alaWsPluginPluginDir}/grails-app/i18n"
     }
 
     grailsSettings.compileDependencies << new File(destPath)
