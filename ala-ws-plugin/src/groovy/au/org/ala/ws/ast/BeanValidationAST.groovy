@@ -24,11 +24,15 @@ class BeanValidationAST implements ASTTransformation {
     void visit(ASTNode[] nodes, SourceUnit source) {
         source?.AST?.classes?.each { clazz ->
             if (clazz.nameWithoutPackage.endsWith("Controller")) {
+                // Do not remove this print statement: it helps (A LOT) when trying to determine if the transformation
+                // was actually applied to a class!! This only executes at compile time.
+                println "Applying Bean Validation AST Transformation to ${clazz.name}"
                 List methods = clazz.methods
 
                 methods.each { MethodNode method ->
                     method.getParameters()?.each { Parameter parameter ->
                         AnnotationNode validator = null
+
                         if (!parameter.getAnnotations(ClassHelper.make(ValidatedParameter))) {
                             parameter.getAnnotations()?.each { AnnotationNode annotation ->
                                 if (annotation.classNode.getAnnotations(ClassHelper.make(Constraint))) {
