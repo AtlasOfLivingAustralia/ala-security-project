@@ -75,7 +75,10 @@ class MyController {
 ```
 This is equivalent in functionality to the Command Object example above, except you'll get a better error message.
 
-Note: bean validation support is only available for action _methods_. Action closures are NOT supported (because they are not the recommended way to implement controller actions).
+## Notes
+
+* bean validation support is only available for action _methods_. Action closures are NOT supported (because they are not the recommended way to implement controller actions).
+* to use bean validation for method arguments, you MUST specify the argument type. If you do not, the type will default to 'Object' and you'll get an error like ```No validator could be found for type: java.lang.Object```.
 
 ## Supported constraints
 

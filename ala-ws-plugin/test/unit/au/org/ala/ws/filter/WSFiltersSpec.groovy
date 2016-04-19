@@ -7,8 +7,8 @@ import grails.test.mixin.support.GrailsUnitTestMixin
 import grails.test.mixin.web.FiltersUnitTestMixin
 import spock.lang.Specification
 
+import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
-import javax.validation.constraints.Size
 
 @TestFor(WSFilters)
 @TestMixin([GrailsUnitTestMixin, FiltersUnitTestMixin])
@@ -39,7 +39,7 @@ class WSFiltersSpec extends Specification {
 
         when:
         params.param1 = "test"
-        params.param2 = "a"
+        params.param2 = 666
         withFilters(controller: "test", action: "action1") {
             controller.action1()
         }
@@ -58,8 +58,8 @@ class WSFiltersSpec extends Specification {
  */
 class TestController {
     def action1(
-            @ValidatedParameter(paramName = "param1") @NotNull String param1,
-            @ValidatedParameter(paramName = "param2") @Size(max = 2) String param2) {
+            @ValidatedParameter(paramName = "param1", paramType = String) @NotNull String param1,
+            @ValidatedParameter(paramName = "param2", paramType = Integer) @Min(2L) int param2) {
 
     }
 

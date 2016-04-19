@@ -9,4 +9,6 @@ import java.lang.annotation.Target;
 @Target([ElementType.PARAMETER])
 public @interface ValidatedParameter {
     String paramName()
+
+    Class paramType()
 }

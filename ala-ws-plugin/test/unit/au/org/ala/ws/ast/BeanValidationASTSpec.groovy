@@ -55,6 +55,24 @@ class BeanValidationASTSpec extends Specification {
         clazz.class.getMethod("action1", String).getParameterAnnotations()[0][1].paramName() == "param1"
     }
 
+    def "transform should store the parameter type from the source code in the @ValidatedParameter annotation"() {
+        setup:
+        BeanValidationAST transformer = new BeanValidationAST()
+        Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
+            import javax.validation.constraints.NotNull
+            class TestController {
+              def action1(@NotNull Double param1) {
+              }
+            }
+        '''
+
+        when:
+        def clazz = testClass.newInstance()
+
+        then:
+        clazz.class.getMethod("action1", Double).getParameterAnnotations()[0][1].paramType() == Double
+    }
+
     def "transform should set the constraint message to the param name followed by the default message expression if message is not set"() {
         setup:
         BeanValidationAST transformer = new BeanValidationAST()

@@ -5,6 +5,7 @@ import grails.web.RequestParameter
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassHelper
+import org.codehaus.groovy.ast.expr.ClassExpression
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.control.CompilePhase
 import org.codehaus.groovy.control.SourceUnit
@@ -28,7 +29,6 @@ class BeanValidationAST implements ASTTransformation {
                 methods.each { MethodNode method ->
                     method.getParameters()?.each { Parameter parameter ->
                         AnnotationNode validator = null
-
                         if (!parameter.getAnnotations(ClassHelper.make(ValidatedParameter))) {
                             parameter.getAnnotations()?.each { AnnotationNode annotation ->
                                 if (annotation.classNode.getAnnotations(ClassHelper.make(Constraint))) {
@@ -40,6 +40,7 @@ class BeanValidationAST implements ASTTransformation {
 
                                     AnnotationNode validatorAnnotation = new AnnotationNode(ClassHelper.make(ValidatedParameter))
                                     validatorAnnotation.addMember("paramName", new ConstantExpression(paramName))
+                                    validatorAnnotation.addMember("paramType", new ClassExpression(parameter.type))
                                     validator = validatorAnnotation
                                 }
                             }
