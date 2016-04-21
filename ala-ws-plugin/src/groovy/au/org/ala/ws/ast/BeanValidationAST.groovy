@@ -5,6 +5,7 @@ import grails.web.RequestParameter
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassHelper
+import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.ClassExpression
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.control.CompilePhase
@@ -22,7 +23,7 @@ import javax.validation.Constraint
 class BeanValidationAST implements ASTTransformation {
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
-        source?.AST?.classes?.each { clazz ->
+        source?.AST?.classes?.each { ClassNode clazz ->
             if (clazz.nameWithoutPackage.endsWith("Controller")) {
                 // Do not remove this print statement: it helps (A LOT) when trying to determine if the transformation
                 // was actually applied to a class!! This only executes at compile time.
