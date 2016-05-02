@@ -44,17 +44,17 @@ abstract class BasicWSController {
     }
 
     /**
-     * Renders the WS response structure (see ala.org.au.ws.service.WebService) as JSON, or sends a HTTP error if resp.status != 200.
+     * Renders the WS response structure (see ala.org.au.ws.service.WebService) as JSON, or sends a HTTP error if resp.status is not in the 2xx range.
      *
      * @param resp response structure as returned by the ala.org.au.ws.service.WebService class
      */
     protected handleWSResponse(Map resp) {
         if (resp) {
-            if (resp.statusCode != SC_OK) {
+            if (!isSuccessful(resp.statusCode)) {
                 log.debug "Response status ${resp.statusCode} returned from operation"
-                response.status = resp.statusCode
                 sendError(resp.statusCode, resp.error ?: "")
             } else {
+                response.status = resp.statusCode
                 response.setContentType(CONTEXT_TYPE_JSON)
                 render resp.resp as JSON
             }
@@ -62,5 +62,10 @@ abstract class BasicWSController {
             response.setContentType(CONTEXT_TYPE_JSON)
             render [:] as JSON
         }
+    }
+
+    /** Returns true for HTTP status codes from 200 to 299 */
+    protected isSuccessful(int statusCode) {
+        return statusCode >= SC_OK && statusCode <= 299
     }
 }
