@@ -152,7 +152,7 @@ class WebService {
                 response.contentLength = contentLength
             }
 
-            List<String> headers = [CONTENT_DISPOSITION, TRANSFER_ENCODING]
+            List<String> headers = [CONTENT_DISPOSITION]
             headers.each { header ->
                 String headerValue = conn.getHeaderField(header)
                 if (headerValue) {
