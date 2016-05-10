@@ -9,7 +9,7 @@ import static org.apache.http.HttpStatus.SC_OK
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 
 abstract class BasicWSController {
-    static final String CONTEXT_TYPE_JSON = "application/json"
+    static final String CONTENT_TYPE_JSON = "application/json"
 
     protected notFound = { String message = null ->
         sendError(SC_NOT_FOUND, message ?: "")
@@ -30,7 +30,7 @@ abstract class BasicWSController {
      */
     protected success = { resp ->
         response.status = SC_OK
-        response.setContentType(CONTEXT_TYPE_JSON)
+        response.setContentType(CONTENT_TYPE_JSON)
         render resp as JSON
     }
 
@@ -55,11 +55,11 @@ abstract class BasicWSController {
                 sendError(resp.statusCode, resp.error ?: "")
             } else {
                 response.status = resp.statusCode
-                response.setContentType(CONTEXT_TYPE_JSON)
+                response.setContentType(CONTENT_TYPE_JSON)
                 render resp.resp as JSON
             }
         } else {
-            response.setContentType(CONTEXT_TYPE_JSON)
+            response.setContentType(CONTENT_TYPE_JSON)
             render [:] as JSON
         }
     }
