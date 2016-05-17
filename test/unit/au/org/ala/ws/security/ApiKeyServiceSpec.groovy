@@ -1,7 +1,7 @@
 package au.org.ala.ws.security
 
 import au.org.ala.ws.security.service.ApiKeyService
-import au.org.ala.ws.security.service.WebService
+import au.org.ala.ws.security.service.WsService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.springframework.http.HttpStatus
@@ -10,7 +10,7 @@ import spock.lang.Unroll
 
 @TestFor(ApiKeyService)
 @Unroll
-@Mock(WebService)
+@Mock(WsService)
 class ApiKeyServiceSpec extends Specification {
 
     void "Should return valid = false when the API Key service returns a HTTP code other than 200"() {
@@ -20,7 +20,7 @@ class ApiKeyServiceSpec extends Specification {
         service.grailsApplication = [config: [security: [apikey: [check: [serviceUrl: "bla"]]]]]
 
         when:
-        service.webService = new MockWebService(status)
+        service.wsService = new MockWebService(status)
         Map result = service.checkApiKey("bla")
 
         then:
@@ -41,7 +41,7 @@ class ApiKeyServiceSpec extends Specification {
         service.grailsApplication = [config: [security: [apikey: [check: [serviceUrl: "bla"]]]]]
 
         when:
-        service.webService = new MockWebService(HttpStatus.OK.value(), "{valid: true}")
+        service.wsService = new MockWebService(HttpStatus.OK.value(), "{valid: true}")
         Map result = service.checkApiKey("bla")
 
         then:
@@ -55,7 +55,7 @@ class ApiKeyServiceSpec extends Specification {
         service.grailsApplication = [config: [security: [apikey: [check: [serviceUrl: "bla"]]]]]
 
         when:
-        service.webService = new MockWebService(HttpStatus.OK.value(), "{valid: false}")
+        service.wsService = new MockWebService(HttpStatus.OK.value(), "{valid: false}")
         Map result = service.checkApiKey("bla")
 
         then:
@@ -63,7 +63,7 @@ class ApiKeyServiceSpec extends Specification {
     }
 }
 
-class MockWebService extends WebService {
+class MockWebService extends WsService {
     int statusCode
     String responseJSON
 
