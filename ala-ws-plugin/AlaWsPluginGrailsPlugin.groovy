@@ -1,6 +1,6 @@
 class AlaWsPluginGrailsPlugin {
     // the plugin version
-    def version = "1.2-SNAPSHOT"
+    def version = "1.2"
 
 
     // the version or versions of Grails the plugin is designed for
