@@ -14,6 +14,7 @@ import org.apache.http.entity.mime.content.ByteArrayBody
 import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.entity.mime.content.InputStreamBody
 import org.apache.http.entity.mime.content.StringBody
+import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import javax.servlet.http.HttpServletResponse
 
@@ -252,11 +253,17 @@ class WebService {
             headers[grailsApplication.config.webservice.apiKeyHeader ?: DEFAULT_API_KEY_HEADER] = apiKey
         }
 
-        Map user = authService.userDetails()
+        // We can only get the user id from the auth service if we are running in a http request.
+        // The Sprint RequestContextHolder's requestAttributes will be null if there is no request.
+        // The #currentRequestAttributes method, which is used by the authService, throws an IllegalStateException if
+        // there is no request, so we need to check if requestAttributes exist before trying to get the user details.
+        if (includeUser && RequestContextHolder.getRequestAttributes() != null) {
+            Map user = authService.userDetails()
 
-        if (user && includeUser) {
-            headers.put(grailsApplication.config.app?.http?.header?.userId ?: DEFAULT_AUTH_HEADER, user.userId as String)
-            headers.put("Cookie", "ALA-Auth=${URLEncoder.encode(user.email, CHAR_ENCODING)}")
+            if (user) {
+                headers.put(grailsApplication.config.app?.http?.header?.userId ?: DEFAULT_AUTH_HEADER, user.userId as String)
+                headers.put("Cookie", "ALA-Auth=${URLEncoder.encode(user.email, CHAR_ENCODING)}")
+            }
         }
 
         if (customHeaders) {
