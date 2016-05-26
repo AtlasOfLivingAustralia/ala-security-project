@@ -24,7 +24,7 @@ grails.project.dependency.resolution = {
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
         // runtime 'mysql:mysql-connector-java:5.1.18'
-        compile ('au.org.ala:ala-cas-client:2.1') {
+        compile ('au.org.ala:ala-cas-client:2.2') {
             excludes([group: 'javax.servlet', name: 'servlet-api'])
         }
         compile ('org.jasig.cas.client:cas-client-core:3.1.12') {
