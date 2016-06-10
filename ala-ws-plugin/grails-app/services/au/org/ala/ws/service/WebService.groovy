@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletResponse
 import static groovyx.net.http.Method.*
 import static org.codehaus.groovy.grails.web.servlet.HttpHeaders.CONNECTION
 import static org.codehaus.groovy.grails.web.servlet.HttpHeaders.CONTENT_DISPOSITION
-import static org.codehaus.groovy.grails.web.servlet.HttpHeaders.TRANSFER_ENCODING
 
 class WebService {
     static final String CHAR_ENCODING = "utf-8"
@@ -35,6 +34,9 @@ class WebService {
 
     /**
      * Sends an HTTP GET request to the specified URL. The URL must already be URL-encoded (if necessary).
+     *
+     * Note: by default, the Accept header will be set to the same content type as the ContentType provided. To override
+     * this default behaviour, include an 'Accept' header in the 'customHeaders' parameter.
      *
      * @param url The url-encoded URL to send the request to
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
@@ -50,6 +52,9 @@ class WebService {
 
     /**
      * Sends an HTTP PUT request to the specified URL. The URL must already be URL-encoded (if necessary).
+     *
+     * Note: by default, the Accept header will be set to the same content type as the ContentType provided. To override
+     * this default behaviour, include an 'Accept' header in the 'customHeaders' parameter.
      *
      * The body map will be sent as the JSON body of the request (i.e. use request.getJSON() on the receiving end).
      *
@@ -69,6 +74,9 @@ class WebService {
     /**
      * Sends an HTTP POST request to the specified URL. The URL must already be URL-encoded (if necessary).
      *
+     * Note: by default, the Accept header will be set to the same content type as the ContentType provided. To override
+     * this default behaviour, include an 'Accept' header in the 'customHeaders' parameter.
+     *
      * The body map will be sent as the body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
@@ -86,6 +94,9 @@ class WebService {
 
     /**
      * Sends a multipart HTTP POST request to the specified URL. The URL must already be URL-encoded (if necessary).
+     *
+     * Note: by default, the Accept header will be set to the same content type as the ContentType provided. To override
+     * this default behaviour, include an 'Accept' header in the 'customHeaders' parameter.
      *
      * Each item in the body map will be sent as a separate Part in the Multipart Request. To send the entire map as a
      * single part, you will need too use the format [data: body].
@@ -116,6 +127,9 @@ class WebService {
     /**
      * Sends a HTTP DELETE request to the specified URL. The URL must already be URL-encoded (if necessary).
      *
+     * Note: by default, the Accept header will be set to the same content type as the ContentType provided. To override
+     * this default behaviour, include an 'Accept' header in the 'customHeaders' parameter.
+     *
      * @param url The url-encoded url to send the request to
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
@@ -134,11 +148,12 @@ class WebService {
      * Used for operations like proxying a download request from one application to another.
      *
      * @param response The HttpServletResponse of the calling request: the response from the proxied request will be written to this object
+     * @param url The URL of the service to proxy to
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
-     * @param url The URL of the service to proxy to
      */
     void proxyGetRequest(HttpServletResponse response, String url, boolean includeApiKey = true, boolean includeUser = true) {
+        log.debug("Proxying GET request to ${url}")
         HttpURLConnection conn = (HttpURLConnection) configureConnection(url, includeApiKey, includeUser)
         conn.useCaches = false
 
@@ -167,6 +182,72 @@ class WebService {
         }
     }
 
+    /**
+     * Proxies a request URL with post data but doesn't assume the response is text based.
+     *
+     * @param response The HttpServletResponse of the calling request: the response from the proxied request will be written to this object
+     * @param url The URL of the service to proxy to
+     * @param postBody The POST data to send with the proxied request. If it is a Collection, then it will be converted to JSON, otherwise it will be sent as a String.
+     * @param contentType the desired content type for the request. Defaults to application/json.
+     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
+     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     */
+    void proxyPostRequest(HttpServletResponse response, String url, postBody, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = false, boolean includeUser = true, Map cookies = [:]) {
+        log.debug("Proxying POST request to ${url}")
+
+        String charEncoding = 'utf-8'
+
+        HttpURLConnection conn = (HttpURLConnection) configureConnection(url, includeApiKey, includeUser)
+        conn.useCaches = false
+
+        try {
+            conn.setRequestMethod("POST")
+            conn.setRequestProperty(CONNECTION, 'close') // disable Keep Alive
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type", contentType.toString());
+
+            cookies?.each { cookie, value ->
+                conn.setRequestProperty(cookie, value)
+            }
+
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream(), charEncoding)
+            if (contentType == ContentType.APPLICATION_JSON && postBody instanceof Collection) {
+                wr.write((postBody as JSON).toString())
+            } else if (contentType == ContentType.APPLICATION_FORM_URLENCODED) {
+                String formData = postBody.inject([]) { result, entry ->
+                    if (entry.value instanceof Collection || entry.value instanceof String[]) {
+                        result << "${enc(entry.key)}=${enc(entry.value?.join(","))}"
+                    } else {
+                        result << "${enc(entry.key)}=${enc(entry.value?.toString())}"
+                    }
+                }?.join("&")
+                wr.write(formData)
+            } else {
+                wr.write(postBody?.toString())
+            }
+            wr.flush()
+            wr.close()
+
+            response.contentType = conn.contentType
+            int contentLength = conn.contentLength
+            if (contentLength != -1) {
+                response.contentLength = contentLength
+            }
+
+            List<String> headers = [CONTENT_DISPOSITION]
+            headers.each { header ->
+                String headerValue = conn.getHeaderField(header)
+                if (headerValue) {
+                    response.setHeader(header, headerValue)
+                }
+            }
+            response.status = conn.responseCode
+            response.outputStream << conn.inputStream
+        } finally {
+            conn.disconnect()
+        }
+    }
+
     private Map send(Method method, String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON,
                      Map body = null, List files = null, boolean includeApiKey = true, boolean includeUser = true,
                      Map customHeaders = [:]) {
@@ -176,6 +257,7 @@ class WebService {
 
         try {
             url = appendQueryString(url, params)
+
             HTTPBuilder http = new HTTPBuilder(url, contentType)
 
             http.request(method, contentType) { request ->
@@ -196,10 +278,11 @@ class WebService {
                     if (data instanceof InputStreamReader) {
                         result.resp = data.text
                     } else {
-                        result.resp = data
+                        result.resp = data ?: [:]
                     }
                 }
                 response.failure = { resp ->
+                    log.error("Request failed with response: ${resp?.entity?.content?.text}")
                     result.statusCode = resp.status
                     result.error = "Failed calling web service - service returned HTTP ${resp.status}"
                 }
@@ -220,7 +303,6 @@ class WebService {
         if (params) {
             url += url.contains("?") ? '&' : '?'
 
-            def enc = { str -> URLEncoder.encode(str, CHAR_ENCODING) }
 
             url += params.inject([]) { result, entry ->
                 result << "${enc(entry.key)}=${enc(entry.value?.toString())}"
@@ -232,6 +314,10 @@ class WebService {
 
     private String getApiKey() {
         grailsApplication.config.webservice.apiKey ?: null
+    }
+
+    private String enc(String str) {
+        str ? URLEncoder.encode(str, CHAR_ENCODING) : ""
     }
 
     private void configureRequestTimeouts(request) {
@@ -287,7 +373,7 @@ class WebService {
                 entityBuilder.addPart(it.originalFilename, new InputStreamBody(it.inputStream, it.contentType, it.originalFilename))
             } else if (it instanceof InputStream) {
                 entityBuilder.addPart("file${index}", new InputStreamBody(it, "file${index}"))
-            }  else if (it instanceof File) {
+            } else if (it instanceof File) {
                 entityBuilder.addPart(it.getName(), new FileBody(it, it.getName()))
             } else {
                 entityBuilder.addPart("file${index}", new ByteArrayBody(it.bytes, "file${index}"))
@@ -305,7 +391,8 @@ class WebService {
 
         if (user && includeUser) {
             conn.setRequestProperty(grailsApplication.config.app?.http?.header?.userId as String, user.userId as String)
-            conn.setRequestProperty("Cookie", "ALA-Auth=${URLEncoder.encode(user.userName, CHAR_ENCODING)}")
+            conn.setRequestProperty("Cookie", "ALA-Auth=${URLEncoder.encode(user.userName ?: "", CHAR_ENCODING)}")
+            conn.setRequestProperty("ALA-Auth", "${URLEncoder.encode(user.userName ?: "", CHAR_ENCODING)}")
         }
 
         String apiKey = getApiKey()

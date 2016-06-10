@@ -56,7 +56,7 @@ abstract class BasicWSController {
             } else {
                 response.status = resp.statusCode
                 response.setContentType(CONTENT_TYPE_JSON)
-                render resp.resp as JSON
+                render((resp.resp ?: [:]) as JSON)
             }
         } else {
             response.setContentType(CONTENT_TYPE_JSON)
