@@ -8,9 +8,10 @@ Grails plugin containing common REST and general webservice functionality
 # Usage
 
 ```
-runtime ":ala-ws-plugin:x.y.z"
+compile ":ala-ws-plugin:x.y.z"
 ```
 
+Note: this plugin MUST be declared as a *compile* time dependency.
 
 ## The WebService class
 
