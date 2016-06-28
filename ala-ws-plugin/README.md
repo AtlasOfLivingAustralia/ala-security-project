@@ -20,7 +20,7 @@ If you want to see the raw data that is sent, add the following lines to your Co
 ```
 debug  "org.apache.http.wire",
        "org.apache.http.headers"
-'''
+```
 
 ## The WebService class
 
