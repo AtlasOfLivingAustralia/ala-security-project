@@ -13,6 +13,15 @@ compile ":ala-ws-plugin:x.y.z"
 
 Note: this plugin MUST be declared as a *compile* time dependency.
 
+### Logging Config
+
+If you want to see the raw data that is sent, add the following lines to your Config.groovy file's log4j config:
+
+```
+debug  "org.apache.http.wire",
+       "org.apache.http.headers"
+'''
+
 ## The WebService class
 
 This is intended as a common replacement for all application-specific implementations of the WebService class. It supports the following functionality:
