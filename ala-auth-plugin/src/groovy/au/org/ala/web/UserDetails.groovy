@@ -1,6 +1,5 @@
 package au.org.ala.web
 
-import java.io.Serializable
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,4 +20,15 @@ class UserDetails implements Serializable {
     String city // optional prop
     String state // optional prop
     String telephone // optional prop
+
+    Set<String> roles = new HashSet()
+
+    /**
+     * Returns true if the user represented by this UserDetails has the supplied role.
+     * @param role the role to check.
+     * @return true if this user has the supplied role.
+     */
+    boolean hasRole(String role) {
+        return roles.contains(role)
+    }
 }

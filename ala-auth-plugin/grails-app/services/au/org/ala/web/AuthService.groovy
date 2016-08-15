@@ -50,7 +50,7 @@ class AuthService {
         return bypass.toString().toBoolean() || inRole
     }
 
-    def userDetails() {
+    Map userDetails() {
         def attr = RequestContextHolder.currentRequestAttributes()?.getUserPrincipal()?.attributes
         def details = null
 
@@ -104,6 +104,10 @@ class AuthService {
             ud.city = json.props.city
             ud.state = json.props.state
             ud.telephone = json.props.telephone
+        }
+
+        if (json.roles) {
+            ud.roles = new HashSet(json.roles)
         }
 
         return ud
