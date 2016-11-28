@@ -277,6 +277,9 @@ class WebService {
                     result.statusCode = resp.status
                     if (data instanceof InputStreamReader) {
                         result.resp = data.text
+                    } else if (data instanceof List) {
+                        // ensure an empty list is not converted to an empty object
+                        result.resp = data
                     } else {
                         result.resp = data ?: [:]
                     }
