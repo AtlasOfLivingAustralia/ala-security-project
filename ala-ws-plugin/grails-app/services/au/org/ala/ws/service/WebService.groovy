@@ -2,32 +2,44 @@ package au.org.ala.ws.service
 
 import au.org.ala.web.AuthService
 import grails.converters.JSON
+import groovyx.net.http.ContentType as GContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
+import groovyx.net.http.ParserRegistry
 import org.apache.http.HttpEntity
+import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.RequestConfig
+import org.apache.http.entity.AbstractHttpEntity
 import org.apache.http.entity.ContentType
+import org.apache.http.entity.StringEntity
 import org.apache.http.entity.mime.HttpMultipartMode
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.ByteArrayBody
 import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.entity.mime.content.InputStreamBody
 import org.apache.http.entity.mime.content.StringBody
+import org.codehaus.groovy.grails.web.json.JSONElement
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.multipart.commons.CommonsMultipartFile
+
 import javax.servlet.http.HttpServletResponse
 
 import static groovyx.net.http.Method.*
+import static org.apache.commons.io.Charsets.UTF_8
 import static org.codehaus.groovy.grails.web.servlet.HttpHeaders.CONNECTION
 import static org.codehaus.groovy.grails.web.servlet.HttpHeaders.CONTENT_DISPOSITION
 
 class WebService {
-    static final String CHAR_ENCODING = "utf-8"
+    static final String CHAR_ENCODING = "UTF-8"
 
     static final int DEFAULT_TIMEOUT_MILLIS = 600000; // five minutes
     static final String DEFAULT_AUTH_HEADER = "X-ALA-userId"
     static final String DEFAULT_API_KEY_HEADER = "apiKey"
+
+    static {
+        ParserRegistry.setDefaultCharset(CHAR_ENCODING)
+    }
 
     def grailsApplication
     AuthService authService
@@ -195,8 +207,6 @@ class WebService {
     void proxyPostRequest(HttpServletResponse response, String url, postBody, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = false, boolean includeUser = true, Map cookies = [:]) {
         log.debug("Proxying POST request to ${url}")
 
-        String charEncoding = 'utf-8'
-
         HttpURLConnection conn = (HttpURLConnection) configureConnection(url, includeApiKey, includeUser)
         conn.useCaches = false
 
@@ -210,7 +220,7 @@ class WebService {
                 conn.setRequestProperty(cookie, value)
             }
 
-            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream(), charEncoding)
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream(), CHAR_ENCODING)
             if (contentType == ContentType.APPLICATION_JSON && postBody instanceof Collection) {
                 wr.write((postBody as JSON).toString())
             } else if (contentType == ContentType.APPLICATION_FORM_URLENCODED) {
@@ -258,7 +268,7 @@ class WebService {
         try {
             url = appendQueryString(url, params)
 
-            HTTPBuilder http = new HTTPBuilder(url, contentType)
+            HTTPBuilder http = newHttpBuilder(url, contentType)
 
             http.request(method, contentType) { request ->
                 configureRequestTimeouts(request)
@@ -302,7 +312,20 @@ class WebService {
         result
     }
 
-    private String appendQueryString(String url, Map params) {
+    HTTPBuilder newHttpBuilder(String url, ContentType contentType) {
+        HTTPBuilder http = new HTTPBuilder(url, contentType)
+        // Since we're in a Grails context, let's use Grails JSON for encoding and decoding
+        final encoder = WebService.&encodeJSON
+        final decoder = WebService.&decodeJSON
+        http.encoder[GContentType.JSON] = encoder
+        http.encoder[ContentType.APPLICATION_JSON] = encoder
+        http.parser[GContentType.JSON] = decoder
+        http.parser[ContentType.APPLICATION_JSON] = decoder
+        // TODO XML
+        return http
+    }
+
+    private static String appendQueryString(String url, Map params) {
         if (params) {
             url += url.contains("?") ? '&' : '?'
 
@@ -319,7 +342,7 @@ class WebService {
         grailsApplication.config.webservice.apiKey ?: null
     }
 
-    private String enc(String str) {
+    static String enc(String str) {
         str ? URLEncoder.encode(str, CHAR_ENCODING) : ""
     }
 
@@ -360,7 +383,7 @@ class WebService {
         }
     }
 
-    private HttpEntity constructMultiPartEntity(Map parts, List files, ContentType partContentType = ContentType.APPLICATION_JSON) {
+    private static HttpEntity constructMultiPartEntity(Map parts, List files, ContentType partContentType = ContentType.APPLICATION_JSON) {
         MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create()
         entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
 
@@ -404,5 +427,66 @@ class WebService {
         }
 
         conn
+    }
+
+    /**
+     * Use Grails JSON to encode an object as JSON.  If the object is a String, assume that it's
+     * already a well formed JSON document and return it as such.  Otherwise, convert the object
+     * to JSON using `o as JSON` and then return an entity that will write the result to an OutputStream.
+     *
+     * @param model The model to convert to JSON
+     * @param contentType The content type.  Could be anything.
+     * @return The HTTP Entity that will write the model to an outputstream as JSON
+     */
+    static HttpEntity encodeJSON(Object model, Object contentType) {
+//        log.info("Grails encodeJSON")
+        final entity
+        if (model instanceof String) {
+            entity = new StringEntity( model, contentType.toString(), CHAR_ENCODING )
+        } else {
+            final json = model as JSON
+            entity = new AbstractHttpEntity() {
+                @Override
+                boolean isRepeatable() {
+                    false
+                }
+
+                @Override
+                long getContentLength() {
+                    -1
+                }
+
+                @Override
+                InputStream getContent() throws IOException, IllegalStateException {
+                    throw new UnsupportedOperationException('This entity only supports writing')
+                }
+
+                @Override
+                void writeTo(OutputStream outputStream) throws IOException {
+                    OutputStreamWriter w = new OutputStreamWriter(outputStream, UTF_8)
+                    json.render(w)
+                }
+
+                @Override
+                boolean isStreaming() {
+                    false
+                }
+            }
+        }
+        entity.setContentType( contentType.toString() )
+        return entity
+    }
+
+    /**
+     * Decode an Apache HTTP Response as JSON using the Grails JSON support
+     *
+     * @param httpResponse The HTTP Response to decode as JSON
+     * @return A Grails JSONElement
+     */
+    static JSONElement decodeJSON(HttpResponse httpResponse) {
+//        log.info("Grails decodeJSON")
+        final cs = ParserRegistry.getCharset(httpResponse)
+        def json = JSON.parse(new InputStreamReader(httpResponse.entity.content, cs))
+        return json
     }
 }
