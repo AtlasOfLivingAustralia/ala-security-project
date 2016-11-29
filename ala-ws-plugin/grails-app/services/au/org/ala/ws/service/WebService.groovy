@@ -24,16 +24,17 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import javax.servlet.http.HttpServletResponse
+import java.nio.charset.Charset
 
 import static groovyx.net.http.Method.*
-import static org.apache.commons.io.Charsets.UTF_8
 import static org.codehaus.groovy.grails.web.servlet.HttpHeaders.CONNECTION
 import static org.codehaus.groovy.grails.web.servlet.HttpHeaders.CONTENT_DISPOSITION
 
 class WebService {
     static final String CHAR_ENCODING = "UTF-8"
+    static final Charset UTF_8 = Charset.forName(CHAR_ENCODING)
 
-    static final int DEFAULT_TIMEOUT_MILLIS = 600000; // five minutes
+    static final int DEFAULT_TIMEOUT_MILLIS = 600000 // five minutes
     static final String DEFAULT_AUTH_HEADER = "X-ALA-userId"
     static final String DEFAULT_API_KEY_HEADER = "apiKey"
 
