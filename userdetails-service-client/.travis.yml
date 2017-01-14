@@ -1,15 +1,18 @@
 sudo: false
 language: java
 jdk:
-- openjdk7
+  - openjdk7
 before_cache:
-- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
-  directories: _ $HOME/.m2 - $HOME/.gradle/caches/ - $HOME/.gradle/wrapper/
+  directories:
+  - $HOME/.m2
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
 after_success:
-- '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && travis_retry ./gradlew publish'
+  - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && travis_retry ./gradlew publish'
 env:
   global:
-  - secure: FUZ7y0UXqDui5vMBsqBirpRNKI3eja+B/LDGtvjKQfZRpdx11SBmivmXeIzDKXEgG7MhBg+7TKPEJ8I8ZKHPi6C9JUH5jAzAu6+VJoZuhoIATOPbaE1fAZa3RRk5KfFmDt6tajhA15+uk32Us3La/+gVAV3WnJeDjURd9XYoaRSibIU8BiZqy7tmuSfKjNj8Cfl9rMp+00Me8SkeT9y/R8FOa3uWKWxeaAga2Pol5K06+ogeEXEjWI5LRyXrcsH3NdaL8LvKibDsHyXanC9Wt4fWO2U9it6ejNDFRA23de87cVVIezzVmGkK9MbWkgWlsFl9j/bGjGG5/fpdfs8bvu5kKnWJdSpWAFmCGZXoAhC5HhWFBMjapFwXAjoMa38MnV1u61m4BNOPavtd0eV4p6c0n8WhXHtlvowDhRcshymIGCBEEMfBZC717hqh18K8oEW0hb1/rVlK/aOGdLS7fX6PlfLL/IRcL7k5VULCVjd/qwYacDSEN4H2ofWs+kOwZ+vucuSp4k7AAYmlk7p6oENDB/D2nPgXeoOI4EAZCnpCDXhqLF7C1AUEA+Eo8BMR5cr7wl1fHi+l2rlRsLPifUSmJ7b2I+vw74AKSjdhSCIAEqxksRqnESEJ83YER6Nstw7IQd4L4fCcFjXoSNhR3Vwd3uo10599Ymgm6OcB9ac=
-  - secure: t5WV4TZ0FxFyAf/AjBBT1jHNlIE1Cmw4v1IxXk/Z5ifFc476M3SWTe/CKZ44LcB/TqIeXYAAPm9KgRo/CDqercdSFPAWy0ViigQ9gJJHQ1VYsGcYXUu79DyW0XKLmMjsIA9NeTkr94rEA94J55jZH+iXJ5LUg4lEFwG+DgAMhUdev+AKLtmzNSU0fkPffa368coExvpBSxKXTngYf5XCof1Pw7beLbWjdk/Xdaabv1Ne8/orKfEKj3XquHsOrRLjE89Jd/8LrE0V85Btb6KQXjEXlgKeJl44WvXIXgln6vcJuUtEiYW4Yf+lTV8N18iN0uD5oPRebTojwbI2BuIY+WiBtznj6c9rEdhsgpryV8RcR8NSYXyt0w33bux2FjapIO/VjmpoA97gs7OiYN0rTLV8Qq+fvkxWFHqFpQIqohKkq5offl9B3ntkjKwkmB4pE9PeDSbYGOCB8epZhnXmrMuBETbukkrIuMre+gn9RGOS2h0htBZy7ZQfE+dCJmUhYCjpW2dVqKR85hjqN7T7BY+9vkVDIFVcnGXoEhLsrlA4iVmRXtpcjwcATuxejPvE6QEqkU8jaP1JU5OJXLnTyD/hrCvcMzFJnSjyb9cD3jaMT46UZD7VqOj4ZQ+BO0SpyMmcE19u50vbEe6FcODPXCZgQ2ufTE2SPHUqrVhUWp4=
+    - secure: FUZ7y0UXqDui5vMBsqBirpRNKI3eja+B/LDGtvjKQfZRpdx11SBmivmXeIzDKXEgG7MhBg+7TKPEJ8I8ZKHPi6C9JUH5jAzAu6+VJoZuhoIATOPbaE1fAZa3RRk5KfFmDt6tajhA15+uk32Us3La/+gVAV3WnJeDjURd9XYoaRSibIU8BiZqy7tmuSfKjNj8Cfl9rMp+00Me8SkeT9y/R8FOa3uWKWxeaAga2Pol5K06+ogeEXEjWI5LRyXrcsH3NdaL8LvKibDsHyXanC9Wt4fWO2U9it6ejNDFRA23de87cVVIezzVmGkK9MbWkgWlsFl9j/bGjGG5/fpdfs8bvu5kKnWJdSpWAFmCGZXoAhC5HhWFBMjapFwXAjoMa38MnV1u61m4BNOPavtd0eV4p6c0n8WhXHtlvowDhRcshymIGCBEEMfBZC717hqh18K8oEW0hb1/rVlK/aOGdLS7fX6PlfLL/IRcL7k5VULCVjd/qwYacDSEN4H2ofWs+kOwZ+vucuSp4k7AAYmlk7p6oENDB/D2nPgXeoOI4EAZCnpCDXhqLF7C1AUEA+Eo8BMR5cr7wl1fHi+l2rlRsLPifUSmJ7b2I+vw74AKSjdhSCIAEqxksRqnESEJ83YER6Nstw7IQd4L4fCcFjXoSNhR3Vwd3uo10599Ymgm6OcB9ac=
+    - secure: t5WV4TZ0FxFyAf/AjBBT1jHNlIE1Cmw4v1IxXk/Z5ifFc476M3SWTe/CKZ44LcB/TqIeXYAAPm9KgRo/CDqercdSFPAWy0ViigQ9gJJHQ1VYsGcYXUu79DyW0XKLmMjsIA9NeTkr94rEA94J55jZH+iXJ5LUg4lEFwG+DgAMhUdev+AKLtmzNSU0fkPffa368coExvpBSxKXTngYf5XCof1Pw7beLbWjdk/Xdaabv1Ne8/orKfEKj3XquHsOrRLjE89Jd/8LrE0V85Btb6KQXjEXlgKeJl44WvXIXgln6vcJuUtEiYW4Yf+lTV8N18iN0uD5oPRebTojwbI2BuIY+WiBtznj6c9rEdhsgpryV8RcR8NSYXyt0w33bux2FjapIO/VjmpoA97gs7OiYN0rTLV8Qq+fvkxWFHqFpQIqohKkq5offl9B3ntkjKwkmB4pE9PeDSbYGOCB8epZhnXmrMuBETbukkrIuMre+gn9RGOS2h0htBZy7ZQfE+dCJmUhYCjpW2dVqKR85hjqN7T7BY+9vkVDIFVcnGXoEhLsrlA4iVmRXtpcjwcATuxejPvE6QEqkU8jaP1JU5OJXLnTyD/hrCvcMzFJnSjyb9cD3jaMT46UZD7VqOj4ZQ+BO0SpyMmcE19u50vbEe6FcODPXCZgQ2ufTE2SPHUqrVhUWp4=
