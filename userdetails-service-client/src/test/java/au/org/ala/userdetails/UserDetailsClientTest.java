@@ -4,7 +4,6 @@ import au.org.ala.web.UserDetails;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
-import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
