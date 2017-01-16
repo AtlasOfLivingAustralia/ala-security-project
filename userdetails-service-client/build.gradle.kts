@@ -38,8 +38,10 @@ dependencies {
     compile(group="com.squareup.moshi", name="moshi", version="1.3.1")
     compile(group="com.squareup.moshi", name="moshi-adapters", version="1.3.1")
 
+    testCompile(group="com.google.guava", name="guava", version="20.0")
     testCompile(group="junit", name="junit", version="4.11")
     testCompile(group="com.squareup.okhttp3", name="logging-interceptor", version="3.3.1")
+    testCompile(group="com.squareup.okhttp3", name="mockwebserver", version="3.0.1")
     testCompile(group="org.assertj", name="assertj-core", version="3.6.1")
 }
 
