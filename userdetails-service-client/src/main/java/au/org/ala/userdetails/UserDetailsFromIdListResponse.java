@@ -13,7 +13,7 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AllUserDetailsResponse {
+public class UserDetailsFromIdListResponse {
     //{"success":false,"message":"Exception: java.lang.NumberFormatException: For input string: \"simon.bear@csiro.au\""}
     /*
     "users": {

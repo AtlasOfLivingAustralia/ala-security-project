@@ -1,7 +1,7 @@
 package au.org.ala;
 
-import au.org.ala.userdetails.AllUserDetailsRequest;
-import au.org.ala.userdetails.AllUserDetailsResponse;
+import au.org.ala.userdetails.UserDetailsFromIdListRequest;
+import au.org.ala.userdetails.UserDetailsFromIdListResponse;
 import au.org.ala.web.UserDetails;
 import au.org.ala.userdetails.UserDetailsClient;
 import okhttp3.OkHttpClient;
@@ -45,8 +45,8 @@ public class UserDetailsClientIntegrationTest {
 
     @Test
     public void testGetUserDetailsFromIdList() throws IOException {
-        Call<AllUserDetailsResponse> allUserDetailsCall = userDetailsClient.getUserDetailsFromIdList(new AllUserDetailsRequest(Arrays.asList(USER_ID), true));
-        AllUserDetailsResponse userDetails = allUserDetailsCall.execute().body();
+        Call<UserDetailsFromIdListResponse> allUserDetailsCall = userDetailsClient.getUserDetailsFromIdList(new UserDetailsFromIdListRequest(Arrays.asList(USER_ID), true));
+        UserDetailsFromIdListResponse userDetails = allUserDetailsCall.execute().body();
         assertThat(userDetails).isNotNull();
         assertThat(userDetails.isSuccess()).isTrue();
         assertThat(userDetails.getUsers()).containsKeys(USER_ID);
@@ -55,8 +55,8 @@ public class UserDetailsClientIntegrationTest {
 
     @Test
     public void testFailedGetUserDetailsFromIdList() throws IOException {
-        Call<AllUserDetailsResponse> allUserDetailsCall = userDetailsClient.getUserDetailsFromIdList(new AllUserDetailsRequest(Arrays.asList(EMAIL), true));
-        AllUserDetailsResponse userDetails = allUserDetailsCall.execute().body();
+        Call<UserDetailsFromIdListResponse> allUserDetailsCall = userDetailsClient.getUserDetailsFromIdList(new UserDetailsFromIdListRequest(Arrays.asList(EMAIL), true));
+        UserDetailsFromIdListResponse userDetails = allUserDetailsCall.execute().body();
         assertThat(userDetails).isNotNull();
         assertThat(userDetails.isSuccess()).isFalse();
         assertThat(userDetails.getMessage()).isNotBlank();

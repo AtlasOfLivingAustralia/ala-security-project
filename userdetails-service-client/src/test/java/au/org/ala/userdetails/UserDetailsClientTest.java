@@ -51,18 +51,18 @@ public class UserDetailsClientTest {
                             response.setResponseCode(200).setBody(moshi.adapter(UserDetails.class).toJson(test));
                             break;
                         case GET_USER_DETAILS_FROM_ID_LIST_PATH:
-                            AllUserDetailsRequest body = moshi.adapter(AllUserDetailsRequest.class).fromJson(request.getBody());
-                            AllUserDetailsResponse responseBody;
+                            UserDetailsFromIdListRequest body = moshi.adapter(UserDetailsFromIdListRequest.class).fromJson(request.getBody());
+                            UserDetailsFromIdListResponse responseBody;
                             try {
                                 for (String id : body.getUserIds()) {
                                     Integer.parseInt(id);
                                 }
-                                responseBody = new AllUserDetailsResponse(true, "", ImmutableMap.of(test.getUserId(), test), newArrayList(123));
+                                responseBody = new UserDetailsFromIdListResponse(true, "", ImmutableMap.of(test.getUserId(), test), newArrayList(123));
                             } catch (NumberFormatException e) {
                                 // This is the same as the userdetails web service :S
-                                responseBody = new AllUserDetailsResponse(false, e.getMessage(), null, null);
+                                responseBody = new UserDetailsFromIdListResponse(false, e.getMessage(), null, null);
                             }
-                            response.setResponseCode(200).setBody(moshi.adapter(AllUserDetailsResponse.class).toJson(responseBody));
+                            response.setResponseCode(200).setBody(moshi.adapter(UserDetailsFromIdListResponse.class).toJson(responseBody));
                             break;
                         case GET_USER_LIST_FULL_PATH:
                             response.setResponseCode(200).setBody(moshi.adapter(Types.newParameterizedType(List.class, UserDetails.class)).toJson(newArrayList(test)));
@@ -107,13 +107,13 @@ public class UserDetailsClientTest {
 
     @Test
     public void testGetAllUserDetails() throws IOException {
-        AllUserDetailsRequest request = new AllUserDetailsRequest(newArrayList(test.getUserId(), "123"), true);
-        Call<AllUserDetailsResponse> call = userDetailsClient.getUserDetailsFromIdList(request);
-        Response<AllUserDetailsResponse> response = call.execute();
+        UserDetailsFromIdListRequest request = new UserDetailsFromIdListRequest(newArrayList(test.getUserId(), "123"), true);
+        Call<UserDetailsFromIdListResponse> call = userDetailsClient.getUserDetailsFromIdList(request);
+        Response<UserDetailsFromIdListResponse> response = call.execute();
 
         assertThat(response.isSuccessful()).isTrue();
 
-        AllUserDetailsResponse usersDetails = response.body();
+        UserDetailsFromIdListResponse usersDetails = response.body();
 
         assertThat(usersDetails).isNotNull();
         assertThat(usersDetails.isSuccess()).isTrue();
@@ -123,13 +123,13 @@ public class UserDetailsClientTest {
 
     @Test
     public void testGetAllUserDetailsWithInvalidId() throws IOException {
-        AllUserDetailsRequest request = new AllUserDetailsRequest(newArrayList("test@test.com"), true);
-        Call<AllUserDetailsResponse> call = userDetailsClient.getUserDetailsFromIdList(request);
-        Response<AllUserDetailsResponse> response = call.execute();
+        UserDetailsFromIdListRequest request = new UserDetailsFromIdListRequest(newArrayList("test@test.com"), true);
+        Call<UserDetailsFromIdListResponse> call = userDetailsClient.getUserDetailsFromIdList(request);
+        Response<UserDetailsFromIdListResponse> response = call.execute();
 
         assertThat(response.isSuccessful()).isTrue();
 
-        AllUserDetailsResponse usersDetails = response.body();
+        UserDetailsFromIdListResponse usersDetails = response.body();
 
         assertThat(usersDetails).isNotNull();
         assertThat(usersDetails.isSuccess()).isFalse();

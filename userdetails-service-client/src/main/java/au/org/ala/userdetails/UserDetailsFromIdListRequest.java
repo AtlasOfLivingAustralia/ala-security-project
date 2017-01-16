@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AllUserDetailsRequest {
+public class UserDetailsFromIdListRequest {
 
     private List<String> userIds;
     private boolean includeProps = false;

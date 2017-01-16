@@ -19,6 +19,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * An interface that represents the exposed web services of the UserDetails application.
+ *
+ * Use the UserDetailsClient.Builder or Retrofit to generate an instance.
+ */
 public interface UserDetailsClient {
 
     String GET_USER_DETAILS_PATH = "userDetails/getUserDetails";
@@ -29,7 +34,8 @@ public interface UserDetailsClient {
 
     /**
      * Return a JSON object containing id, email and display name for a given user, use includeProps=true to get additional information such as organisation
-     * @param username Can be either a numeric id or an email address id
+     *
+     * @param username     Can be either a numeric id or an email address id
      * @param includeProps True to include extended properties such as organisation, telephone, etc.
      * @return A call that will return a UserDetails object.
      */
@@ -38,14 +44,16 @@ public interface UserDetailsClient {
 
     /**
      * return the UserDetails objects for a list of user ids.
+     *
      * @param request The request body - accepts numeric ids only.
      * @return A response object with the matched UserDetails and any missing ids and or error messages.
      */
     @POST(GET_USER_DETAILS_FROM_ID_LIST_PATH)
-    Call<AllUserDetailsResponse> getUserDetailsFromIdList(@Body AllUserDetailsRequest request);
+    Call<UserDetailsFromIdListResponse> getUserDetailsFromIdList(@Body UserDetailsFromIdListRequest request);
 
     /**
      * Return all the UserDetails.  This will be super slow probably so caching the result is advised.
+     *
      * @return A call that returns all the UserDetails.
      */
     @Deprecated
@@ -54,6 +62,7 @@ public interface UserDetailsClient {
 
     /**
      * Return a map of User email to User display name.  Returns all known users.
+     *
      * @return A map of User email to User display name
      */
     @Deprecated
@@ -62,6 +71,7 @@ public interface UserDetailsClient {
 
     /**
      * Return a map of User numeric id to User display name.  Returns all known users.
+     *
      * @return A map of User numeric id to User display name
      */
     @Deprecated
@@ -85,8 +95,9 @@ public interface UserDetailsClient {
         /**
          * Create a Builder using an okHttpClient and String baseUrl.  The baseUrl will be
          * converted to an HttpUrl and a trailing / will be added if required.
+         *
          * @param okHttpClient The OkHttpClient to use
-         * @param baseUrl The base URL of the User Details service
+         * @param baseUrl      The base URL of the User Details service
          */
         public Builder(OkHttpClient okHttpClient, String baseUrl) {
             this.okHttpClient = okHttpClient;
@@ -104,20 +115,14 @@ public interface UserDetailsClient {
          * @return A UserDetailsClient using the supplied okhttpclient, baseUrl and moshi.
          */
         public UserDetailsClient build() {
-            val builder = new Retrofit.Builder();
+            val moshi = this.moshi != null ? this.moshi : new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter()).build();
 
-            Moshi moshi = this.moshi;
-            if (moshi == null) {
-                moshi = new Moshi.Builder()
-                        .add(Date.class, new Rfc3339DateJsonAdapter())
-                        .build();
-            }
-
-            builder.addConverterFactory(MoshiConverterFactory.create(moshi))
+            return new Retrofit.Builder()
+                    .addConverterFactory(MoshiConverterFactory.create(moshi))
                     .client(okHttpClient)
-                    .baseUrl(baseUrl);
-
-            return builder.build().create(UserDetailsClient.class);
+                    .baseUrl(baseUrl)
+                    .build()
+                    .create(UserDetailsClient.class);
         }
     }
 
