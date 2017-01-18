@@ -16,7 +16,10 @@ import java.util.Set;
 @AllArgsConstructor
 public class UserDetails implements Serializable {
 
-    private static final long serialVersionUID = 44L;
+    private static final long serialVersionUID = 45L;
+
+    // Some old services return userId as an number id
+    private Long id;
 
     private String firstName;
     private String lastName;
@@ -31,6 +34,10 @@ public class UserDetails implements Serializable {
     private String telephone; // optional prop
 
     private Set<String> roles = new HashSet<String>();
+
+    public String getUserId() {
+        return userId != null ? userId : id != null ? String.valueOf(id) : null;
+    }
 
     public String getDisplayName() {
         return firstName + " " + lastName;

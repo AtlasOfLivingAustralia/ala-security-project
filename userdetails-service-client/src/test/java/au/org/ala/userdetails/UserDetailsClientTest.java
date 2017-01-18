@@ -2,6 +2,7 @@ package au.org.ala.userdetails;
 
 import au.org.ala.web.UserDetails;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 import okhttp3.OkHttpClient;
@@ -21,6 +22,7 @@ import java.util.List;
 
 import static au.org.ala.userdetails.UserDetailsClient.*;
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
@@ -30,7 +32,7 @@ public class UserDetailsClientTest {
     Moshi moshi;
     UserDetailsClient userDetailsClient;
 
-    static final UserDetails test = new UserDetails("Test", "Test", "test@test.com", "1", "test", "test", "test", "test", "test", "test", Collections.<String>emptySet());
+    static final UserDetails test = new UserDetails(1l, "Test", "Test", "test@test.com", "1", "test", "test", "test", "test", "test", "test", newHashSet("ROLE_POTATO"));
 
     @Before
     public void setup() throws IOException {
@@ -102,7 +104,7 @@ public class UserDetailsClientTest {
         assertThat(response.isSuccessful()).isTrue();
 
         UserDetails userDetails = response.body();
-        assertThat(userDetails).isNotNull().hasFieldOrPropertyWithValue("displayName", "Test Test").hasFieldOrPropertyWithValue("userName", "test@test.com");
+        assertThat(userDetails).isNotNull().isEqualTo(test);
     }
 
     @Test

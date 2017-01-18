@@ -6,6 +6,7 @@ import au.org.ala.web.UserDetails;
 import au.org.ala.userdetails.UserDetailsClient;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
+import org.assertj.core.api.Condition;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.*;
 
-// Remove this and replace constants below to run the test
+// Remove this and replace constants below to run the test against the actual service
 @Ignore
 public class UserDetailsClientIntegrationTest {
 
@@ -50,7 +51,7 @@ public class UserDetailsClientIntegrationTest {
         assertThat(userDetails).isNotNull();
         assertThat(userDetails.isSuccess()).isTrue();
         assertThat(userDetails.getUsers()).containsKeys(USER_ID);
-        assertThat(userDetails.getUsers().get(USER_ID)).hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME).hasFieldOrPropertyWithValue("userName", EMAIL);
+        assertThat(userDetails.getUsers().get(USER_ID)).hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME).hasFieldOrPropertyWithValue("userName", EMAIL).hasFieldOrPropertyWithValue("userId", USER_ID);
     }
 
     @Test
@@ -64,9 +65,22 @@ public class UserDetailsClientIntegrationTest {
 
     @Test
     public void testGetUserListFull() throws IOException {
+        Condition<String> onlyDigits = new Condition<String>() {
+
+            @Override
+            public boolean matches(String value) {
+                try {
+                    Long.parseLong(value);
+                    return true;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+        };
         Call<List<UserDetails>> listUserDetailsCall = userDetailsClient.getUserListFull();
         List<UserDetails> userDetailsList = listUserDetailsCall.execute().body();
         assertThat(userDetailsList).isNotNull().hasAtLeastOneElementOfType(UserDetails.class).first().hasFieldOrProperty("userName").hasFieldOrProperty("userId");
+        assertThat(userDetailsList).extracting("userId", String.class).doesNotContainNull().are(onlyDigits);
     }
 
     @Ignore
