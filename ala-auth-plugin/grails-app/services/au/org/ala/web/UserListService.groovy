@@ -1,7 +1,6 @@
 package au.org.ala.web
 
-import net.sf.json.JSONArray
-import net.sf.json.JSONObject
+import au.org.ala.userdetails.UserDetailsClient
 import org.springframework.cache.annotation.Cacheable
 
 /**
@@ -15,24 +14,22 @@ class UserListService {
 
     static transactional = false
 
-    def httpWebService, grailsApplication
+    def grailsApplication
+    UserDetailsClient userDetailsClient
 
+    /**
+     * @deprecated use the AuthService.getUserDetailsById instead
+     * @return All the UserDetails, without extended properties
+     */
     @Cacheable("userListCache")
-    def getFullUserList() {
+    List<UserDetails> getFullUserList() {
         checkConfig()
-        try {
-            return httpWebService.doJsonPost(grailsApplication.config.userDetails.url, grailsApplication.config.userDetails.path, "", "")
-        } catch (Exception e) {
-            log.error "Cache refresh error: " + e.message, e
-        }
+        return userDetailsClient.getUserListFull().execute().body()
     }
 
     private void checkConfig() {
         if (!grailsApplication.config.userDetails.url) {
             log.error "Required config not found: userDetails.url - please add to Config.groovy"
-        }
-        if (!grailsApplication.config.userDetails.path) {
-            log.error "Required config not found: userDetails.path - please add to Config.groovy"
         }
     }
 

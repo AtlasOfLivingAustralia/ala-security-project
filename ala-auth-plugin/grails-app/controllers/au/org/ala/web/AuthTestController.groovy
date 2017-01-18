@@ -25,13 +25,12 @@ class AuthTestController {
 
     }
 
-    def userSearchResults() {
+    def userSearchResults(String userId) {
         if (!authService.userInRole(CASRoles.ROLE_ADMIN)) {
             redirect(action:'index')
             return
         }
 
-        def userId = params.userId as String
         UserDetails user = null
         if (userId) {
             user = authService.getUserForUserId(userId)

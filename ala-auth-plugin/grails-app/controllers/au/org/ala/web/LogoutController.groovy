@@ -9,7 +9,7 @@ class LogoutController {
      * @param casUrl the url for logging out of cas
      * @param appUrl the url to redirect back to after the logout
      */
-    def logout = {
+    def logout() {
         session.invalidate()
         def appUrl = URLEncoder.encode(params.appUrl, "UTF-8")
         redirect(url:"${params.casUrl}?url=${appUrl}")
@@ -19,7 +19,7 @@ class LogoutController {
      * Clear the headers and footers cache
      *
      */
-    def clearCache = {
+    def clearCache() {
         render hf.clearCache()
     }
 }
