@@ -5,7 +5,8 @@ compile "org.grails.plugins:ala-auth:3.0.0-SNAPSHOT"
 ```
 
 ## Description
-ALA authentication/authorization plugin interface to CAS
+ALA authentication/authorization Grails 3 plugin interface to CAS.  The Grails 2 version of this plugin can
+be found on the grails2 branch.
 
 ## Usage
 
