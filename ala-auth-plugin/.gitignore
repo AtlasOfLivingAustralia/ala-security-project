@@ -5,5 +5,7 @@
 *.sha1
 *.tld
 
+.gradle/
 .idea/
 target/
+build/
