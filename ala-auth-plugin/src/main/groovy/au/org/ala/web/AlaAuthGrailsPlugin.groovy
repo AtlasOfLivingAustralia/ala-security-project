@@ -9,7 +9,7 @@ import org.jasig.cas.client.session.SingleSignOutFilter
 import org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 
-class AlaAuthPluginGrailsPlugin extends Plugin {
+class AlaAuthGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "3.2.4 > *"
