@@ -1,5 +1,6 @@
 package au.org.ala.web
 
+import au.org.ala.cas.client.UriFilter
 import grails.core.GrailsApplication
 import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
@@ -8,6 +9,10 @@ import org.springframework.stereotype.Component
 
 import javax.servlet.ServletContext
 import javax.servlet.ServletException
+
+import static au.org.ala.cas.client.UriFilter.AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN
+import static au.org.ala.cas.client.UriFilter.URI_EXCLUSION_FILTER_PATTERN
+import static au.org.ala.cas.client.UriFilter.URI_FILTER_PATTERN
 
 @Component
 @Slf4j
@@ -33,9 +38,9 @@ class CasContextParamInitializer implements ServletContextInitializer {
             servletContext.setInitParameter('service', service)
         }
         servletContext.setInitParameter('casServerName', grailsApplication.config.security.cas.casServerName)
-        servletContext.setInitParameter('uriFilterPattern', grailsApplication.config.security.cas.uriFilterPattern)
-        servletContext.setInitParameter('uriExclusionFilterPattern', grailsApplication.config.security.cas.uriExclusionFilterPattern)
-        servletContext.setInitParameter('authenticateOnlyIfLoggedInFilterPattern', grailsApplication.config.security.cas.authenticateOnlyIfLoggedInPattern)
+        servletContext.setInitParameter(URI_FILTER_PATTERN, grailsApplication.config.security.cas.uriFilterPattern)
+        servletContext.setInitParameter(URI_EXCLUSION_FILTER_PATTERN, grailsApplication.config.security.cas.uriExclusionFilterPattern)
+        servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, grailsApplication.config.security.cas.authenticateOnlyIfLoggedInPattern)
 
         def encodeServiceUrl = grailsApplication.config.security.cas.encodeServiceUrl
         if (isBoolesque(encodeServiceUrl)) {

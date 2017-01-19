@@ -1,6 +1,5 @@
 package au.org.ala.web
 
-import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 
 import java.lang.reflect.Method
@@ -9,7 +8,9 @@ import java.lang.reflect.Modifier
 @CompileStatic
 class AlaSecuredInterceptor {
 
-    GrailsApplication grailsApplication
+    // Run before other interceptors since we might fail the request
+    int order = HIGHEST_PRECEDENCE + 50
+
     SecurityPrimitives securityPrimitives
 
     AlaSecuredInterceptor() {
