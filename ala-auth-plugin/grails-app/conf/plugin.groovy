@@ -8,7 +8,7 @@ security {
         logoutUrl = 'https://auth.ala.org.au/cas/logout'
         bypass = false
         uriFilterPattern = '/admin/.*,/testAuth,/authTest/.*'
-        uriExclusionFilterPattern = '/assets/.*,/images/.*,/css/.*,/js/.*,/less/.*'
+        uriExclusionFilterPattern = '/assets/.*,/static/.*,/fonts/.*,/images/.*,/css/.*,/js/.*,/less/.*'
         authenticateOnlyIfLoggedInPattern =  ''
 //        encodeServiceUrl = 'true'
 //        contextPath = '/set-this-to-override-default'
