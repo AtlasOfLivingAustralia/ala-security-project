@@ -40,6 +40,14 @@ class AuthService {
         return AuthenticationUtils.getDisplayName(RequestContextHolder.currentRequestAttributes().getRequest())
     }
 
+    def getFirstName() {
+        return AuthenticationUtils.getFirstName(RequestContextHolder.currentRequestAttributes().getRequest())
+    }
+
+    def getLastName() {
+        return AuthenticationUtils.getLastName(RequestContextHolder.currentRequestAttributes().getRequest())
+    }
+
     boolean userInRole(role) {
 
         def inRole = AuthenticationUtils.isUserInRole(RequestContextHolder.currentRequestAttributes().getRequest(), role)
