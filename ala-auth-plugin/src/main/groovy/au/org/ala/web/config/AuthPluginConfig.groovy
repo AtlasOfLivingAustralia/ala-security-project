@@ -20,7 +20,7 @@ class AuthPluginConfig {
     @ConditionalOnMissingBean(name = "userDetailsHttpClient")
     @Bean(name = ["defaultUserDetailsHttpClient", "userDetailsHttpClient"])
     OkHttpClient userDetailsHttpClient(GrailsApplication grailsApplication) {
-        Integer readTimeout = (grailsApplication.config['userdetails']['baseUrl'] ?: '30000') as Integer
+        Integer readTimeout = (grailsApplication.config['userdetails']['baseUrl'] ?: '60000') as Integer
         new OkHttpClient.Builder().readTimeout(readTimeout, MILLISECONDS).build()
     }
 
