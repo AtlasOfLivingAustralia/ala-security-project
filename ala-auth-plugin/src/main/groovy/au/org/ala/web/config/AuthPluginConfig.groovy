@@ -11,14 +11,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS
+
 @CompileStatic
 @Configuration("alaAuthPluginConfiguration")
-class PluginConfig {
+class AuthPluginConfig {
 
     @ConditionalOnMissingBean(name = "userDetailsHttpClient")
     @Bean(name = ["defaultUserDetailsHttpClient", "userDetailsHttpClient"])
-    OkHttpClient userDetailsHttpClient() {
-        new OkHttpClient.Builder().build()
+    OkHttpClient userDetailsHttpClient(GrailsApplication grailsApplication) {
+        Integer readTimeout = (grailsApplication.config['userdetails']['baseUrl'] ?: '30000') as Integer
+        new OkHttpClient.Builder().readTimeout(readTimeout, MILLISECONDS).build()
     }
 
     @ConditionalOnMissingBean(name = "userDetailsMoshi")

@@ -2,7 +2,7 @@ package au.org.ala.web
 
 import au.org.ala.cas.client.AlaHttpServletRequestWrapperFilter
 import au.org.ala.cas.client.UriFilter
-import au.org.ala.web.config.PluginConfig
+import au.org.ala.web.config.AuthPluginConfig
 import grails.plugins.*
 import org.jasig.cas.client.authentication.AuthenticationFilter
 import org.jasig.cas.client.session.SingleSignOutFilter
@@ -53,12 +53,14 @@ This plugin provides auth services for ALA.
                 filter = bean(SingleSignOutFilter)
                 order = 1
                 urlPatterns = ['/*']
+                asyncSupported = true
             }
             casAuthFilter(FilterRegistrationBean) {
                 name = 'CAS Authentication Filter'
                 filter = bean(UriFilter)
                 order = 2
                 urlPatterns = ['/*']
+                asyncSupported = true
                 initParameters = [
                         'filterClass': AuthenticationFilter.name,
                         'casServerLoginUrl': grailsApplication.config.security.cas.loginUrl,
@@ -71,6 +73,7 @@ This plugin provides auth services for ALA.
                 filter = bean(UriFilter)
                 order = 3
                 urlPatterns = ['/*']
+                asyncSupported = true
                 initParameters = [
                         'filterClass': Cas20ProxyReceivingTicketValidationFilter.name,
                         'disableCAS': grailsApplication.config.security.cas.bypass.toString(),
@@ -82,13 +85,14 @@ This plugin provides auth services for ALA.
                 filter = bean(UriFilter)
                 order = 4
                 urlPatterns = ['/*']
+                asyncSupported = true
                 initParameters = [
                         'filterClass': AlaHttpServletRequestWrapperFilter.name,
                         'disableCAS': grailsApplication.config.security.cas.bypass.toString(),
                 ]
             }
 
-            alaAuthPluginConfiguration(PluginConfig)
+            alaAuthPluginConfiguration(AuthPluginConfig)
 
             securityPrimitives(SecurityPrimitives) { beanDefinition ->
                 beanDefinition.constructorArgs = [ref('authService'), ref('grailsApplication')]
