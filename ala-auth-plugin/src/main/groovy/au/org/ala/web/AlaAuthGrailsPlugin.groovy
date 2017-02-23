@@ -7,6 +7,7 @@ import grails.plugins.*
 import org.jasig.cas.client.authentication.AuthenticationFilter
 import org.jasig.cas.client.session.SingleSignOutFilter
 import org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter
+import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 
 class AlaAuthGrailsPlugin extends Plugin {
@@ -63,8 +64,6 @@ This plugin provides auth services for ALA.
                 asyncSupported = true
                 initParameters = [
                         'filterClass': AuthenticationFilter.name,
-                        'casServerLoginUrl': grailsApplication.config.security.cas.loginUrl,
-                        'gateway': 'false',
                         'disableCAS': grailsApplication.config.security.cas.bypass.toString()
                 ]
             }
@@ -75,9 +74,8 @@ This plugin provides auth services for ALA.
                 urlPatterns = ['/*']
                 asyncSupported = true
                 initParameters = [
-                        'filterClass': Cas20ProxyReceivingTicketValidationFilter.name,
-                        'disableCAS': grailsApplication.config.security.cas.bypass.toString(),
-                        'casServerUrlPrefix': grailsApplication.config.security.cas.casServerUrlPrefix
+                        'filterClass': Cas30ProxyReceivingTicketValidationFilter.name,
+                        'disableCAS': grailsApplication.config.security.cas.bypass.toString()
                 ]
             }
             casHttpServletRequestWrapperFilter(FilterRegistrationBean) {
