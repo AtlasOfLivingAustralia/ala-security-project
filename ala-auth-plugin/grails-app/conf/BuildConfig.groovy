@@ -35,7 +35,7 @@ grails.project.dependency.resolution = {
             export = false
         }
         runtime(":release:3.1.2") {
-//            export = false
+            export = false
         }
 //        compile ":rest:0.8"
     }
