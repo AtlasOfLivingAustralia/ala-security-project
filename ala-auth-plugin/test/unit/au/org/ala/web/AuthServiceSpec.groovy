@@ -1,7 +1,9 @@
 package au.org.ala.web
 
-import grails.converters.JSON
+import au.org.ala.userdetails.UserDetailsClient
+import au.org.ala.userdetails.UserDetailsFromIdListResponse
 import grails.test.mixin.*
+import retrofit2.mock.Calls
 import spock.lang.Specification
 
 @TestFor(AuthService)
@@ -9,25 +11,22 @@ class AuthServiceSpec extends Specification {
 
     def setup() {
         grailsApplication.config.userDetails.url = 'http://auth.ala.org.au/userdetails/'
-        grailsApplication.config.userDetailsById.bulkPath = 'getUserDetailsFromIdList'
     }
 
     def testGetUserDetailsById() {
         setup:
-        def mockHttpWebService = mockFor(HttpWebService)
-        mockHttpWebService.demand.doPost(1) { url, path, port, postBody, contentType ->
-            assert url == 'http://auth.ala.org.au/userdetails/getUserDetailsFromIdList'
-            return [resp: JSON.parse('''{
-  "users":{
-     "546":{"userId": "546", "userName": "user1@gmail.com", "firstName": "Jimmy-Bob", "lastName": "Dursten"},
-     "4568":{"userId": "4568", "userName": "user2@hotmail.com", "firstName": "James Robert", "lastName": "Durden"},
-     "8744":{"userId": "8744", "userName": "user3@fake.edu.au", "firstName": "Jim Rob", "lastName": "Durpen"}
-  },
-  "invalidIds":[ 575 ],
-  "success": true
-}'''), error: null]
-        }
-        service.httpWebService = mockHttpWebService.createMock()
+        def mockUserDetailsClient = Stub(UserDetailsClient)
+        def response = new UserDetailsFromIdListResponse()
+        response.users = [
+                '546': new UserDetails(userId: "546", userName: "user1@gmail.com", firstName: "Jimmy-Bob", lastName: "Dursten"),
+                '4568': new UserDetails(userId: "4568", userName: "user2@hotmail.com", firstName: "James Robert", lastName: "Durden"),
+                '8744': new UserDetails(userId: "8744", userName: "user3@fake.edu.au", firstName: "Jim Rob", lastName: "Durpen")
+        ]
+        response.invalidIds = [ 575 ]
+        response.success = true
+        mockUserDetailsClient.getUserDetailsFromIdList(_) >> Calls.response(response)
+
+        service.userDetailsClient = mockUserDetailsClient
 
         when:
         def x = service.getUserDetailsById(['546','8744','4568','575'])

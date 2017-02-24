@@ -27,7 +27,7 @@ class SecurityPrimitivesSpec extends Specification {
 
     def "test logged in user"() {
         given:
-        mockAuthService.userDetails() >> [userId:"potato", email: "potato@potato.po", userDisplayName: "Mr Potato", ]
+        mockAuthService.userDetails() >> new UserDetails(userId:"potato", userName: "potato@potato.po", firstName: "Mr", lastName: "Potato")
 
         when:
         def loggedIn = secPrim.loggedIn

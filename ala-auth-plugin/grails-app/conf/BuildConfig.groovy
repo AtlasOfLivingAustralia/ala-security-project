@@ -1,10 +1,10 @@
-grails.servlet.version = "2.5"
+grails.servlet.version = "3.0"
 //grails.project.class.dir = "target/classes"
 //grails.project.test.class.dir = "target/test-classes"
 //grails.project.test.reports.dir = "target/test-reports"
 grails.project.work.dir = "target"
-grails.project.target.level = 1.6
-grails.project.source.level = 1.6
+grails.project.target.level = 1.7
+grails.project.source.level = 1.7
 
 grails.project.dependency.resolver = "maven" // or ivy
 grails.project.dependency.resolution = {
@@ -24,21 +24,18 @@ grails.project.dependency.resolution = {
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
         // runtime 'mysql:mysql-connector-java:5.1.18'
-        compile ('au.org.ala:ala-cas-client:2.2') {
-            excludes([group: 'javax.servlet', name: 'servlet-api'])
-        }
-        compile ('org.jasig.cas.client:cas-client-core:3.1.12') {
-            excludes([group: 'javax.servlet', name: 'servlet-api'])
-        }
+        compile ('au.org.ala:ala-cas-client:2.3-SNAPSHOT')
+        compile ('au.org.ala:userdetails-service-client:1.0.0-SNAPSHOT')
+
+        test ('com.squareup.retrofit2:retrofit-mock:2.1.0')
     }
 
     plugins {
-        compile(":tomcat:7.0.55",
-                ":release:3.0.1",
-                ":rest-client-builder:2.0.3") {
+        compile(":tomcat:7.0.70",
+                ":release:3.0.1") {
             export = false
         }
-        compile ":rest:0.8"
+//        compile ":rest:0.8"
     }
 }
 

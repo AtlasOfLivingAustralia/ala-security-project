@@ -11,7 +11,7 @@ security.cas.loginUrl = ${security.cas.casServerUrlPrefix} + '/login'
 security.cas.logoutUrl = ${security.cas.casServerUrlPrefix} + '/logout'
 security.cas.bypass = false
 security.cas.appServerName = "http://${grails.hostname}:8080"
-security.cas.contextPath = "/" + appName
+//security.cas.contextPath = "/" + appName
 
 log4j = {
     // Example of changing the log pattern for the default console

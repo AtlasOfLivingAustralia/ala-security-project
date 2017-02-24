@@ -1,11 +1,19 @@
+import au.org.ala.cas.client.AlaHttpServletRequestWrapperFilter
+import au.org.ala.cas.client.UriFilter
 import au.org.ala.web.SecurityPrimitives
+import au.org.ala.web.config.AuthPluginConfig
+import au.org.ala.web.filter.ParametersFilterProxy
+import grails.util.Environment
 import grails.util.Holders
+import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.jasig.cas.client.authentication.AuthenticationFilter
+import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 
 class AlaAuthGrailsPlugin {
     // the plugin version
-    def version = "1.3.5-SNAPSHOT"
+    def version = "2.0.0-SNAPSHOT"
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "2.2 > *"
+    def grailsVersion = "2.5.5 > *"
     // the other plugins this plugin depends on
     def dependsOn = [:]
     // resources that are excluded from plugin packaging
@@ -26,7 +34,7 @@ class AlaAuthGrailsPlugin {
     def organization = [ name: "Atlas of Living Australia", url: "http://www.ala.org.au/" ]
 
     // Any additional developers beyond the author specified above.
-    def developers = [ [ name: "Nick dos Remedios", email: "nick.dosremedios@csiro.au" ], [ name: "Dave Martin", email: "david.martin@csiro.au" ]]
+    def developers = [ [ name: "Nick dos Remedios", email: "nick.dosremedios@csiro.au" ], [ name: "Dave Martin", email: "david.martin@csiro.au" ], [ name: 'Simon Bear', email: 'simon.bear@csiro.au' ]]
 
     // Location of the plugin's issue tracker.
     def issueManagement = [ system: "github", url: "https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/issues" ]
@@ -40,52 +48,10 @@ class AlaAuthGrailsPlugin {
         def lastMapping = mappingElement[mappingElement.size()-1]
         String defaultConfig = Holders.config.default_config
 
-        if (Holders.config.runWithNoExternalConfig == true) {
-            // No external config file set, use security.cas.* settings embedded un web.xml instead
-            if (!Holders.config.security.cas || Holders.config.security.cas.size() == 0) {
-                println "No security.cas.* settings found (or external conf found) - setting bypass = true"
-                Holders.config.security.cas.bypass = true
-            }
-
-            lastMapping + {
-                'context-param' {
-                    'param-name' ('serverName')
-                    'param-value' (Holders.config.security.cas.appServerName)
-                }
-                'context-param' {
-                    'param-name' ('casServerName')
-                    'param-value' (Holders.config.security.cas.casServerName)
-                }
-                'context-param' {
-                    'param-name' ('uriFilterPattern')
-                    'param-value' (Holders.config.security.cas.uriFilterPattern)
-                }
-                'context-param' {
-                    'param-name' ('uriExclusionFilterPattern')
-                    'param-value' (Holders.config.security.cas.uriExclusionFilterPattern)
-                }
-                'context-param' {
-                    'param-name' ('authenticateOnlyIfLoggedInFilterPattern')
-                    'param-value' (Holders.config.security.cas.authenticateOnlyIfLoggedInPattern)
-                }
-            }
-
-            if (Holders.config.security.cas.contextPath) {
-                lastMapping + {
-                    'context-param' {
-                        'param-name' ('contextPath')
-                        'param-value' (Holders.config.security.cas.contextPath)
-                    }
-                }
-            }
-        } else {
-            // Use `configPropFile` external config which is read by ala-cas-client-2.0-SNAPSHOT.jar
-            lastMapping + {
-                'env-entry' {
-                    'env-entry-name' ('configPropFile')
-                    'env-entry-value' (defaultConfig)
-                    'env-entry-type' ('java.lang.String')
-                }
+        lastMapping + {
+            'context-param' {
+                'param-name'('configurationStrategy')
+                'param-value'('WEB_XML')
             }
         }
 
@@ -95,53 +61,33 @@ class AlaAuthGrailsPlugin {
             'filter' {
                 'filter-name' ('CAS Single Sign Out Filter')
                 'filter-class' ('org.jasig.cas.client.session.SingleSignOutFilter')
+                'async-supported' ('true')
             }
             'filter' {
-                'filter-name' ('CAS Authentication Filter')
-                'filter-class' ('au.org.ala.cas.client.UriFilter')
+                'filter-name' ('casAuthenticationFilter')
+                'filter-class' ('org.springframework.web.filter.DelegatingFilterProxy')
+                'async-supported' ('true')
                 'init-param' {
-                    'param-name' ('filterClass')
-                    'param-value' ('org.jasig.cas.client.authentication.AuthenticationFilter')
-                }
-                'init-param' {
-                    'param-name' ('casServerLoginUrl')
-                    'param-value' (Holders.config.security.cas.loginUrl)
-                }
-                'init-param' {
-                    'param-name' ('gateway')
-                    'param-value' ('false')
-                }
-                'init-param' {
-                    'param-name' ('disableCAS')
-                    'param-value' (Holders.config.security.cas.bypass == true ? 'true' : 'false')
+                    'param-name' ('targetFilterLifecycle')
+                    'param-value' ('true')
                 }
             }
             'filter' {
-                'filter-name' ('CAS Validation Filter')
-                'filter-class' ('au.org.ala.cas.client.UriFilter')
+                'filter-name' ('casValidationFilter')
+                'filter-class' ('org.springframework.web.filter.DelegatingFilterProxy')
+                'async-supported' ('true')
                 'init-param' {
-                    'param-name' ('filterClass')
-                    'param-value' ('org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter')
-                }
-                'init-param' {
-                    'param-name' ('disableCAS')
-                    'param-value' (Holders.config.security.cas.bypass == true ? 'true' : 'false')
-                }
-                'init-param' {
-                    'param-name' ('casServerUrlPrefix')
-                    'param-value' (Holders.config.security.cas.casServerUrlPrefix)
+                    'param-name' ('targetFilterLifecycle')
+                    'param-value' ('true')
                 }
             }
             'filter' {
-                'filter-name' ('CAS HttpServletRequest Wrapper Filter')
-                'filter-class' ('au.org.ala.cas.client.UriFilter')
+                'filter-name' ('casHttpServletRequestWrapperFilter')
+                'filter-class' ('org.springframework.web.filter.DelegatingFilterProxy')
+                'async-supported' ('true')
                 'init-param' {
-                    'param-name' ('filterClass')
-                    'param-value' ('au.org.ala.cas.client.AlaHttpServletRequestWrapperFilter')
-                }
-                'init-param' {
-                    'param-name' ('disableCAS')
-                    'param-value' (Holders.config.security.cas.bypass == true ? 'true' : 'false')
+                    'param-name' ('targetFilterLifecycle')
+                    'param-value' ('true')
                 }
             }
             'filter-mapping' {
@@ -149,62 +95,54 @@ class AlaAuthGrailsPlugin {
                 'url-pattern' ('/*')
             }
             'filter-mapping' {
-                'filter-name' ('CAS Authentication Filter')
+                'filter-name' ('casAuthenticationFilter')
                 'url-pattern' ('/*')
             }
             'filter-mapping' {
-                'filter-name' ('CAS Validation Filter')
+                'filter-name' ('casValidationFilter')
                 'url-pattern' ('/*')
             }
             'filter-mapping' {
-                'filter-name' ('CAS HttpServletRequest Wrapper Filter')
+                'filter-name' ('casHttpServletRequestWrapperFilter')
                 'url-pattern' ('/*')
             }
         }
 
         if (Holders.config.security.cas.debugWebXml) {
-            println "web.xml = ${mappingElement}"
+            println "web.xml = ${xml}"
         }
     }
 
     def doWithSpring = {
+        mergeConfig(application)
         //System.println("Merging conf...")
         //mergeConfig(application)
         def config = application.config
 
-        if (!config.userDetails.url) {
-            config.userDetails.url = "https://auth.ala.org.au/userdetails/userDetails/"
+        casAuthenticationFilter(ParametersFilterProxy) {
+            filter = new UriFilter()
+            initParameters = [
+                    'filterClass': AuthenticationFilter.name,
+                    'disableCAS': config.security.cas.bypass.toString()
+            ]
         }
 
-        if (!config.userDetails.path) {
-            config.userDetails.path = "getUserListFull"
+        casValidationFilter(ParametersFilterProxy) {
+            filter = new UriFilter()
+            initParameters = [
+                    'filterClass': Cas30ProxyReceivingTicketValidationFilter.name,
+                    'disableCAS': config.security.cas.bypass.toString()
+            ]
+        }
+        casHttpServletRequestWrapperFilter(ParametersFilterProxy) {
+            filter = new UriFilter()
+            initParameters = [
+                    'filterClass': AlaHttpServletRequestWrapperFilter.name,
+                    'disableCAS': config.security.cas.bypass.toString(),
+            ]
         }
 
-        if (!config.userDetailsById.path) {
-            config.userDetailsById.path = "getUserDetails"
-        }
-
-        if (!config.userDetailsById.bulkPath) {
-            config.userDetailsById.bulkPath = 'getUserDetailsFromIdList'
-        }
-
-        if (!config.grails.cache.config) {
-            config.grails.cache.config = {
-                defaults {
-                    eternal false
-                    overflowToDisk false
-                    maxElementsInMemory 20000
-                    timeToLiveSeconds 3600
-                }
-                cache {
-                    name 'userListCache'
-                }
-                cache {
-                    name 'userMapCache'
-                }
-
-            }
-        }
+        alaAuthPluginConfiguration(AuthPluginConfig)
 
         securityPrimitives(SecurityPrimitives) { beanDefinition ->
             beanDefinition.constructorArgs = [ref('authService'), ref('grailsApplication')]
@@ -215,14 +153,40 @@ class AlaAuthGrailsPlugin {
     }
 
     def doWithApplicationContext = { applicationContext ->
+
     }
 
     def onChange = { event ->
     }
 
     def onConfigChange = { event ->
+        this.mergeConfig(application)
     }
 
     def onShutdown = { event ->
+    }
+
+    private void mergeConfig(GrailsApplication app) {
+        ConfigObject currentCasConfig = app.config.security.cas
+        ConfigObject currentUserDetailsConfig = app.config.userdetails
+        ConfigObject currentCacheConfig = app.config.grails.cache
+
+        ConfigSlurper slurper = new ConfigSlurper(Environment.current.name)
+        ConfigObject secondaryConfig = slurper.parse(app.classLoader.loadClass("AlaAuthPluginConfig"))
+
+        ConfigObject casConfig = new ConfigObject()
+        casConfig.putAll(secondaryConfig.security.cas.merge(currentCasConfig))
+
+        app.config.security.cas = casConfig
+
+        ConfigObject userDetailsConfig = new ConfigObject()
+        userDetailsConfig.putAll(secondaryConfig.userdetails.merge(currentUserDetailsConfig))
+
+        app.config.userdetails = userDetailsConfig
+
+        ConfigObject cacheConfig = new ConfigObject()
+        cacheConfig.putAll(secondaryConfig.grails.cache.merge(currentCacheConfig))
+
+        app.config.grails.cache = cacheConfig
     }
 }
