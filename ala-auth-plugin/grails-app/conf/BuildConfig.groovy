@@ -27,13 +27,15 @@ grails.project.dependency.resolution = {
         compile ('au.org.ala:ala-cas-client:2.3-SNAPSHOT')
         compile ('au.org.ala:userdetails-service-client:1.0.0-SNAPSHOT')
 
-        test ('com.squareup.retrofit2:retrofit-mock:2.1.0')
+        test ('com.squareup.retrofit2:retrofit-mock:2.2.0')
     }
 
     plugins {
-        compile(":tomcat:7.0.70",
-                ":release:3.0.1") {
+        compile(":tomcat:7.0.70") {
             export = false
+        }
+        runtime(":release:3.1.2") {
+//            export = false
         }
 //        compile ":rest:0.8"
     }
