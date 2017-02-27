@@ -38,7 +38,7 @@ This plugin provides auth services for ALA.
     def organization = [ name: "Atlas of Living Australia", url: "http://www.ala.org.au/" ]
 
     // Any additional developers beyond the author specified above.
-    def developers = [ [ name: "Simon Bear", email: "simon.bear@csiro.au" ], [ name: "Chris Godwin", email: "chris.godwin.ala@gmail.com" ], [ name: "Peter Ansell", email: "p_ansell@yahoo.com" ], [ name: "Dave Martin", email: "david.martin@csiro.au" ]]
+    def developers = [ [ name: "Peter Ansell", email: "p_ansell@yahoo.com" ], [ name: "Simon Bear", email: "simon.bear@csiro.au" ], [ name: "Nick dos Remedios", email: "nick.dosremedios@csiro.au" ], [ name: "Chris Godwin", email: "chris.godwin.ala@gmail.com" ], [ name: "Dave Martin", email: "david.martin@csiro.au" ]]
 
     // Location of the plugin's issue tracker.
     def issueManagement = [ system: "github", url: "https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/issues" ]
