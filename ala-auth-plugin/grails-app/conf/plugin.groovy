@@ -1,6 +1,9 @@
 import au.org.ala.cas.client.AjaxAwareGatewayStorage
 
-userDetails.url = 'https://auth.ala.org.au/userdetails/'
+userDetails {
+    url = 'https://auth.ala.org.au/userdetails/'
+    readTimeout = 0 // disable read timeouts for user details because some services are slooooow...
+}
 security {
     cas {
         appServerName = null

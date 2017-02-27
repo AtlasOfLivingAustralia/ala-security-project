@@ -20,7 +20,7 @@ class AuthPluginConfig {
     @ConditionalOnMissingBean(name = "userDetailsHttpClient")
     @Bean(name = ["defaultUserDetailsHttpClient", "userDetailsHttpClient"])
     OkHttpClient userDetailsHttpClient(GrailsApplication grailsApplication) {
-        Integer readTimeout = (grailsApplication.config['userDetails']['readTimeout'] ?: '60000') as Integer
+        Integer readTimeout = grailsApplication.config['userDetails']['readTimeout'] as Integer
         new OkHttpClient.Builder().readTimeout(readTimeout, MILLISECONDS).build()
     }
 
@@ -35,7 +35,7 @@ class AuthPluginConfig {
     UserDetailsClient userDetailsClient(@Qualifier("userDetailsHttpClient") OkHttpClient userDetailsHttpClient,
                                         @Qualifier('userDetailsMoshi') Moshi moshi,
                                         GrailsApplication grailsApplication) {
-        String baseUrl = grailsApplication.config["userDetails"]["url"] ?: 'https://auth.ala.org.au/userdetails/'
+        String baseUrl = grailsApplication.config["userDetails"]["url"]
         new UserDetailsClient.Builder(userDetailsHttpClient, baseUrl).moshi(moshi).build()
     }
 

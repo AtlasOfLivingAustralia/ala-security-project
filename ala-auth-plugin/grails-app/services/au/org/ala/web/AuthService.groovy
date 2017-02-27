@@ -74,7 +74,7 @@ class AuthService {
     }
 
     @Cacheable("userDetailsCache")
-    UserDetails getUserForUserId(String userId, boolean includeProps = false) {
+    UserDetails getUserForUserId(String userId, boolean includeProps = true) {
         def call = userDetailsClient.getUserDetails(userId, includeProps)
         try {
             def response = call.execute()
@@ -91,7 +91,7 @@ class AuthService {
     }
 
     @Cacheable("userDetailsCache")
-    UserDetails getUserForEmailAddress(String emailAddress, boolean includeProps = false) {
+    UserDetails getUserForEmailAddress(String emailAddress, boolean includeProps = true) {
         // The user details service lookup service should accept either a numerical id or email address and respond appropriately
         return getUserForUserId(emailAddress, includeProps)
     }
@@ -117,7 +117,7 @@ class AuthService {
      * @return
      */
     @Cacheable("userDetailsCache")
-    def getUserDetailsById(List<String> userIds, boolean includeProps = false) {
+    def getUserDetailsById(List<String> userIds, boolean includeProps = true) {
         def call = userDetailsClient.getUserDetailsFromIdList(new UserDetailsFromIdListRequest(userIds, includeProps))
         try {
             def response = call.execute()
