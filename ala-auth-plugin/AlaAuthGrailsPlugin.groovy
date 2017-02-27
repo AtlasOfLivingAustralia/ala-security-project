@@ -1,13 +1,8 @@
-import au.org.ala.cas.client.AlaHttpServletRequestWrapperFilter
-import au.org.ala.cas.client.UriFilter
 import au.org.ala.web.SecurityPrimitives
 import au.org.ala.web.config.AuthPluginConfig
-import au.org.ala.web.filter.ParametersFilterProxy
+
 import grails.util.Environment
-import grails.util.Holders
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.jasig.cas.client.authentication.AuthenticationFilter
-import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 
 class AlaAuthGrailsPlugin {
     // the plugin version
@@ -44,103 +39,10 @@ class AlaAuthGrailsPlugin {
 
     // Note: ONLY evaluated at compile time (not run time)
     def doWithWebDescriptor = { xml ->
-        def mappingElement = xml.'context-param'
-        def lastMapping = mappingElement[mappingElement.size()-1]
-        String defaultConfig = Holders.config.default_config
-
-        lastMapping + {
-            'context-param' {
-                'param-name'('configurationStrategy')
-                'param-value'('WEB_XML')
-            }
-        }
-
-        mappingElement = xml.'filter'
-        lastMapping = mappingElement[mappingElement.size()-1]
-        lastMapping + {
-            'filter' {
-                'filter-name' ('CAS Single Sign Out Filter')
-                'filter-class' ('org.jasig.cas.client.session.SingleSignOutFilter')
-                'async-supported' ('true')
-            }
-            'filter' {
-                'filter-name' ('casAuthenticationFilter')
-                'filter-class' ('org.springframework.web.filter.DelegatingFilterProxy')
-                'async-supported' ('true')
-                'init-param' {
-                    'param-name' ('targetFilterLifecycle')
-                    'param-value' ('true')
-                }
-            }
-            'filter' {
-                'filter-name' ('casValidationFilter')
-                'filter-class' ('org.springframework.web.filter.DelegatingFilterProxy')
-                'async-supported' ('true')
-                'init-param' {
-                    'param-name' ('targetFilterLifecycle')
-                    'param-value' ('true')
-                }
-            }
-            'filter' {
-                'filter-name' ('casHttpServletRequestWrapperFilter')
-                'filter-class' ('org.springframework.web.filter.DelegatingFilterProxy')
-                'async-supported' ('true')
-                'init-param' {
-                    'param-name' ('targetFilterLifecycle')
-                    'param-value' ('true')
-                }
-            }
-            'filter-mapping' {
-                'filter-name' ('CAS Single Sign Out Filter')
-                'url-pattern' ('/*')
-            }
-            'filter-mapping' {
-                'filter-name' ('casAuthenticationFilter')
-                'url-pattern' ('/*')
-            }
-            'filter-mapping' {
-                'filter-name' ('casValidationFilter')
-                'url-pattern' ('/*')
-            }
-            'filter-mapping' {
-                'filter-name' ('casHttpServletRequestWrapperFilter')
-                'url-pattern' ('/*')
-            }
-        }
-
-        if (Holders.config.security.cas.debugWebXml) {
-            println "web.xml = ${xml}"
-        }
     }
 
     def doWithSpring = {
         mergeConfig(application)
-        //System.println("Merging conf...")
-        //mergeConfig(application)
-        def config = application.config
-
-        casAuthenticationFilter(ParametersFilterProxy) {
-            filter = new UriFilter()
-            initParameters = [
-                    'filterClass': AuthenticationFilter.name,
-                    'disableCAS': config.security.cas.bypass.toString()
-            ]
-        }
-
-        casValidationFilter(ParametersFilterProxy) {
-            filter = new UriFilter()
-            initParameters = [
-                    'filterClass': Cas30ProxyReceivingTicketValidationFilter.name,
-                    'disableCAS': config.security.cas.bypass.toString()
-            ]
-        }
-        casHttpServletRequestWrapperFilter(ParametersFilterProxy) {
-            filter = new UriFilter()
-            initParameters = [
-                    'filterClass': AlaHttpServletRequestWrapperFilter.name,
-                    'disableCAS': config.security.cas.bypass.toString(),
-            ]
-        }
 
         alaAuthPluginConfiguration(AuthPluginConfig)
 
@@ -168,7 +70,7 @@ class AlaAuthGrailsPlugin {
 
     private void mergeConfig(GrailsApplication app) {
         ConfigObject currentCasConfig = app.config.security.cas
-        ConfigObject currentUserDetailsConfig = app.config.userdetails
+        ConfigObject currentUserDetailsConfig = app.config.userDetails
         ConfigObject currentCacheConfig = app.config.grails.cache
 
         ConfigSlurper slurper = new ConfigSlurper(Environment.current.name)
@@ -180,9 +82,9 @@ class AlaAuthGrailsPlugin {
         app.config.security.cas = casConfig
 
         ConfigObject userDetailsConfig = new ConfigObject()
-        userDetailsConfig.putAll(secondaryConfig.userdetails.merge(currentUserDetailsConfig))
+        userDetailsConfig.putAll(secondaryConfig.userDetails.merge(currentUserDetailsConfig))
 
-        app.config.userdetails = userDetailsConfig
+        app.config.userDetails = userDetailsConfig
 
         ConfigObject cacheConfig = new ConfigObject()
         cacheConfig.putAll(secondaryConfig.grails.cache.merge(currentCacheConfig))

@@ -20,7 +20,13 @@ class UserListService {
     @Cacheable("userListCache")
     def getFullUserList() {
         checkConfig()
-        return userDetailsClient.getUserListFull().execute().body()
+        def response = userDetailsClient.getUserListFull().execute()
+        if (response.successful) {
+            return response.body()
+        } else {
+            log.error("Error response from getUserListFull service: ${response.code()} ${response.message()}")
+            return null // maintains compatibility with previous version
+        }
     }
 
     private void checkConfig() {

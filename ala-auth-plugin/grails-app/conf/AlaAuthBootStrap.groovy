@@ -1,11 +1,20 @@
+import au.org.ala.cas.client.AlaHttpServletRequestWrapperFilter
+import au.org.ala.cas.client.UriFilter
+import grails.util.Environment
 import org.apache.log4j.Logger
+import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.jasig.cas.client.authentication.AuthenticationFilter
+import org.jasig.cas.client.session.SingleSignOutFilter
+import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 
+import javax.servlet.DispatcherType
 import javax.servlet.ServletContext
 
 import static au.org.ala.cas.client.UriFilter.AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN
 import static au.org.ala.cas.client.UriFilter.URI_EXCLUSION_FILTER_PATTERN
 import static au.org.ala.cas.client.UriFilter.URI_FILTER_PATTERN
 import static org.jasig.cas.client.configuration.ConfigurationKeys.*
+import static org.jasig.cas.client.configuration.ConfigurationStrategyName.WEB_XML
 
 class AlaAuthBootStrap {
 
@@ -14,8 +23,14 @@ class AlaAuthBootStrap {
     def grailsApplication
 
     def init = { ServletContext servletContext ->
-        def appServerName = grailsApplication.config.security.cas.appServerName
-        def service = grailsApplication.config.security.cas.service
+//        mergeConfig(grailsApplication)
+        def config = grailsApplication.config
+
+
+        servletContext.setInitParameter('configurationStrategy', WEB_XML.name())
+
+        def appServerName = config.security.cas.appServerName
+        def service = config.security.cas.service
         if (!appServerName && !service) {
             def message = "One of 'security.cas.appServerName' or 'security.cas.service' config settings is required by the CAS filters."
             log.error(message)
@@ -27,39 +42,65 @@ class AlaAuthBootStrap {
         if (service) {
             servletContext.setInitParameter(SERVICE.name, service)
         }
-        servletContext.setInitParameter(CAS_SERVER_URL_PREFIX.name, grailsApplication.config.security.cas.casServerUrlPrefix)
-        servletContext.setInitParameter(CAS_SERVER_LOGIN_URL.name, grailsApplication.config.security.cas.loginUrl)
+        servletContext.setInitParameter(CAS_SERVER_URL_PREFIX.name, config.security.cas.casServerUrlPrefix)
+        servletContext.setInitParameter(CAS_SERVER_LOGIN_URL.name, config.security.cas.loginUrl)
 
-        servletContext.setInitParameter('casServerName', grailsApplication.config.security.cas.casServerName)
+        servletContext.setInitParameter('casServerName', config.security.cas.casServerName)
 
-        servletContext.setInitParameter(URI_FILTER_PATTERN, grailsApplication.config.security.cas.uriFilterPattern)
-        servletContext.setInitParameter(URI_EXCLUSION_FILTER_PATTERN, grailsApplication.config.security.cas.uriExclusionFilterPattern)
-        servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, grailsApplication.config.security.cas.authenticateOnlyIfLoggedInPattern)
+        servletContext.setInitParameter(URI_FILTER_PATTERN, config.security.cas.uriFilterPattern)
+        servletContext.setInitParameter(URI_EXCLUSION_FILTER_PATTERN, config.security.cas.uriExclusionFilterPattern)
+        servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, config.security.cas.authenticateOnlyIfLoggedInPattern)
 
-        def encodeServiceUrl = grailsApplication.config.security.cas.encodeServiceUrl
+        def encodeServiceUrl = config.security.cas.encodeServiceUrl
         if (isBoolesque(encodeServiceUrl)) {
             servletContext.setInitParameter(ENCODE_SERVICE_URL.name, encodeServiceUrl.toString())
         }
 
-        def contextPath = grailsApplication.config.security.cas.contextPath
+        def contextPath = config.security.cas.contextPath
         if (contextPath) {
             log.warn("Setting security.cas.contextPath ($contextPath) is unnecessary, ala-cas-client can now retrieve it from the ServletContext")
             servletContext.setInitParameter('contextPath', contextPath)
         }
 
-        def gateway = grailsApplication.config.security.cas.gateway
+        def gateway = config.security.cas.gateway
         if (isBoolesque(gateway)) {
             servletContext.setInitParameter(GATEWAY.name, gateway.toString())
         }
 
-        def gatewayStorageClass = grailsApplication.config.security.cas.gatewayStorageClass
+        def gatewayStorageClass = config.security.cas.gatewayStorageClass
         if (gatewayStorageClass) {
             servletContext.setInitParameter(GATEWAY_STORAGE_CLASS.name, gatewayStorageClass)
         }
 
-        def renew = grailsApplication.config.security.cas.renew
+        def renew = config.security.cas.renew
         if (isBoolesque(renew)) {
             servletContext.setInitParameter(RENEW.name, renew.toString())
+        }
+
+        servletContext.addFilter('CAS Single Sign Out Filter', SingleSignOutFilter).with {
+            asyncSupported = true
+            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), false, '/*')
+        }
+
+        servletContext.addFilter('CAS Authentication Filter', UriFilter).with {
+            asyncSupported = true
+            setInitParameter( 'filterClass', AuthenticationFilter.name)
+            setInitParameter( 'disableCAS', config.security.cas.bypass.toString())
+            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), false, '/*')
+        }
+
+        servletContext.addFilter('CAS Validation Filter', UriFilter).with {
+            asyncSupported = true
+            setInitParameter( 'filterClass', Cas30ProxyReceivingTicketValidationFilter.name)
+            setInitParameter( 'disableCAS', config.security.cas.bypass.toString())
+            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), false, '/*')
+        }
+
+        servletContext.addFilter('CAS HttpServletRequestWrapper Filter', UriFilter).with {
+            asyncSupported = true
+            setInitParameter( 'filterClass', AlaHttpServletRequestWrapperFilter.name)
+            setInitParameter( 'disableCAS', config.security.cas.bypass.toString())
+            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), false, '/*')
         }
     }
 
