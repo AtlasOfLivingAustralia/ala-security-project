@@ -300,9 +300,7 @@ class WebService {
                     result.statusCode = resp.status
                     result.error = "Failed calling web service - service returned HTTP ${resp.status}"
                 }
-
-                result
-            } as Map
+            }
         } catch (Exception e) {
             e.printStackTrace()
             log.error("Failed sending ${method} request to ${url}", e)
