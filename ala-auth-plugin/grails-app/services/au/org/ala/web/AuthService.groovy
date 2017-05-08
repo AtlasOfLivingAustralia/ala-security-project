@@ -116,7 +116,7 @@ class AuthService {
      * @param userIds
      * @return
      */
-    @Cacheable("userDetailsCache")
+    @Cacheable("userDetailsByIdCache")
     def getUserDetailsById(List<String> userIds, boolean includeProps = true) {
         def call = userDetailsClient.getUserDetailsFromIdList(new UserDetailsFromIdListRequest(userIds, includeProps))
         try {
