@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=grails2)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-runtime ":ala-auth:2.0.0-SNAPSHOT"
+runtime ":ala-auth:2.0.1"
 ```
 
 ## Description
