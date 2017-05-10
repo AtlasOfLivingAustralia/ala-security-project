@@ -16,13 +16,19 @@ In your `Config.groovy` you should define the following properties:
 ```groovy
 security {
     cas {
-        appServerName = 'http://devt.ala.org.au:8080' # or similar, up to the request path part
+        appServerName = 'http://devt.ala.org.au:8080' // or similar, up to the request path part
+        // service = 'http://devt.ala.org.au:8080' // optional, if set it will always be used as the return path from CAS
         uriFilterPattern = '/paths/.*,/that,/require/.*,/auth.*'
-        uriExclusionFilterPattern = '/assets/.*,/images/.*,/css/.*,/js/.*,/less/.*' # this is the default value
+        uriExclusionFilterPattern = '/assets/.*,/images/.*,/css/.*,/js/.*,/less/.*' // this is the default value
         authenticateOnlyIfLoggedInPattern =  '/optional-auth/.*'
     }
 }
 ```
+
+**NOTE** If setting `security.cas.appServerName` only and a scheme / port number is not specified: ensure that the app 
+server (eg Tomcat) is receiving the correct remote scheme / port from any reverse proxy (eg by using the AJP protocol 
+or enabling the Tomcat Remote IP Valve and the appropriate headers from the RP) otherwise the CAS filter will get 
+confused trying to generate the service url for the CAS callback.
 
 The remaining properties should have sensible default values that are provided by this plugin.  You can
 override these if you wish, however:
@@ -40,7 +46,7 @@ security {
 ```
 
 `ala-cas-client` v2.3+ will now get the context path from the Servlet Context, so that property is
-no longer required.
+no longer required but can be set to override this behaviour.
 
 ### (Optional) Add role based authorization using the @AlaSecured annotation
 
