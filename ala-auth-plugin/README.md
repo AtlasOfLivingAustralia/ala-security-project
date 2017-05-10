@@ -26,6 +26,11 @@ security {
 }
 ```
 
+**NOTE** If setting `security.cas.appServerName` only and a scheme / port number is not specified: ensure that the app
+server (eg Tomcat) is receiving the correct remote scheme / port from any reverse proxy (eg by using the AJP protocol
+or enabling the Tomcat Remote IP Valve and the appropriate headers from the RP) otherwise the CAS filter will get
+confused trying to generate the service url for the CAS callback.
+
 The remaining properties should have sensible default values that are provided by this plugin.  You can
 override these if you wish, however:
 
