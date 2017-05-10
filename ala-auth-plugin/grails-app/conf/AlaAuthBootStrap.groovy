@@ -1,8 +1,7 @@
 import au.org.ala.cas.client.AlaHttpServletRequestWrapperFilter
 import au.org.ala.cas.client.UriFilter
-import grails.util.Environment
 import org.apache.log4j.Logger
-import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.runtime.typehandling.GroovyCastException
 import org.jasig.cas.client.authentication.AuthenticationFilter
 import org.jasig.cas.client.session.SingleSignOutFilter
 import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
@@ -26,6 +25,28 @@ class AlaAuthBootStrap {
 //        mergeConfig(grailsApplication)
         def config = grailsApplication.config
 
+        // Work around Tomcat bug #53758 which affects the Ubuntu 12.04 tomcat7 package
+        def defaultInvertIsMatchAfter = false
+        try {
+            def serverInfo = "org.apache.catalina.util.ServerInfo" as Class
+            String serverNumber = serverInfo.getServerNumber()
+            log.error("ALA Auth Plugin running on Catalina $serverNumber")
+            def parts = serverNumber.split('\\.')
+            if (parts.length > 2) {
+                def major = parts[0] as Integer
+                def minor = parts[1] as Integer
+                def patch = parts[2] as Integer
+                if (major == 7 && minor == 0 && patch < 30) {
+                    defaultInvertIsMatchAfter = true // work around a Tomcat bug that inverts the order of the isMatchAfter parameter
+                }
+            }
+        } catch (GroovyCastException e) {
+            // ignore, not running in Tomcat
+        } catch (Exception e) {
+            log.warn("Exception extracting tomcat version number", e)
+        }
+
+        def invertIsMatchAfter = (config.security.cas.isSet('invertIsMatchAfter') ? config.security.casinvertIsMatchAfter : defaultInvertIsMatchAfter).toBoolean()
 
         servletContext.setInitParameter('configurationStrategy', WEB_XML.name())
 
@@ -77,30 +98,32 @@ class AlaAuthBootStrap {
             servletContext.setInitParameter(RENEW.name, renew.toString())
         }
 
+        def disableCAS = config.security.cas.bypass.toString()
+
         servletContext.addFilter('CAS Single Sign Out Filter', SingleSignOutFilter).with {
             asyncSupported = true
-            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), false, '/*')
+            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
         }
 
         servletContext.addFilter('CAS Authentication Filter', UriFilter).with {
             asyncSupported = true
             setInitParameter( 'filterClass', AuthenticationFilter.name)
-            setInitParameter( 'disableCAS', config.security.cas.bypass.toString())
-            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), false, '/*')
+            setInitParameter( 'disableCAS', disableCAS)
+            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
         }
 
         servletContext.addFilter('CAS Validation Filter', UriFilter).with {
             asyncSupported = true
             setInitParameter( 'filterClass', Cas30ProxyReceivingTicketValidationFilter.name)
-            setInitParameter( 'disableCAS', config.security.cas.bypass.toString())
-            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), false, '/*')
+            setInitParameter( 'disableCAS', disableCAS)
+            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
         }
 
         servletContext.addFilter('CAS HttpServletRequestWrapper Filter', UriFilter).with {
             asyncSupported = true
             setInitParameter( 'filterClass', AlaHttpServletRequestWrapperFilter.name)
-            setInitParameter( 'disableCAS', config.security.cas.bypass.toString())
-            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), false, '/*')
+            setInitParameter( 'disableCAS', disableCAS)
+            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
         }
     }
 
