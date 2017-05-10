@@ -12,6 +12,7 @@ import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 import retrofit2.http.Body;
+import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
 
@@ -31,6 +32,7 @@ public interface UserDetailsClient {
     String GET_USER_LIST_FULL_PATH = "userDetails/getUserListFull";
     String GET_USER_LIST_PATH = "userDetails/getUserList";
     String GET_USER_LIST_WITH_IDS_PATH = "userDetails/getUserListWithIds";
+    String GET_USER_STATS_PATH = "ws/getUserStats";
 
     /**
      * Return a JSON object containing id, email and display name for a given user, use includeProps=true to get additional information such as organisation
@@ -50,6 +52,9 @@ public interface UserDetailsClient {
      */
     @POST(GET_USER_DETAILS_FROM_ID_LIST_PATH)
     Call<UserDetailsFromIdListResponse> getUserDetailsFromIdList(@Body UserDetailsFromIdListRequest request);
+
+    @GET(GET_USER_STATS_PATH)
+    Call<UserStatsResponse> getUserStats();
 
     /**
      * Return all the UserDetails.  This will be super slow probably so caching the result is advised.

@@ -69,6 +69,9 @@ public class UserDetailsClientTest {
                         case GET_USER_LIST_FULL_PATH:
                             response.setResponseCode(200).setBody(moshi.adapter(Types.newParameterizedType(List.class, UserDetails.class)).toJson(newArrayList(test)));
                             break;
+                        case GET_USER_STATS_PATH:
+                            response.setResponseCode(200).setBody(moshi.adapter(UserStatsResponse.class).toJson(new UserStatsResponse("description", 2, 1)));
+                            break;
                         case GET_USER_LIST_PATH:
                         case GET_USER_LIST_WITH_IDS_PATH:
                             // not implemented
@@ -148,6 +151,20 @@ public class UserDetailsClientTest {
         List<UserDetails> userDetailsList = response.body();
 
         assertThat(userDetailsList).isNotNull().contains(test);
+    }
+
+    @Test
+    public void testGetUserStats() throws IOException {
+        Call<UserStatsResponse> call = userDetailsClient.getUserStats();
+        Response<UserStatsResponse> response = call.execute();
+        assertThat(response.isSuccessful()).isTrue();
+
+        UserStatsResponse body = response.body();
+
+        assertThat(body).isNotNull();
+        assertThat(body.getDescription()).isEqualTo("description");
+        assertThat(body.getTotalUsers()).isEqualTo(2);
+        assertThat(body.getTotalUsersOneYearAgo()).isEqualTo(1);
     }
 
 }

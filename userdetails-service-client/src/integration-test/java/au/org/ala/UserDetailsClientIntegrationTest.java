@@ -2,6 +2,7 @@ package au.org.ala;
 
 import au.org.ala.userdetails.UserDetailsFromIdListRequest;
 import au.org.ala.userdetails.UserDetailsFromIdListResponse;
+import au.org.ala.userdetails.UserStatsResponse;
 import au.org.ala.web.UserDetails;
 import au.org.ala.userdetails.UserDetailsClient;
 import okhttp3.OkHttpClient;
@@ -97,5 +98,16 @@ public class UserDetailsClientIntegrationTest {
         Call<Map<String, String>> userListWithIdsCall = userDetailsClient.getUserListWithIds();
         Map<String, String> userList = userListWithIdsCall.execute().body();
         assertThat(userList).isNotNull().containsValue(DISPLAY_NAME);
+    }
+
+    @Test
+    public void testGetUserStats() throws IOException {
+        Call<UserStatsResponse> call = userDetailsClient.getUserStats();
+        UserStatsResponse userStatsResponse = call.execute().body();
+        assertThat(userStatsResponse).isNotNull();
+        assertThat(userStatsResponse.getDescription()).isNotBlank();
+        assertThat(userStatsResponse.getTotalUsers()).isGreaterThan(0);
+        assertThat(userStatsResponse.getTotalUsersOneYearAgo()).isGreaterThan(0);
+        assertThat(userStatsResponse.getTotalUsers()).isGreaterThanOrEqualTo(userStatsResponse.getTotalUsersOneYearAgo());
     }
 }

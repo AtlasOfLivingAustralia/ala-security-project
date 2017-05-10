@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +14,9 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDetailsFromIdListResponse {
+public class UserDetailsFromIdListResponse implements Serializable {
+
+    private static final long serialVersionUID = -1565081443900911680L;
     //{"success":false,"message":"Exception: java.lang.NumberFormatException: For input string: \"simon.bear@csiro.au\""}
     /*
     "users": {
