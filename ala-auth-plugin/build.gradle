@@ -56,7 +56,7 @@ dependencies {
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
 
-    compile "au.org.ala:userdetails-service-client:1.1.0"
+    compile "au.org.ala:userdetails-service-client:1.2.0"
     testCompile "com.squareup.retrofit2:retrofit-mock:2.1.0"
 
     compile 'au.org.ala:ala-cas-client:2.3'
