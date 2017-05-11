@@ -103,32 +103,32 @@ class AlaAuthBootStrap {
 
         if (Environment.current == Environment.TEST) {
             log.error("Skipping adding CAS filters due to running in integration test environment.")
-        }
+        } else {
+            servletContext.addFilter('CAS Single Sign Out Filter', SingleSignOutFilter).with {
+                asyncSupported = true
+                addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
+            }
 
-        servletContext.addFilter('CAS Single Sign Out Filter', SingleSignOutFilter).with {
-            asyncSupported = true
-            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
-        }
+            servletContext.addFilter('CAS Authentication Filter', UriFilter).with {
+                asyncSupported = true
+                setInitParameter( 'filterClass', AuthenticationFilter.name)
+                setInitParameter( 'disableCAS', disableCAS)
+                addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
+            }
 
-        servletContext.addFilter('CAS Authentication Filter', UriFilter).with {
-            asyncSupported = true
-            setInitParameter( 'filterClass', AuthenticationFilter.name)
-            setInitParameter( 'disableCAS', disableCAS)
-            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
-        }
+            servletContext.addFilter('CAS Validation Filter', UriFilter).with {
+                asyncSupported = true
+                setInitParameter( 'filterClass', Cas30ProxyReceivingTicketValidationFilter.name)
+                setInitParameter( 'disableCAS', disableCAS)
+                addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
+            }
 
-        servletContext.addFilter('CAS Validation Filter', UriFilter).with {
-            asyncSupported = true
-            setInitParameter( 'filterClass', Cas30ProxyReceivingTicketValidationFilter.name)
-            setInitParameter( 'disableCAS', disableCAS)
-            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
-        }
-
-        servletContext.addFilter('CAS HttpServletRequestWrapper Filter', UriFilter).with {
-            asyncSupported = true
-            setInitParameter( 'filterClass', AlaHttpServletRequestWrapperFilter.name)
-            setInitParameter( 'disableCAS', disableCAS)
-            addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
+            servletContext.addFilter('CAS HttpServletRequestWrapper Filter', UriFilter).with {
+                asyncSupported = true
+                setInitParameter( 'filterClass', AlaHttpServletRequestWrapperFilter.name)
+                setInitParameter( 'disableCAS', disableCAS)
+                addMappingForUrlPatterns(EnumSet.noneOf(DispatcherType), invertIsMatchAfter, '/*')
+            }
         }
     }
 
