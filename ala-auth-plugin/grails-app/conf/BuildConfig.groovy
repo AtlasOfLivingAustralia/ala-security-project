@@ -25,7 +25,7 @@ grails.project.dependency.resolution = {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
         // runtime 'mysql:mysql-connector-java:5.1.18'
         compile ('au.org.ala:ala-cas-client:2.3')
-        compile ('au.org.ala:userdetails-service-client:1.1.0')
+        compile ('au.org.ala:userdetails-service-client:1.2.0')
 
         test ('com.squareup.retrofit2:retrofit-mock:2.2.0')
     }
