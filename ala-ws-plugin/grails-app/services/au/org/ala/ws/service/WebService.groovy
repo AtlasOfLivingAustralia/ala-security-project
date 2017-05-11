@@ -1,6 +1,7 @@
 package au.org.ala.ws.service
 
 import au.org.ala.web.AuthService
+import au.org.ala.web.UserDetails
 import grails.converters.JSON
 import groovyx.net.http.ContentType as GContentType
 import groovyx.net.http.HTTPBuilder
@@ -369,7 +370,7 @@ class WebService {
         // The #currentRequestAttributes method, which is used by the authService, throws an IllegalStateException if
         // there is no request, so we need to check if requestAttributes exist before trying to get the user details.
         if (includeUser && RequestContextHolder.getRequestAttributes() != null) {
-            Map user = authService.userDetails()
+            def user = authService.userDetails()
 
             if (user) {
                 headers.put(grailsApplication.config.app?.http?.header?.userId ?: DEFAULT_AUTH_HEADER, user.userId as String)
@@ -412,7 +413,7 @@ class WebService {
 
         conn.setConnectTimeout((grailsApplication.config.webservice?.connect?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
         conn.setReadTimeout((grailsApplication.config.webservice?.read?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
-        Map user = authService.userDetails()
+        def user = authService.userDetails()
 
         if (user && includeUser) {
             conn.setRequestProperty(grailsApplication.config.app?.http?.header?.userId as String, user.userId as String)

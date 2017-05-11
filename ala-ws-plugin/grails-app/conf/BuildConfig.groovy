@@ -59,7 +59,7 @@ grails.project.dependency.resolution = {
 
         compile "org.grails.plugins:rest:0.8"
 
-        runtime(":ala-auth:1.3.1") {
+        runtime(":ala-auth:2.0.4") {
             excludes "commons-httpclient"
         }
     }

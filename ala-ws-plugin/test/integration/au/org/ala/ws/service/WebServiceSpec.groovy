@@ -1,6 +1,7 @@
 package au.org.ala.ws.service
 
 import au.org.ala.web.AuthService
+import au.org.ala.web.UserDetails
 import grails.converters.JSON
 import grails.test.spock.IntegrationSpec
 import groovy.json.JsonSlurper
@@ -67,7 +68,7 @@ class WebServiceSpec extends IntegrationSpec {
     def setup() {
         service = new WebService()
         service.authService = Mock(AuthService)
-        service.authService.userDetails() >> [userId: "1234", email: "fred@bla.com"]
+        service.authService.userDetails() >> new UserDetails(userId: '1234', email: 'fred@bla.com')
         service.grailsApplication = [
                 config: [
                         webservice: [

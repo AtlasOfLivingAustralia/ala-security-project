@@ -1,10 +1,10 @@
 class AlaWsPluginGrailsPlugin {
     // the plugin version
-    def version = "1.5.1-SNAPSHOT"
+    def version = "1.6-SNAPSHOT"
 
 
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "2.3 > *"
+    def grailsVersion = "2.5.5 > *"
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
         "grails-app/views/error.gsp"
