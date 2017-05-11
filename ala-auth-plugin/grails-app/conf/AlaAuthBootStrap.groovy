@@ -1,5 +1,6 @@
 import au.org.ala.cas.client.AlaHttpServletRequestWrapperFilter
 import au.org.ala.cas.client.UriFilter
+import grails.util.Environment
 import org.apache.log4j.Logger
 import org.codehaus.groovy.runtime.typehandling.GroovyCastException
 import org.jasig.cas.client.authentication.AuthenticationFilter
@@ -99,6 +100,10 @@ class AlaAuthBootStrap {
         }
 
         def disableCAS = config.security.cas.bypass.toString()
+
+        if (Environment.current == Environment.TEST) {
+            log.error("Skipping adding CAS filters due to running in integration test environment.")
+        }
 
         servletContext.addFilter('CAS Single Sign Out Filter', SingleSignOutFilter).with {
             asyncSupported = true
