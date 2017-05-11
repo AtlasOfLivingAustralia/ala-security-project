@@ -39,6 +39,14 @@ public class UserDetails implements Serializable {
         return userId != null ? userId : id != null ? String.valueOf(id) : null;
     }
 
+    public String getEmail() {
+        return userName;
+    }
+
+    public void setEmail(String email) {
+        this.userName = email;
+    }
+
     public String getDisplayName() {
         return firstName + " " + lastName;
     }
