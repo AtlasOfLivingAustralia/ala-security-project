@@ -1,5 +1,15 @@
 // configuration for plugin testing - will not be included in the plugin zip
 
+environments {
+    test {
+        security {
+            cas {
+                service = 'http://localhost:8080'
+            }
+        }
+    }
+}
+
 log4j = {
     appenders {
         environments {
