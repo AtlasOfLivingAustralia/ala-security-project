@@ -129,6 +129,7 @@ class AlaAuthGrailsPlugin {
     def doWithSpring = {
         mergeConfig(application)
 
+        def config = application.config
         def disableCAS = config.security.cas.bypass.toString()
 
         casAuthenticationFilter(ParametersFilterProxy) {
