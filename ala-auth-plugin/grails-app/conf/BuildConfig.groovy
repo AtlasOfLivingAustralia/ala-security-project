@@ -31,6 +31,7 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
+        compile ':webxml:1.4.1'
         compile(":tomcat:7.0.70") {
             export = false
         }

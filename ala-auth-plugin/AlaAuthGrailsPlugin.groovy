@@ -1,8 +1,15 @@
+import au.org.ala.cas.client.AlaHttpServletRequestWrapperFilter
+import au.org.ala.cas.client.UriFilter
 import au.org.ala.web.SecurityPrimitives
 import au.org.ala.web.config.AuthPluginConfig
+import au.org.ala.web.filter.ParametersFilterProxy
 
 import grails.util.Environment
+import grails.util.Holders
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.jasig.cas.client.authentication.AuthenticationFilter
+import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
+import org.springframework.web.filter.DelegatingFilterProxy
 
 class AlaAuthGrailsPlugin {
     // the plugin version
@@ -37,12 +44,115 @@ class AlaAuthGrailsPlugin {
     // Online location of the plugin's browseable source code.
     def scm = [ url: "https://github.com/AtlasOfLivingAustralia/ala-auth-plugin" ]
 
+    // make sure the filter chain filter is after the Grails filter
+    def getWebXmlFilterOrder() {
+        [
+            casSingleSignOutFilter             : FilterManager.GRAILS_WEB_REQUEST_POSITION + 100,
+            casAuthenticationFilter            : FilterManager.GRAILS_WEB_REQUEST_POSITION + 101,
+            casValidationFilter                : FilterManager.GRAILS_WEB_REQUEST_POSITION + 102,
+            casHttpServletRequestWrapperFilter : FilterManager.GRAILS_WEB_REQUEST_POSITION + 103
+        ]
+    }
+
     // Note: ONLY evaluated at compile time (not run time)
     def doWithWebDescriptor = { xml ->
+        def mappingElement = xml.'filter'
+        mappingLocation = mappingElement[mappingElement.size()-1]
+        mappingLocation + {
+            'filter' {
+                'filter-name'('casSingleSignOutFilter')
+                'filter-class'('org.jasig.cas.client.session.SingleSignOutFilter')
+                'async-supported'('true')
+            }
+            'filter' {
+                'filter-name'('casAuthenticationFilter')
+                'filter-class'(DelegatingFilterProxy.name)
+                'async-supported'('true')
+                'init-param' {
+                    'param-name'('targetFilterLifecycle')
+                    'param-value'('true')
+                }
+            }
+            'filter' {
+                'filter-name'('casValidationFilter')
+                'filter-class'(DelegatingFilterProxy.name)
+                'async-supported'('true')
+                'init-param' {
+                    'param-name'('targetFilterLifecycle')
+                    'param-value'('true')
+                }
+            }
+            'filter' {
+                'filter-name'('casHttpServletRequestWrapperFilter')
+                'filter-class'(DelegatingFilterProxy.name)
+                'async-supported'('true')
+                'init-param' {
+                    'param-name'('targetFilterLifecycle')
+                    'param-value'('true')
+                }
+            }
+        }
+        findMappingLocation.delegate = delegate
+        mappingLocation = findMappingLocation(xml)
+        mappingLocation + {
+            'filter-mapping' {
+                'filter-name' ('casSingleSignOutFilter')
+                'url-pattern' ('/*')
+                dispatcher('ERROR')
+                dispatcher('REQUEST')
+            }
+            'filter-mapping' {
+                'filter-name' ('casAuthenticationFilter')
+                'url-pattern' ('/*')
+                dispatcher('ERROR')
+                dispatcher('REQUEST')
+            }
+            'filter-mapping' {
+                'filter-name' ('casValidationFilter')
+                'url-pattern' ('/*')
+                dispatcher('ERROR')
+                dispatcher('REQUEST')
+            }
+            'filter-mapping' {
+                'filter-name' ('casHttpServletRequestWrapperFilter')
+                'url-pattern' ('/*')
+                dispatcher('ERROR')
+                dispatcher('REQUEST')
+            }
+        }
+
+        if (Holders.config.security.cas.debugWebXml) {
+            println "web.xml = ${xml}"
+        }
     }
 
     def doWithSpring = {
         mergeConfig(application)
+
+        def disableCAS = config.security.cas.bypass.toString()
+
+        casAuthenticationFilter(ParametersFilterProxy) {
+            filter = new UriFilter()
+            initParameters = [
+                    'filterClass': AuthenticationFilter.name,
+                    'disableCAS': disableCAS
+            ]
+        }
+
+        casValidationFilter(ParametersFilterProxy) {
+            filter = new UriFilter()
+            initParameters = [
+                    'filterClass': Cas30ProxyReceivingTicketValidationFilter.name,
+                    'disableCAS': disableCAS
+            ]
+        }
+        casHttpServletRequestWrapperFilter(ParametersFilterProxy) {
+            filter = new UriFilter()
+            initParameters = [
+                    'filterClass': AlaHttpServletRequestWrapperFilter.name,
+                    'disableCAS': disableCAS
+            ]
+        }
 
         alaAuthPluginConfiguration(AuthPluginConfig)
 
@@ -66,6 +176,40 @@ class AlaAuthGrailsPlugin {
     }
 
     def onShutdown = { event ->
+    }
+
+    private findMappingLocation = { xml ->
+
+        // find the location to insert the filter-mapping; needs to be after the 'charEncodingFilter'
+        // which may not exist. should also be before the sitemesh filter.
+        // thanks to the JSecurity plugin for the logic.
+
+        def mappingLocation = xml.'filter-mapping'.find { it.'filter-name'.text() == 'charEncodingFilter' }
+        if (mappingLocation) {
+            return mappingLocation
+        }
+
+        // no 'charEncodingFilter'; try to put it before sitemesh
+        int i = 0
+        int siteMeshIndex = -1
+        xml.'filter-mapping'.each {
+            if (it.'filter-name'.text().equalsIgnoreCase('sitemesh')) {
+                siteMeshIndex = i
+            }
+            i++
+        }
+        if (siteMeshIndex > 0) {
+            return xml.'filter-mapping'[siteMeshIndex - 1]
+        }
+
+        if (siteMeshIndex == 0 || xml.'filter-mapping'.size() == 0) {
+            def filters = xml.'filter'
+            return filters[filters.size() - 1]
+        }
+
+        // neither filter found
+        def filters = xml.'filter'
+        return filters[filters.size() - 1]
     }
 
     private void mergeConfig(GrailsApplication app) {
