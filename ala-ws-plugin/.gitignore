@@ -4,3 +4,8 @@
 .project
 coverage/
 target/
+
+*.zip
+*.sha1
+plugin.xml
+web-app/
