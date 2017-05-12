@@ -57,7 +57,7 @@ class AlaAuthGrailsPlugin {
     // Note: ONLY evaluated at compile time (not run time)
     def doWithWebDescriptor = { xml ->
         def mappingElement = xml.'filter'
-        mappingLocation = mappingElement[mappingElement.size()-1]
+        def mappingLocation = mappingElement[mappingElement.size()-1]
         mappingLocation + {
             'filter' {
                 'filter-name'('casSingleSignOutFilter')
