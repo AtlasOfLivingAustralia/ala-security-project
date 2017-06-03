@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=grails2)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-runtime ":ala-auth:2.1.0"
+runtime ":ala-auth:2.1.1-SNAPSHOT"
 ```
 
 ## Description
@@ -62,6 +62,8 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 ```
 
 ## Changelog
+- **Version 2.1** (12/05/2017):
+  - Fix order the CAS filters are run
 - **Version 2.0** (24/02/2017):
   - Upgrade to latest ALA CAS client (and latest JASIG CAS client)
   - Allow CAS configuration to be read from regular `grailsApplication.config` at runtime
