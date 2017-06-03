@@ -34,6 +34,7 @@ class AlaAuthBootStrap {
         }
         servletContext.setInitParameter(CAS_SERVER_URL_PREFIX.name, config.security.cas.casServerUrlPrefix)
         servletContext.setInitParameter(CAS_SERVER_LOGIN_URL.name, config.security.cas.loginUrl)
+        servletContext.setInitParameter(ROLE_ATTRIBUTE.name, config.security.cas.roleAttribute)
 
         servletContext.setInitParameter('casServerName', config.security.cas.casServerName)
 

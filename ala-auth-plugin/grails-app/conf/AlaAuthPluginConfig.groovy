@@ -17,6 +17,7 @@ security {
         uriExclusionFilterPattern = '/assets/.*,/static/.*,/fonts/.*,/images/.*,/css/.*,/js/.*,/less/.*'
         authenticateOnlyIfLoggedInPattern =  ''
         gatewayStorageClass = AjaxAwareGatewayStorage.name
+        roleAttribute = 'authority'
 //        encodeServiceUrl = 'true'
 //        contextPath = '/set-this-to-override-default'
     }

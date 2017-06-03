@@ -41,6 +41,7 @@ security {
         loginUrl = 'https://auth.ala.org.au/cas/login'
         logoutUrl = 'https://auth.ala.org.au/cas/logout'
         bypass = false
+        roleAttribute = 'authority'
     }
 }
 ```
