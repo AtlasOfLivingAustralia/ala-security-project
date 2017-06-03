@@ -43,6 +43,7 @@ class CasContextParamInitializer implements ServletContextInitializer {
         }
         servletContext.setInitParameter(CAS_SERVER_URL_PREFIX.name, grailsApplication.config.security.cas.casServerUrlPrefix)
         servletContext.setInitParameter(CAS_SERVER_LOGIN_URL.name, grailsApplication.config.security.cas.loginUrl)
+        servletContext.setInitParameter(ROLE_ATTRIBUTE.name, config.security.cas.roleAttribute)
 
         servletContext.setInitParameter('casServerName', grailsApplication.config.security.cas.casServerName)
 
