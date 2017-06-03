@@ -6,6 +6,7 @@ import au.org.ala.web.config.AuthPluginConfig
 import grails.plugins.*
 import org.jasig.cas.client.authentication.AuthenticationFilter
 import org.jasig.cas.client.session.SingleSignOutFilter
+import org.jasig.cas.client.session.SingleSignOutHttpSessionListener
 import org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter
 import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 import org.springframework.boot.web.servlet.FilterRegistrationBean

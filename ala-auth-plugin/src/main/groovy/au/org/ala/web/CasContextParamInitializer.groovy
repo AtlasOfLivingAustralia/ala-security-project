@@ -3,6 +3,7 @@ package au.org.ala.web
 import grails.core.GrailsApplication
 import groovy.util.logging.Slf4j
 import org.jasig.cas.client.configuration.ConfigurationStrategyName
+import org.jasig.cas.client.session.SingleSignOutHttpSessionListener
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.web.servlet.ServletContextInitializer
 import org.springframework.stereotype.Component
@@ -25,6 +26,8 @@ class CasContextParamInitializer implements ServletContextInitializer {
     @Override
     void onStartup(ServletContext servletContext) throws ServletException {
         log.debug("CAS Servlet Context Initializer")
+
+        servletContext.addListener(SingleSignOutHttpSessionListener)
 
         servletContext.setInitParameter('configurationStrategy', ConfigurationStrategyName.WEB_XML.name())
 
