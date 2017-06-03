@@ -8,6 +8,7 @@ import grails.util.Environment
 import grails.util.Holders
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.jasig.cas.client.authentication.AuthenticationFilter
+import org.jasig.cas.client.session.SingleSignOutHttpSessionListener
 import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 import org.springframework.web.filter.DelegatingFilterProxy
 
@@ -118,6 +119,13 @@ class AlaAuthGrailsPlugin {
                 'url-pattern' ('/*')
                 dispatcher('ERROR')
                 dispatcher('REQUEST')
+            }
+        }
+
+        mappingLocation = xml.'filter-mapping'
+        mappingLocation[filterMapping.size() - 1] + {
+            listener {
+                'listener-class'(SingleSignOutHttpSessionListener.name)
             }
         }
 

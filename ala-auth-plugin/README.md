@@ -63,6 +63,9 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 ```
 
 ## Changelog
+- **Version 2.1.1** (3/06/2017):
+  - Add roleAttribute proprty so that `HttpServletRequest.isUserInRole(String)` works
+  - Add SingleSignOut Http Session Listener to clean out SingleSignOut filter on session expiry.
 - **Version 2.1** (12/05/2017):
   - Fix order the CAS filters are run
 - **Version 2.0** (24/02/2017):
