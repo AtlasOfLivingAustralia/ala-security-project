@@ -36,6 +36,11 @@ class AlaAuthBootStrap {
         servletContext.setInitParameter(CAS_SERVER_LOGIN_URL.name, config.security.cas.loginUrl)
         servletContext.setInitParameter(ROLE_ATTRIBUTE.name, config.security.cas.roleAttribute)
 
+        def ignoreCase = config.security.cas.ignoreCase
+        if (isBoolesque(ignoreCase)) {
+            servletContext.setInitParameter(IGNORE_CASE.name, ignoreCase.toString())
+        }
+
         servletContext.setInitParameter('casServerName', config.security.cas.casServerName)
 
         servletContext.setInitParameter(URI_FILTER_PATTERN, config.security.cas.uriFilterPattern)
