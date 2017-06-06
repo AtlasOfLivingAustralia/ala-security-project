@@ -2,10 +2,7 @@ package au.org.ala.web.filter;
 
 import javax.servlet.*;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public class ParametersFilterProxy implements Filter {
 
@@ -15,7 +12,11 @@ public class ParametersFilterProxy implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        filter.init(new FilterConfigWrapper(filterConfig, initParameters));
+        Map<String, String> parameters = this.initParameters;
+        if (parameters == null) {
+            parameters = new HashMap<String,String>();
+        }
+        filter.init(new FilterConfigWrapper(filterConfig, parameters));
     }
 
     @Override
