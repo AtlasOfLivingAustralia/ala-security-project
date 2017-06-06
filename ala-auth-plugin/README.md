@@ -42,6 +42,7 @@ security {
         logoutUrl = 'https://auth.ala.org.au/cas/logout'
         bypass = false
         roleAttribute = 'authority'
+        ignoreCase = true
     }
 }
 ```
@@ -65,6 +66,7 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 ## Changelog
 - **Version 2.1.1** (3/06/2017):
   - Add roleAttribute proprty so that `HttpServletRequest.isUserInRole(String)` works
+  - Add ignoreCase proprty so that `HttpServletRequest.isUserInRole(String)` works the same as previous versions of the plugin
   - Add SingleSignOut Http Session Listener to clean out SingleSignOut filter on session expiry.
 - **Version 2.1** (12/05/2017):
   - Fix order the CAS filters are run
