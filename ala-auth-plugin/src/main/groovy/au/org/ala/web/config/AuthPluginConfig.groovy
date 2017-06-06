@@ -27,7 +27,7 @@ class AuthPluginConfig {
     @ConditionalOnMissingBean(name = "userDetailsMoshi")
     @Bean(name = ["defaultUserDetailsMoshi", "userDetailsMoshi"])
     Moshi userDetailsMoshi() {
-        new Moshi.Builder().add(Date, new Rfc3339DateJsonAdapter()).build()
+        new Moshi.Builder().add(Date, new Rfc3339DateJsonAdapter().nullSafe()).build()
     }
 
 
