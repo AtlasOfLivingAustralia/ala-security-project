@@ -123,7 +123,7 @@ class AlaAuthGrailsPlugin {
         }
 
         mappingLocation = xml.'filter-mapping'
-        mappingLocation[filterMapping.size() - 1] + {
+        mappingLocation[mappingLocation.size() - 1] + {
             listener {
                 'listener-class'(SingleSignOutHttpSessionListener.name)
             }
