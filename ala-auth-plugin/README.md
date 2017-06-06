@@ -43,6 +43,7 @@ security:
         logoutUrl: https://auth.ala.org.au/cas/logout
         bypass: false
         roleAttribute: authority
+        ignoreCase: true
 ```
 
 `ala-cas-client` v2.3+ will now get the context path from the Servlet Context, so that property is
