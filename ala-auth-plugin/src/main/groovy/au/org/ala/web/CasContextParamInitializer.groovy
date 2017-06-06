@@ -27,12 +27,14 @@ class CasContextParamInitializer implements ServletContextInitializer {
     void onStartup(ServletContext servletContext) throws ServletException {
         log.debug("CAS Servlet Context Initializer")
 
+        def config = grailsApplication.config
+
         servletContext.addListener(SingleSignOutHttpSessionListener)
 
         servletContext.setInitParameter('configurationStrategy', ConfigurationStrategyName.WEB_XML.name())
 
-        def appServerName = grailsApplication.config.security.cas.appServerName
-        def service = grailsApplication.config.security.cas.service
+        def appServerName = config.security.cas.appServerName
+        def service = config.security.cas.service
         if (!appServerName && !service) {
             def message = "One of 'security.cas.appServerName' or 'security.cas.service' config settings is required by the CAS filters."
             log.error(message)
@@ -44,38 +46,43 @@ class CasContextParamInitializer implements ServletContextInitializer {
         if (service) {
             servletContext.setInitParameter(SERVICE.name, service)
         }
-        servletContext.setInitParameter(CAS_SERVER_URL_PREFIX.name, grailsApplication.config.security.cas.casServerUrlPrefix)
-        servletContext.setInitParameter(CAS_SERVER_LOGIN_URL.name, grailsApplication.config.security.cas.loginUrl)
+        servletContext.setInitParameter(CAS_SERVER_URL_PREFIX.name, config.security.cas.casServerUrlPrefix)
+        servletContext.setInitParameter(CAS_SERVER_LOGIN_URL.name, config.security.cas.loginUrl)
         servletContext.setInitParameter(ROLE_ATTRIBUTE.name, config.security.cas.roleAttribute)
 
-        servletContext.setInitParameter('casServerName', grailsApplication.config.security.cas.casServerName)
+        def ignoreCase = config.security.cas.ignoreCase
+        if (isBoolesque(ignoreCase)) {
+            servletContext.setInitParameter(IGNORE_CASE.name, ignoreCase.toString())
+        }
 
-        servletContext.setInitParameter(URI_FILTER_PATTERN, grailsApplication.config.security.cas.uriFilterPattern)
-        servletContext.setInitParameter(URI_EXCLUSION_FILTER_PATTERN, grailsApplication.config.security.cas.uriExclusionFilterPattern)
-        servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, grailsApplication.config.security.cas.authenticateOnlyIfLoggedInPattern)
+        servletContext.setInitParameter('casServerName', config.security.cas.casServerName)
 
-        def encodeServiceUrl = grailsApplication.config.security.cas.encodeServiceUrl
+        servletContext.setInitParameter(URI_FILTER_PATTERN, config.security.cas.uriFilterPattern)
+        servletContext.setInitParameter(URI_EXCLUSION_FILTER_PATTERN, config.security.cas.uriExclusionFilterPattern)
+        servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, config.security.cas.authenticateOnlyIfLoggedInPattern)
+
+        def encodeServiceUrl = config.security.cas.encodeServiceUrl
         if (isBoolesque(encodeServiceUrl)) {
             servletContext.setInitParameter(ENCODE_SERVICE_URL.name, encodeServiceUrl.toString())
         }
 
-        def contextPath = grailsApplication.config.security.cas.contextPath
+        def contextPath = config.security.cas.contextPath
         if (contextPath) {
             log.warn("Setting security.cas.contextPath is unnecessary, ala-cas-client can now retrieve it from the ServletContext")
             servletContext.setInitParameter('contextPath', contextPath)
         }
 
-        def gateway = grailsApplication.config.security.cas.gateway
+        def gateway = config.security.cas.gateway
         if (isBoolesque(gateway)) {
             servletContext.setInitParameter(GATEWAY.name, gateway.toString())
         }
 
-        def gatewayStorageClass = grailsApplication.config.security.cas.gatewayStorageClass
+        def gatewayStorageClass = config.security.cas.gatewayStorageClass
         if (gatewayStorageClass) {
             servletContext.setInitParameter(GATEWAY_STORAGE_CLASS.name, gatewayStorageClass)
         }
 
-        def renew = grailsApplication.config.security.cas.renew
+        def renew = config.security.cas.renew
         if (isBoolesque(renew)) {
             servletContext.setInitParameter(RENEW.name, renew.toString())
         }
