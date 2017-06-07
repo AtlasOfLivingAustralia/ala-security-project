@@ -3,7 +3,7 @@ import au.org.ala.cas.client.UriFilter
 import au.org.ala.web.SecurityPrimitives
 import au.org.ala.web.config.AuthPluginConfig
 import au.org.ala.web.filter.ParametersFilterProxy
-
+import grails.plugin.webxml.FilterManager
 import grails.util.Environment
 import grails.util.Holders
 import org.codehaus.groovy.grails.commons.GrailsApplication
@@ -14,7 +14,7 @@ import org.springframework.web.filter.DelegatingFilterProxy
 
 class AlaAuthGrailsPlugin {
     // the plugin version
-    def version = "2.2-SNAPSHOT"
+    def version = "2.1.2-SNAPSHOT"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.5.5 > *"
     // the other plugins this plugin depends on
@@ -45,13 +45,13 @@ class AlaAuthGrailsPlugin {
     // Online location of the plugin's browseable source code.
     def scm = [ url: "https://github.com/AtlasOfLivingAustralia/ala-auth-plugin" ]
 
-    // make sure the filter chain filter is after the Grails filter
+    // make sure the filter chain filter is the character encoding filter but before Grails
     def getWebXmlFilterOrder() {
         [
-            casSingleSignOutFilter             : FilterManager.GRAILS_WEB_REQUEST_POSITION + 100,
-            casAuthenticationFilter            : FilterManager.GRAILS_WEB_REQUEST_POSITION + 101,
-            casValidationFilter                : FilterManager.GRAILS_WEB_REQUEST_POSITION + 102,
-            casHttpServletRequestWrapperFilter : FilterManager.GRAILS_WEB_REQUEST_POSITION + 103
+            casSingleSignOutFilter             : FilterManager.DEFAULT_POSITION + 100,
+            casAuthenticationFilter            : FilterManager.DEFAULT_POSITION + 101,
+            casValidationFilter                : FilterManager.DEFAULT_POSITION + 102,
+            casHttpServletRequestWrapperFilter : FilterManager.DEFAULT_POSITION + 103
         ]
     }
 
