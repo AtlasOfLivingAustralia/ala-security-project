@@ -120,7 +120,7 @@ public interface UserDetailsClient {
          * @return A UserDetailsClient using the supplied okhttpclient, baseUrl and moshi.
          */
         public UserDetailsClient build() {
-            val moshi = this.moshi != null ? this.moshi : new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter()).build();
+            val moshi = this.moshi != null ? this.moshi : new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build();
 
             return new Retrofit.Builder()
                     .addConverterFactory(MoshiConverterFactory.create(moshi))
