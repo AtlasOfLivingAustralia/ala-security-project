@@ -75,6 +75,7 @@ class AuthService {
 
     @Cacheable("userDetailsCache")
     UserDetails getUserForUserId(String userId, boolean includeProps = true) {
+        if (!userId) return null // this would have failed anyway
         def call = userDetailsClient.getUserDetails(userId, includeProps)
         try {
             def response = call.execute()
