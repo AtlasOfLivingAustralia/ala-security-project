@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=grails2)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-runtime ":ala-auth:2.1.2"
+runtime ":ala-auth:2.1.3"
 ```
 
 ## Description
@@ -64,6 +64,10 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 ```
 
 ## Changelog
+- **Version 2.1.3** (17/06/2017):
+  - Don't call userdetails service for a blank username.
+- **Version 2.1.2** (7/06/2017):
+  - Adjust filter order slightly, so that CAS filters happen before Grails filter and preserve flash scope variables.
 - **Version 2.1.1** (3/06/2017):
   - Add roleAttribute proprty so that `HttpServletRequest.isUserInRole(String)` works
   - Add ignoreCase proprty so that `HttpServletRequest.isUserInRole(String)` works the same as previous versions of the plugin
