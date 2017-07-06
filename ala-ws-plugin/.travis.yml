@@ -5,7 +5,11 @@ sudo: false
 branches:
   only:
   - master
-  - 1.5.x  
+  - 1.5.x
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.grails/wrapper
 before_install:
 - wget -q https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/ala_common.sh
 - chmod +x ala_common.sh
