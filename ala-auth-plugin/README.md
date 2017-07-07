@@ -62,6 +62,10 @@ You can change the base address of the UserDetails web services by overriding th
 userDetails.url = 'https://auth.ala.org.au/userdetails/'
 ```
 
+### Migration from 1.x
+
+See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
+
 ## Changelog
 - **Version 3.0.0-SNAPSHOT**:
   - Upgrade to Grails 3
