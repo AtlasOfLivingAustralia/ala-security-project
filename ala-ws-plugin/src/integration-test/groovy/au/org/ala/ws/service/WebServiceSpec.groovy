@@ -3,20 +3,24 @@ package au.org.ala.ws.service
 import au.org.ala.web.AuthService
 import au.org.ala.web.UserDetails
 import grails.converters.JSON
-import grails.test.spock.IntegrationSpec
+import grails.test.mixin.integration.Integration
 import groovy.json.JsonSlurper
 import org.apache.commons.logging.Log
 import org.apache.http.HttpStatus
 import org.apache.http.entity.ContentType
+import org.springframework.beans.factory.annotation.Autowired
 import ratpack.exec.Promise
 import ratpack.form.Form
 import ratpack.groovy.test.embed.GroovyEmbeddedApp
 import ratpack.http.TypedData
 import ratpack.test.embed.EmbeddedApp
 import spock.lang.Shared
+import spock.lang.Specification
 
-class WebServiceSpec extends IntegrationSpec {
+@Integration
+class WebServiceSpec extends Specification {
 
+    @Autowired
     WebService service
     @Shared
     EmbeddedApp server

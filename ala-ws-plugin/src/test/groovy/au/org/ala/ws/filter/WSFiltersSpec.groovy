@@ -1,18 +1,19 @@
 package au.org.ala.ws.filter
 
-import au.org.ala.ws.WSFilters
+import au.org.ala.ws.WSInterceptor
 import au.org.ala.ws.validation.ValidatedParameter
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
-import grails.test.mixin.web.FiltersUnitTestMixin
+import grails.test.mixin.web.InterceptorUnitTestMixin
+import org.grails.web.util.GrailsApplicationAttributes
 import spock.lang.Specification
 
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
 
-@TestFor(WSFilters)
-@TestMixin([GrailsUnitTestMixin, FiltersUnitTestMixin])
+@TestFor(WSInterceptor)
+@TestMixin([GrailsUnitTestMixin, InterceptorUnitTestMixin])
 class WSFiltersSpec extends Specification {
     def controller = new TestController()
 
@@ -24,7 +25,9 @@ class WSFiltersSpec extends Specification {
 
         when:
 
-        withFilters(controller: "test", action: "action1") {
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'test')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'action1')
+        withInterceptors(controller: "test", action: "action1") {
             controller.action1()
         }
 
@@ -39,9 +42,11 @@ class WSFiltersSpec extends Specification {
         grailsApplication.addArtefact("Controller", TestController)
 
         when:
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'test')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'action1')
         params.param1 = "test"
         params.param2 = 666
-        withFilters(controller: "test", action: "action1") {
+        withInterceptors(controller: "test", action: "action1") {
             controller.action1()
         }
 

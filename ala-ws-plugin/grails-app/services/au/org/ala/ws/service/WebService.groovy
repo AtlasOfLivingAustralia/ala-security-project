@@ -20,16 +20,16 @@ import org.apache.http.entity.mime.content.ByteArrayBody
 import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.entity.mime.content.InputStreamBody
 import org.apache.http.entity.mime.content.StringBody
-import org.codehaus.groovy.grails.web.json.JSONElement
+import org.grails.web.json.JSONElement
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import javax.servlet.http.HttpServletResponse
 import java.nio.charset.Charset
 
+import static grails.web.http.HttpHeaders.CONNECTION
+import static grails.web.http.HttpHeaders.CONTENT_DISPOSITION
 import static groovyx.net.http.Method.*
-import static org.codehaus.groovy.grails.web.servlet.HttpHeaders.CONNECTION
-import static org.codehaus.groovy.grails.web.servlet.HttpHeaders.CONTENT_DISPOSITION
 
 class WebService {
     static final String CHAR_ENCODING = "UTF-8"

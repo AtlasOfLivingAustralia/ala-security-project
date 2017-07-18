@@ -2,7 +2,7 @@
 grails:
     profile: web-plugin
     codegen:
-        defaultPackage: testplugin
+        defaultPackage: au.org.ala.ws
     spring:
         transactionManagement:
             proxies: false
