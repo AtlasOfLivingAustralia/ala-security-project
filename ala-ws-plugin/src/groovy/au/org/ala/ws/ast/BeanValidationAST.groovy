@@ -2,7 +2,6 @@ package au.org.ala.ws.ast
 
 import au.org.ala.ws.validation.ValidatedParameter
 import grails.web.RequestParameter
-import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassHelper
 import org.codehaus.groovy.ast.ClassNode
@@ -18,7 +17,6 @@ import org.codehaus.groovy.ast.Parameter
 
 import javax.validation.Constraint
 
-@CompileStatic
 @GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
 class BeanValidationAST implements ASTTransformation {
     @Override

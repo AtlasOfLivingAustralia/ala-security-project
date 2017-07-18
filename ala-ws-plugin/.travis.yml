@@ -6,15 +6,20 @@ branches:
   only:
   - master
   - grails3
+  - 1.5.x
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.grails/wrapper
 before_install:
 - wget -q https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/ala_common.sh
 - chmod +x ala_common.sh
 - source ./ala_common.sh
-- ala_travis_grails_setup_env
+- ala_travis_grails_repo_setup
 script:
-- grails clean && grails refresh-dependencies --non-interactive && grails test-app --non-interactive
+- ./grailsw clean && ./grailsw refresh-dependencies --non-interactive && ./grailsw test-app --non-interactive
 - jdk_switcher use oraclejdk7
-- grails prod maven-install --non-interactive && grails prod maven-deploy --repository=$MAVEN_REPO --non-interactive
+- ./grailsw prod maven-install --non-interactive && ./grailsw prod maven-deploy --repository=$MAVEN_REPO --non-interactive
 env:
   global:
   - secure: Wz5z+3RtS1H2uOUvT6ZQm0lxwNvR2PSgsTak99nGHVqrfpzQWXy0NcuoO309WrcfHvLHkVzjzfIBrkECH+l+8gPs7K0mElxLt1PMC/kYD+Tw/Yv6mj3ZCOb+NT2GYBbBDDHysMgFk4WZ4oGBK6jvgiThW+5MECwZ4Fo7pQpLbxo5pe2kPjRQ26fzef89eNHb7oTfUE2l26PSR/ndj5xkyeS5U1YtCDJVQIJal8nZ7RMd74c7NpuepxF/AenJPtOSKREwWETlaWnnwoFsxNOJpNEzxFalkH2R1fpT9AFU/D+1Egub3C+FVHalFNb/njHD07ui4nE8G61/AGk/c+VXW0qbqL58ZZWzCrBHTVFEqYWjsCke39lz58NkJ8j9TxVten4XFCUgb/oPA7N2KvIqHAWtQPPYGg3vojnXZSvihMQ0K7S5A/j+7lH2eALGUiif9pHeHDZFaGhG7yIwroW264fXs01G8bD1inVwrsukq7T52+K9sDuFu9suPbD4CNVobpuaI/qLNzkWxo9hWx/8MHPIKIsU7BtAs/kn6KZypneNZzkY+wpWCWmMURtdGF9lpjDY6Oc0lgGGhWh9koeS+iWYGSWtxNXcPb7fEKdk15dACRX4vvDZ2hmvKzVFe0djn+7rlieoTAr9UinciDsdRjdVLEFuct8DN3xOcx+N9d8=
