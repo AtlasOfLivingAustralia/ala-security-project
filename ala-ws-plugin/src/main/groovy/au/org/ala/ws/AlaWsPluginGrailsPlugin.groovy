@@ -1,3 +1,5 @@
+package au.org.ala.ws
+
 class AlaWsPluginGrailsPlugin {
     // the plugin version
     def version = "1.8-SNAPSHOT"

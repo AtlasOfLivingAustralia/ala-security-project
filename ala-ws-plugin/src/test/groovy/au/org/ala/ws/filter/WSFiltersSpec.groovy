@@ -1,5 +1,6 @@
 package au.org.ala.ws.filter
 
+import au.org.ala.ws.WSFilters
 import au.org.ala.ws.validation.ValidatedParameter
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin

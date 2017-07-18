@@ -4,8 +4,12 @@
 .project
 coverage/
 target/
+.DS_Store
 
 *.zip
 *.sha1
 plugin.xml
 web-app/
+
+.gradle/
+build/

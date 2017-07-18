@@ -1,4 +1,4 @@
-package au.org.ala.ws.filter
+package au.org.ala.ws
 
 import org.apache.http.HttpStatus
 
@@ -58,7 +58,7 @@ class WSFilters {
 
                         Set<ConstraintViolation> violations = validator.validateParameters(dummyControllerImpl, method, parameterValues as Object[])
                         if (violations) {
-                            log.debug("Request validation failed: ${violations}")
+                            WSFilters.log.debug("Request validation failed: ${violations}")
                             response.status = HttpStatus.SC_BAD_REQUEST
                             response.sendError(HttpStatus.SC_BAD_REQUEST, "Request validation failed: ${violations*.message.join("; ")}")
                         }
