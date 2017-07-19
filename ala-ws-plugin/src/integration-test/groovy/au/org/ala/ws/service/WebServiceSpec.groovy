@@ -4,11 +4,14 @@ import au.org.ala.web.AuthService
 import au.org.ala.web.UserDetails
 import grails.converters.JSON
 import grails.test.mixin.integration.Integration
+import grails.util.GrailsWebMockUtil
 import groovy.json.JsonSlurper
-import org.apache.commons.logging.Log
 import org.apache.http.HttpStatus
 import org.apache.http.entity.ContentType
+import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.web.context.WebApplicationContext
+import org.springframework.web.context.request.RequestContextHolder
 import ratpack.exec.Promise
 import ratpack.form.Form
 import ratpack.groovy.test.embed.GroovyEmbeddedApp
@@ -26,6 +29,8 @@ class WebServiceSpec extends Specification {
     EmbeddedApp server
     @Shared
     String url
+    @Autowired
+    WebApplicationContext ctx
 
     def setupSpec() {
         /* https://ratpack.io/manual/current/all.html */
@@ -82,15 +87,20 @@ class WebServiceSpec extends Specification {
                         app       : []
                 ]
         ]
+        GrailsWebMockUtil.bindMockWebRequest(ctx)
     }
 
     def cleanupSpec() {
         server?.close()
     }
 
+    def cleanup() {
+        RequestContextHolder.resetRequestAttributes()
+    }
+
     def "a request that results in a connection exception should return a statusCode == 500 and an error message, and log the error"() {
         setup:
-        service.log = Mock(Log)
+        service.log = Mock(Logger)
 
         when: "the call results in a 404 (i.e. there is no server running)"
         Map result = service.get("http://localhost:3123")

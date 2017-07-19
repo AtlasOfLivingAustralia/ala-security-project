@@ -90,6 +90,10 @@ endpoints:
 
 ---
 # configuration for plugin testing - will not be included in the plugin zip
+security:
+    cas:
+        service: 'http://localhost:8080'
+
 environments:
     test:
         security:
