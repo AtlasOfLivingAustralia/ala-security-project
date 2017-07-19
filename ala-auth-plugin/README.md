@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-compile "org.grails.plugins:ala-auth:3.0.0-SNAPSHOT"
+compile "org.grails.plugins:ala-auth:3.0.0"
 ```
 
 ## Description
