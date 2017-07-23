@@ -5,6 +5,7 @@ jdk:
 branches:
   only:
   - master
+  - grails3
 before_install:
 - export TZ=Australia/Canberra
 - date
