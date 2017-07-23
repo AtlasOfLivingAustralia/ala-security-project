@@ -6,37 +6,19 @@ branches:
   only:
   - master
   - grails3
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
 before_install:
 - export TZ=Australia/Canberra
-- date
-- rm -rf ~/.sdkman
-- curl -s get.sdkman.io > ~/install_sdkman.sh
-- chmod 775 ~/install_sdkman.sh
-- ~/install_sdkman.sh
-- echo "sdkman_auto_answer=true" > ~/.sdkman/etc/config
-- source ~/.sdkman/bin/sdkman-init.sh
-- GRAILS_VERSION=`grep '^\s*app.grails.version' application.properties | sed -e 's/^\s*app\.grails\.version=//g'
-  | tr -d "\r"`
-- echo "GRAILS_VERSION:$GRAILS_VERSION"
-- sdk install grails $GRAILS_VERSION || true
-before_script:
-- GRAILS_VERSION_NUMBER=`echo $GRAILS_VERSION | sed -e 's/\.[0-9]*$//g' -e 's/\.//g'
-  | tr -d "\r"`
-- echo "GRAILS_VERSION_NUMBER:$GRAILS_VERSION_NUMBER"
-- GRAILS_SETTINGS_FILE="travis_grails_settings_new.groovy"
-- if [ "$GRAILS_VERSION_NUMBER" -lt "23" ]; then GRAILS_SETTINGS_FILE="travis_grails_settings_old.groovy";
-  fi;
-- echo "GRAILS_SETTINGS_FILE:$GRAILS_SETTINGS_FILE"
-- mkdir -p ~/.grails; wget -q -O ~/.grails/settings.groovy https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/$GRAILS_SETTINGS_FILE
-- MAVEN_REPO="ala-repo-snapshot"
-- APP_VERSION=`grep '^\s*def\s*version' *GrailsPlugin.groovy | sed -e 's/^.*= *"//g'
-  | sed -e 's/".*$//g' | tr -d "\r"`
-- echo $APP_VERSION | grep -q "\-SNAPSHOT"; if [ "$?" = "1" ]; then MAVEN_REPO="ala-repo-release";
-  fi;
-- echo "APP_VERSION:$APP_VERSION"
-- echo "MAVEN_REPO:$MAVEN_REPO"
-script:
-- grails clean && grails refresh-dependencies --non-interactive && grails test-app --non-interactive && grails prod maven-install --non-interactive && grails prod maven-deploy --repository=$MAVEN_REPO --non-interactive
+after_success:
+  - jdk_switcher use oraclejdk7
+  - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && ./gradlew clean && travis_retry ./gradlew publish'
 env:
   global:
   - secure: q/jEBUHRPYsdt0sq9IrIzK4PwmTgGr7NJ3f+ugXJTjBVDSesIOcTRpZYlvq7pIkBZzm1O+/V5YhqxhVGjIMGyzYYVefDwBn60Lws9JGHb5/lsHvEOrh65Wvk8Ozj4ICwMu54MUOiln5DtR/BOehERv4fmf+knMrDnD/DXkJuZI8lsbBt7c60yK9wUC+gMgnjHumHINtVBQfM/BrSjRRm8D6qDGb/Vkmi6/PdLVbAVA8b79fVP5JFvS4s5pRzxlVnkC4q3leEH3O/kzBSiG8Gkmz7BqYhCVDr/6KAWMk+Kz1ThvuediI0ysaDNdkNrBajoingtTXtiBR+R8oqsWL4BudWreJkQVef/LQXvHtbjoHZ51/jBPGjJvq5NgwsuZdTx7q0hlTIeljVbsAjDHVMF3b0V698qDdoH+w/aw2vcN+gmWZ8HLdNwS8Y3hbrdJIaTw61Wg9Jax7uj3jfpn08QNwNv7VABtIGoWjocxGD6yyNrWIT31Ii0YgTc8Kgb0jzTpUa7wMhpT1G81w0LZhJzn5+YiU18t8dIgaPo3hfQum+xdwmo21Evh4Ca2cQgPegmCt2uj1XAzRoPhSKMAT2Tu0XV8vYb4sn1Ds3XSVaAHvGCDexkXkrW4D39TtMz6naIGUjON6XGhkQhl84Iwp0cIynzKuDOJO28CJdwu8TKyQ=
