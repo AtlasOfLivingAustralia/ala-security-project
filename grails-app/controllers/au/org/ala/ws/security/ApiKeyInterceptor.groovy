@@ -6,7 +6,7 @@ import au.org.ala.ws.security.service.ApiKeyService
 
 import javax.servlet.http.HttpServletRequest
 
-class ApiKeyFilters {
+class ApiKeyInterceptor {
     def grailsApplication
     ApiKeyService apiKeyService
 

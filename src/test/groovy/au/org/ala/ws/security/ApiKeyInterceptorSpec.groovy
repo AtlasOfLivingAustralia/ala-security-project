@@ -12,11 +12,11 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 
-@TestFor(ApiKeyFilters)
+@TestFor(ApiKeyInterceptor)
 @TestMixin([GrailsUnitTestMixin, FiltersUnitTestMixin])
 @Unroll
 @Mock([ApiKeyService])
-class ApiKeyFiltersSpec extends Specification {
+class ApiKeyInterceptorSpec extends Specification {
 
     static final int UNAUTHORISED = 403
     static final int OK = 200
