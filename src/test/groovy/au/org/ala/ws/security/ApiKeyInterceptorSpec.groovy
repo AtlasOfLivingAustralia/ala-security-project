@@ -3,27 +3,31 @@ package au.org.ala.ws.security
 import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.ws.security.service.ApiKeyService
-import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
-import grails.test.mixin.web.FiltersUnitTestMixin
+import grails.test.mixin.web.InterceptorUnitTestMixin
+import org.grails.web.util.GrailsApplicationAttributes
 import spock.lang.Specification
 import spock.lang.Unroll
 
-
 @TestFor(ApiKeyInterceptor)
-@TestMixin([GrailsUnitTestMixin, FiltersUnitTestMixin])
+@TestMixin([GrailsUnitTestMixin, InterceptorUnitTestMixin])
 @Unroll
-@Mock([ApiKeyService])
 class ApiKeyInterceptorSpec extends Specification {
 
     static final int UNAUTHORISED = 403
     static final int OK = 200
 
+    ApiKeyService apiKeyService
+
     void setup() {
         // grailsApplication is not isolated in unit tests, so clear the ip.whitelist property to avoid polluting independent tests
         grailsApplication.config.security.apikey.ip = [whitelist: ""]
+        apiKeyService = Stub(ApiKeyService)
+        apiKeyService.checkApiKey(_) >> { String key -> [valid: (key == "valid")] }
+
+        interceptor.apiKeyService = apiKeyService
     }
 
     void "All methods of a controller annotated with RequireApiKey at the class level should be protected"() {
@@ -34,24 +38,22 @@ class ApiKeyInterceptorSpec extends Specification {
 
         AnnotatedClassController controller = new AnnotatedClassController()
 
-        defineBeans {
-            apiKeyService(MockApiKeyService)
-        }
-
         when:
         request.addHeader("apiKey", "invalid")
 
-        withFilters(controller: "annotatedClass", action: action) {
-            controller."${action}"()
-        }
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
 
         then:
+        result == before
         response.status == responseCode
 
         where:
-        action    | responseCode
-        "action1" | UNAUTHORISED
-        "action2" | UNAUTHORISED
+        action    | responseCode | before
+        "action1" | UNAUTHORISED | false
+        "action2" | UNAUTHORISED | false
     }
 
     void "Only methods annotated with RequireApiKey should be protected if the class is not annotated"() {
@@ -62,24 +64,22 @@ class ApiKeyInterceptorSpec extends Specification {
 
         AnnotatedMethodController controller = new AnnotatedMethodController()
 
-        defineBeans {
-            apiKeyService(MockApiKeyService)
-        }
-
         when:
         request.addHeader("apiKey", "invalid")
 
-        withFilters(controller: "annotatedMethod", action: action) {
-            controller."${action}"()
-        }
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedMethod')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedMethod", action: action)
+        def result = interceptor.before()
 
         then:
+        result == before
         response.status == responseCode
 
         where:
-        action          | responseCode
-        "securedAction" | UNAUTHORISED
-        "publicAction"  | OK
+        action          | responseCode | before
+        "securedAction" | UNAUTHORISED | false
+        "publicAction"  | OK           | true
     }
 
     void "Methods annotated with SkipApiKeyCheck should be accessible even when the class is annotated with RequireApiKey"() {
@@ -90,18 +90,16 @@ class ApiKeyInterceptorSpec extends Specification {
 
         AnnotatedClassController controller = new AnnotatedClassController()
 
-        defineBeans {
-            apiKeyService(MockApiKeyService)
-        }
-
         when:
         request.addHeader("apiKey", "invalid")
 
-        withFilters(controller: "annotatedClass", action: "action3") {
-            controller.action3()
-        }
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'action3')
+        withRequest(controller: "annotatedClass", action: "action3")
+        def result = interceptor.before()
 
         then:
+        result == true
         response.status == OK
 
     }
@@ -114,24 +112,22 @@ class ApiKeyInterceptorSpec extends Specification {
 
         AnnotatedClassController controller = new AnnotatedClassController()
 
-        defineBeans {
-            apiKeyService(MockApiKeyService)
-        }
-
         when:
         request.addHeader("apiKey", "valid")
 
-        withFilters(controller: "annotatedClass", action: action) {
-            controller."${action}"()
-        }
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
 
         then:
+        result == before
         response.status == responseCode
 
         where:
-        action    | responseCode
-        "action1" | OK
-        "action2" | OK
+        action    | responseCode | before
+        "action1" | OK           | true
+        "action2" | OK           | true
     }
 
     void "Secured methods should be accessible when the request is from an IP on the whitelist, even with no API Key"() {
@@ -142,26 +138,24 @@ class ApiKeyInterceptorSpec extends Specification {
 
         AnnotatedClassController controller = new AnnotatedClassController()
 
-        defineBeans {
-            apiKeyService(MockApiKeyService)
-        }
-
         when:
         grailsApplication.config.security.apikey.ip = [whitelist: "2.2.2.2, 3.3.3.3"]
         request.remoteHost = ipAddress
 
-        withFilters(controller: "annotatedClass", action: action) {
-            controller."${action}"()
-        }
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
 
         then:
+        result == before
         response.status == responseCode
 
         where:
-        ipAddress | action    | responseCode
-        "2.2.2.2" | "action1" | OK
-        "3.3.3.3" | "action2" | OK
-        "6.6.6.6" | "action2" | UNAUTHORISED
+        ipAddress | action    | responseCode | before
+        "2.2.2.2" | "action1" | OK           | true
+        "3.3.3.3" | "action2" | OK           | true
+        "6.6.6.6" | "action2" | UNAUTHORISED | false
     }
 
     void "Secured methods should be accessible when the request is from the loopback IP Address, even with no API Key"() {
@@ -172,26 +166,24 @@ class ApiKeyInterceptorSpec extends Specification {
 
         AnnotatedClassController controller = new AnnotatedClassController()
 
-        defineBeans {
-            apiKeyService(MockApiKeyService)
-        }
-
         when:
         request.remoteHost = ipAddress
 
-        withFilters(controller: "annotatedClass", action: action) {
-            controller."${action}"()
-        }
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
 
         then:
+        result == before
         response.status == responseCode
 
         where:
-        ipAddress         | action    | responseCode
-        "127.0.0.1"       | "action1" | OK
-        "::1"             | "action2" | OK
-        "0:0:0:0:0:0:0:1" | "action2" | OK
-        "1.2.3.4"         | "action2" | UNAUTHORISED
+        ipAddress         | action    | responseCode | before
+        "127.0.0.1"       | "action1" | OK           | true
+        "::1"             | "action2" | OK           | true
+        "0:0:0:0:0:0:0:1" | "action2" | OK           | true
+        "1.2.3.4"         | "action2" | UNAUTHORISED | false
     }
 
     void "Do not trust the X-Forwarded-For header when it is attempting to use the loopback addresses (easily faked)"() {
@@ -202,27 +194,25 @@ class ApiKeyInterceptorSpec extends Specification {
 
         AnnotatedClassController controller = new AnnotatedClassController()
 
-        defineBeans {
-            apiKeyService(MockApiKeyService)
-        }
-
         when:
         request.addHeader("X-Forwarded-For", ipAddress)
         request.remoteHost = "1.2.3.4"
 
-        withFilters(controller: "annotatedClass", action: action) {
-            controller."${action}"()
-        }
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
 
         then:
+        result == before
         response.status == responseCode
 
         where:
-        ipAddress         | action    | responseCode
-        "127.0.0.1"       | "action1" | UNAUTHORISED
-        "::1"             | "action2" | UNAUTHORISED
-        "0:0:0:0:0:0:0:1" | "action2" | UNAUTHORISED
-        "1.2.3.4"         | "action2" | UNAUTHORISED
+        ipAddress         | action    | responseCode | before
+        "127.0.0.1"       | "action1" | UNAUTHORISED | false
+        "::1"             | "action2" | UNAUTHORISED | false
+        "0:0:0:0:0:0:0:1" | "action2" | UNAUTHORISED | false
+        "1.2.3.4"         | "action2" | UNAUTHORISED | false
     }
 }
 
@@ -253,12 +243,3 @@ class AnnotatedMethodController {
 
     }
 }
-
-class MockApiKeyService extends ApiKeyService {
-
-    @Override
-    Map checkApiKey(String key) {
-        return [valid: (key == "valid")]
-    }
-}
-

@@ -25,13 +25,13 @@ class ApiKeyServiceSpec extends Specification {
 
         then:
 
-        if (status == HttpStatus.OK.value) {
-            assertTrue "HTTP Status ${status} - The result should be valid (true) when the web service returns a HTTP 200", result.valid?.asBoolean()
+        if (status == HttpStatus.OK.value()) {
+            result.valid?.toBoolean() == true
         } else {
-            assertFalse "HTTP Status ${status} - The result should be invalid (false) when the web service returns anything other than a HTTP 200", result.valid?.asBoolean()
+            result.valid?.toBoolean() == false
         }
 
-        where: status << HttpStatus.values().collect { it.value }
+        where: status << HttpStatus.values().collect { it.value() }
     }
 
     void "Should return valid = true if the API Key service returns a HTTP 200 and a response JSON of '{valid: true}'"() {
@@ -45,7 +45,7 @@ class ApiKeyServiceSpec extends Specification {
         Map result = service.checkApiKey("bla")
 
         then:
-        assertTrue "The result should be valid (true) when the web service returns a HTTP 200 with json '{valid: true}'", result.valid?.asBoolean()
+        result.valid?.toBoolean() == true
     }
 
     void "Should return valid = false if the API Key service returns a HTTP 200 and a response JSON of '{valid: false}'"() {
@@ -59,7 +59,7 @@ class ApiKeyServiceSpec extends Specification {
         Map result = service.checkApiKey("bla")
 
         then:
-        assertFalse "The result should be invalid (false) when the web service returns a HTTP 200 with json '{valid: false}'", result.valid?.asBoolean()
+        result.valid?.toBoolean() == false
     }
 }
 

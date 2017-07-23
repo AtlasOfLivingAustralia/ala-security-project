@@ -3,11 +3,14 @@ package au.org.ala.ws.security
 import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.ws.security.service.ApiKeyService
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 
 import javax.servlet.http.HttpServletRequest
 
+@CompileStatic
+@Slf4j
 class ApiKeyInterceptor {
-    def grailsApplication
     ApiKeyService apiKeyService
 
     static final int STATUS_UNAUTHORISED = 403
@@ -15,62 +18,74 @@ class ApiKeyInterceptor {
     static final List<String> LOOPBACK_ADDRESSES = ["127.0.0.1",
                                                     "0:0:0:0:0:0:0:1", // IP v6
                                                     "::1"] // IP v6 short form
-    def filters = {
-        apiKeyCheck(controller: '*', action: '*') {
-            before = {
-                String headerName = grailsApplication.config.security.apikey.header.override ?: API_KEY_HEADER_NAME
-                def controller = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
-                Class controllerClass = controller?.clazz
-                def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
+    ApiKeyInterceptor() {
+        matchAll()
+    }
 
-                if ((controllerClass?.isAnnotationPresent(RequireApiKey) && !method?.isAnnotationPresent(SkipApiKeyCheck))
-                        || method?.isAnnotationPresent(RequireApiKey)) {
-                    List whiteList = buildWhiteList()
-                    String clientIp = getClientIP(request)
-                    boolean ipOk = checkClientIp(clientIp, whiteList)
-                    if (!ipOk) {
-                        boolean keyOk = apiKeyService.checkApiKey(request.getHeader(headerName)).valid
-                        log.debug "IP ${clientIp} ${ipOk ? 'is' : 'is not'} ok. Key ${keyOk ? 'is' : 'is not'} ok."
+    /**
+     * Executed before a matched action
+     *
+     * @return Whether the action should continue and execute
+     */
+    boolean before() {
+        String headerName = grailsApplication.config.navigate('security', 'apikey', 'header', 'override') ?: API_KEY_HEADER_NAME
+        def controller = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
+        Class controllerClass = controller?.clazz
+        def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
 
-                        if (!keyOk) {
-                            log.warn(ipOk ? "No valid api key for ${controllerName}/${actionName}" :
-                                    "Non-authorised IP address - ${clientIp}")
-                            response.status = STATUS_UNAUTHORISED
-                            response.sendError(STATUS_UNAUTHORISED, "Forbidden")
-                            return false
-                        }
-                    } else {
-                        log.debug("IP ${clientIp} is exempt from the API Key check. Authorising.")
-                    }
+        if ((controllerClass?.isAnnotationPresent(RequireApiKey) && !method?.isAnnotationPresent(SkipApiKeyCheck))
+                || method?.isAnnotationPresent(RequireApiKey)) {
+            List<String> whiteList = buildWhiteList()
+            String clientIp = getClientIP(request)
+            boolean ipOk = checkClientIp(clientIp, whiteList)
+            if (!ipOk) {
+                boolean keyOk = apiKeyService.checkApiKey(request.getHeader(headerName)).valid
+                log.debug "IP ${clientIp} ${ipOk ? 'is' : 'is not'} ok. Key ${keyOk ? 'is' : 'is not'} ok."
+
+                if (!keyOk) {
+                    log.warn(ipOk ? "No valid api key for ${controllerName}/${actionName}" :
+                            "Non-authorised IP address - ${clientIp}")
+                    response.status = STATUS_UNAUTHORISED
+                    response.sendError(STATUS_UNAUTHORISED, "Forbidden")
+                    return false
                 }
-            }
-            after = { Map model ->
-
-            }
-            afterView = { Exception e ->
-
+            } else {
+                log.debug("IP ${clientIp} is exempt from the API Key check. Authorising.")
             }
         }
+        return true
     }
+
+    /**
+     * Executed after the action executes but prior to view rendering
+     *
+     * @return True if view rendering should continue, false otherwise
+     */
+    boolean after() { true }
+
+    /**
+     * Executed after view rendering completes
+     */
+    void afterView() {}
 
     /**
      * Client IP passes if it is in the whitelist
      * @param clientIp
      * @return
      */
-    def checkClientIp(clientIp, List whiteList) {
+    def checkClientIp(clientIp, List<String> whiteList) {
         whiteList.contains(clientIp)
     }
 
-    def buildWhiteList() {
-        List whiteList = []
+    List<String> buildWhiteList() {
+        List<String> whiteList = []
         whiteList.addAll(LOOPBACK_ADDRESSES) // allow calls from localhost to make testing easier
-        def config = grailsApplication.config.security.apikey.ip.whitelist
+        String config = grailsApplication.config.navigate('security', 'apikey', 'ip', 'whitelist')
         if (config) {
-            whiteList.addAll(config.split(',').collect({ it.trim() }))
+            whiteList.addAll(config.split(',').collect({ String s -> s.trim() }))
         }
-        log.debug whiteList
-        whiteList
+        log.debug('{}', whiteList)
+        return whiteList
     }
 
     def getClientIP(HttpServletRequest request) {
