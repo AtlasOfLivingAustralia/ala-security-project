@@ -1,4 +1,4 @@
-package testplugin
+package au.org.ala.ws.security
 
 import grails.boot.*
 import grails.boot.config.GrailsAutoConfiguration

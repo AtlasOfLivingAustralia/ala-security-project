@@ -1,4 +1,4 @@
-package testplugin
+package au.org.ala.ws.security
 
 class BootStrap {
 
