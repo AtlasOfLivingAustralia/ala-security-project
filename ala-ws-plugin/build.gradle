@@ -26,7 +26,6 @@ apply plugin:"maven-publish"
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
-
 repositories {
     mavenLocal()
     maven { url "https://nexus.ala.org.au/content/groups/public/" }
@@ -55,11 +54,11 @@ dependencies {
 
     // Grails plugin dependencies
 
-    compile 'org.grails.plugins:http-builder-helper:1.0.2'
+    compile 'org.grails.plugins:http-builder-helper:1.0.2.ALA'
     compile "org.grails.plugins:ala-auth:3.0.0"
 
     // Regular JAR dependencies
-    compile "org.apache.httpcomponents:httpmime:4.3.3"
+    compile "org.apache.httpcomponents:httpclient:4.5.3"
     compile "javax.validation:validation-api:1.1.0.Final"
     compile "javax.el:javax.el-api:2.2.4"
 
