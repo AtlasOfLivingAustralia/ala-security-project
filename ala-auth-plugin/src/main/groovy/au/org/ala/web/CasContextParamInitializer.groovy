@@ -59,7 +59,13 @@ class CasContextParamInitializer implements ServletContextInitializer {
 
         servletContext.setInitParameter(URI_FILTER_PATTERN, config.security.cas.uriFilterPattern)
         servletContext.setInitParameter(URI_EXCLUSION_FILTER_PATTERN, config.security.cas.uriExclusionFilterPattern)
-        servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, config.security.cas.authenticateOnlyIfLoggedInPattern)
+        def onlyIfLoggedInPattern = config.security.cas.authenticateOnlyIfLoggedInPattern
+        def onlyIfLoggedInFilterPattern = config.security.cas.authenticateOnlyIfLoggedInFilterPattern
+        if (onlyIfLoggedInPattern && onlyIfLoggedInFilterPattern) {
+            servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, onlyIfLoggedInPattern + ',' + onlyIfLoggedInFilterPattern)
+        } else {
+            servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, onlyIfLoggedInPattern ?: onlyIfLoggedInFilterPattern)
+        }
 
         def encodeServiceUrl = config.security.cas.encodeServiceUrl
         if (isBoolesque(encodeServiceUrl)) {
