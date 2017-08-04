@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-compile "org.grails.plugins:ala-auth:3.0.0"
+compile "org.grails.plugins:ala-auth:3.0.1"
 ```
 
 ## Description
@@ -67,7 +67,9 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
-- **Version 3.0.0-SNAPSHOT**:
+- **Version 3.0.1**:
+  - Support both `authenticateOnlyIfLoggedInPattern` and `authenticateOnlyIfLoggedInFilterPattern` properties for the only if previously logged in filter.
+- **Version 3.0.0**:
   - Upgrade to Grails 3
   - Use userdetails-service-client in preference to HttpWebService class
   - Use ala-cas-client 2.3 changes
