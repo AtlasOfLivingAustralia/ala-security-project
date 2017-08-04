@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=grails2)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-runtime ":ala-auth:2.1.3"
+runtime ":ala-auth:2.1.4"
 ```
 
 ## Description
@@ -68,6 +68,8 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 2.1.4**:
+  - Support both `authenticateOnlyIfLoggedInPattern` and `authenticateOnlyIfLoggedInFilterPattern` properties for the only if previously logged in filter.
 - **Version 2.1.3** (17/06/2017):
   - Don't call userdetails service for a blank username.
 - **Version 2.1.2** (7/06/2017):
