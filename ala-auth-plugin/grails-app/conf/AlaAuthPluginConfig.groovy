@@ -16,6 +16,7 @@ security {
         uriFilterPattern = '/admin/.*,/testAuth,/authTest/.*'
         uriExclusionFilterPattern = '/assets/.*,/static/.*,/fonts/.*,/images/.*,/css/.*,/js/.*,/less/.*'
         authenticateOnlyIfLoggedInPattern =  ''
+        authenticateOnlyIfLoggedInFilterPattern =  ''
         gatewayStorageClass = AjaxAwareGatewayStorage.name
         roleAttribute = 'authority'
         ignoreCase = true
