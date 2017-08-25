@@ -70,7 +70,7 @@ See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1
 - **Version 3.0.2**:
   - Fix CAS filter registration order WRT the Grails Character Encoding filter.
 - **Version 3.0.1**:
-  - Support both `authenticateOnlyIfLoggedInPattern` and `authenticateOnlyIfLoggedInFilterPattern` properties for the only if previously logged in filter.
+  - Support both `authenticateOnlyIfLoggedInPattern` and `authenticateOnlyIfLoggedInFilterPattern` properties for the only if previously logged in filter.
 - **Version 3.0.0**:
   - Upgrade to Grails 3
   - Use userdetails-service-client in preference to HttpWebService class
