@@ -4,21 +4,23 @@ import au.org.ala.cas.client.AlaHttpServletRequestWrapperFilter
 import au.org.ala.cas.client.UriFilter
 import au.org.ala.web.config.AuthPluginConfig
 import grails.plugins.*
+import grails.util.Metadata
 import org.jasig.cas.client.authentication.AuthenticationFilter
 import org.jasig.cas.client.session.SingleSignOutFilter
 import org.jasig.cas.client.session.SingleSignOutHttpSessionListener
 import org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter
 import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 import org.springframework.boot.web.servlet.FilterRegistrationBean
+import org.springframework.core.Ordered
+
+import javax.servlet.DispatcherType
 
 class AlaAuthGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "3.2.4 > *"
     // resources that are excluded from plugin packaging
-    def pluginExcludes = [
-        "grails-app/views/error.gsp"
-    ]
+    def pluginExcludes = []
 
     def title = "Ala Auth Plugin" // Headline display name of the plugin
     def author = "Nick dos Remedios"
@@ -50,17 +52,31 @@ This plugin provides auth services for ALA.
     Closure doWithSpring() { {->
             casContextParamInitializer(CasContextParamInitializer)
 
+            // The filter chain has to be before grailsWebRequestFilter but after the encoding filter.
+            // Its order changed in 3.1 (from Ordered.HIGHEST_PRECEDENCE + 30 (-2147483618) to
+            // FilterRegistrationBean.REQUEST_WRAPPER_FILTER_MAX_ORDER + 30 (30))
+            def filterOrder
+            String grailsVersion = Metadata.current.getGrailsVersion()
+            if (grailsVersion.startsWith('3.0')) {
+                filterOrder = Ordered.HIGHEST_PRECEDENCE + 21
+            }
+            else {
+                filterOrder = 21 // FilterRegistrationBean.REQUEST_WRAPPER_FILTER_MAX_ORDER + 21
+            }
+
             casSSOFilter(FilterRegistrationBean) {
                 name = 'Cas Single Sign Out Filter'
                 filter = bean(SingleSignOutFilter)
-                order = 1
+                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
+                order = filterOrder
                 urlPatterns = ['/*']
                 asyncSupported = true
             }
             casAuthFilter(FilterRegistrationBean) {
                 name = 'CAS Authentication Filter'
                 filter = bean(UriFilter)
-                order = 2
+                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
+                order = filterOrder + 1
                 urlPatterns = ['/*']
                 asyncSupported = true
                 initParameters = [
@@ -71,7 +87,8 @@ This plugin provides auth services for ALA.
             casValidationFilter(FilterRegistrationBean) {
                 name = 'CAS Validation Filter'
                 filter = bean(UriFilter)
-                order = 3
+                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
+                order = filterOrder + 2
                 urlPatterns = ['/*']
                 asyncSupported = true
                 initParameters = [
@@ -82,7 +99,8 @@ This plugin provides auth services for ALA.
             casHttpServletRequestWrapperFilter(FilterRegistrationBean) {
                 name = 'CAS HttpServletRequest Wrapper Filter'
                 filter = bean(UriFilter)
-                order = 4
+                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
+                order = filterOrder + 3
                 urlPatterns = ['/*']
                 asyncSupported = true
                 initParameters = [
