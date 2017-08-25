@@ -67,6 +67,8 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 3.0.2**:
+  - Fix CAS filter registration order WRT the Grails Character Encoding filter.
 - **Version 3.0.1**:
   - Support both `authenticateOnlyIfLoggedInPattern` and `authenticateOnlyIfLoggedInFilterPattern` properties for the only if previously logged in filter.
 - **Version 3.0.0**:
