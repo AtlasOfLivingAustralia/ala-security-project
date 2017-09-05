@@ -55,7 +55,7 @@ dependencies {
     // Grails plugin dependencies
 
     compile 'org.grails.plugins:http-builder-helper:1.0.2.ALA'
-    compile "org.grails.plugins:ala-auth:3.0.2"
+    compile "org.grails.plugins:ala-auth:3.0.2" 
 
     // Regular JAR dependencies
     compile "org.apache.httpcomponents:httpmime:4.5.3"
