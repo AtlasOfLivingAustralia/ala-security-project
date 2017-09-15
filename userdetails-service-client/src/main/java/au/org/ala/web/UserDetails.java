@@ -32,6 +32,7 @@ public class UserDetails implements Serializable {
     private String city; // optional prop
     private String state; // optional prop
     private String telephone; // optional prop
+    private Boolean locked; // optional prop
 
     private Set<String> roles = new HashSet<String>();
 

@@ -32,7 +32,7 @@ public class UserDetailsClientTest {
     Moshi moshi;
     UserDetailsClient userDetailsClient;
 
-    static final UserDetails test = new UserDetails(1l, "Test", "Test", "test@test.com", "1", "test", "test", "test", "test", "test", "test", newHashSet("ROLE_POTATO"));
+    static final UserDetails test = new UserDetails(1l, "Test", "Test", "test@test.com", "1", "test", "test", "test", "test", "test", "test", false, newHashSet("ROLE_POTATO"));
 
     @Before
     public void setup() throws IOException {

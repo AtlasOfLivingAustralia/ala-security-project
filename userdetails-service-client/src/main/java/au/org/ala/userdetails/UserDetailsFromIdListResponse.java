@@ -26,6 +26,7 @@ public class UserDetailsFromIdListResponse implements Serializable {
       "firstName":"User Given Name",
       "lastName":"User Surname",
       "email":"user@email.address",
+      "locked": false,
       "props":{
         "secondaryUserType":"Citizen scientist",
         "organisation":"User Organisation",
