@@ -1,7 +1,7 @@
 package au.org.ala.web
 
 import au.org.ala.userdetails.UserDetailsClient
-import org.springframework.cache.annotation.Cacheable
+import grails.plugin.cache.Cacheable
 
 /**
  * This service has one method that returns a large list of objects containing data about ALA users.

@@ -3,7 +3,7 @@ package au.org.ala.web
 import au.org.ala.cas.util.AuthenticationUtils
 import au.org.ala.userdetails.UserDetailsClient
 import au.org.ala.userdetails.UserDetailsFromIdListRequest
-import org.springframework.cache.annotation.Cacheable
+import grails.plugin.cache.Cacheable
 import org.springframework.web.context.request.RequestContextHolder
 
 import javax.servlet.http.HttpServletRequest
