@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-compile "org.grails.plugins:ala-auth:3.0.2"
+compile "org.grails.plugins:ala-auth:3.0.3"
 ```
 
 ## Description
@@ -67,6 +67,8 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 3.0.3**:
+  - Fix @Cacheable annotations to use the Grails versions instead of Spring
 - **Version 3.0.2**:
   - Fix CAS filter registration order WRT the Grails Character Encoding filter.
 - **Version 3.0.1**:
