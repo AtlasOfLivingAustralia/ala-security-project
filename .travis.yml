@@ -1,7 +1,7 @@
 language: groovy
 sudo: false
 jdk:
-- oraclejdk7
+- oraclejdk8
 branches:
   only:
   - master
@@ -17,7 +17,7 @@ cache:
 before_install:
 - export TZ=Australia/Canberra
 after_success:
-  - jdk_switcher use oraclejdk7
+  - jdk_switcher use oraclejdk8
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && ./gradlew clean && travis_retry ./gradlew publish'
 env:
   global:
