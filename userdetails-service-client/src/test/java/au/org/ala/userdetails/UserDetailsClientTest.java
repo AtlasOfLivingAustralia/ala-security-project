@@ -2,7 +2,6 @@ package au.org.ala.userdetails;
 
 import au.org.ala.web.UserDetails;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 import okhttp3.OkHttpClient;
@@ -17,7 +16,6 @@ import retrofit2.Call;
 import retrofit2.Response;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 import static au.org.ala.userdetails.UserDetailsClient.*;
@@ -32,7 +30,7 @@ public class UserDetailsClientTest {
     Moshi moshi;
     UserDetailsClient userDetailsClient;
 
-    static final UserDetails test = new UserDetails(1l, "Test", "Test", "test@test.com", "1", "test", "test", "test", "test", "test", "test", false, newHashSet("ROLE_POTATO"));
+    static final UserDetails test = new UserDetails(1l, "Test", "Tester", "test@test.com", "1", false, "testing", "checking", "Test Org", "City of Test", "TST", "555-TEST", newHashSet("ROLE_POTATO"));
 
     @Before
     public void setup() throws IOException {
@@ -124,6 +122,21 @@ public class UserDetailsClientTest {
         assertThat(usersDetails.isSuccess()).isTrue();
         assertThat(usersDetails.getInvalidIds()).contains(123);
         assertThat(usersDetails.getUsers()).contains(entry(test.getUserId(), test));
+        assertThat(usersDetails.getUsers().get(test.getUserId()))
+                .hasFieldOrPropertyWithValue("id", test.getId())
+                .hasFieldOrPropertyWithValue("userId", test.getUserId())
+                .hasFieldOrPropertyWithValue("firstName", test.getFirstName())
+                .hasFieldOrPropertyWithValue("lastName", test.getLastName())
+                .hasFieldOrPropertyWithValue("userName", test.getUserName())
+                .hasFieldOrPropertyWithValue("locked", test.getLocked())
+                .hasFieldOrPropertyWithValue("primaryUserType", test.getPrimaryUserType())
+                .hasFieldOrPropertyWithValue("secondaryUserType", test.getSecondaryUserType())
+                .hasFieldOrPropertyWithValue("organisation", test.getOrganisation())
+                .hasFieldOrPropertyWithValue("city", test.getCity())
+                .hasFieldOrPropertyWithValue("state", test.getState())
+                .hasFieldOrPropertyWithValue("telephone", test.getTelephone())
+                .hasFieldOrPropertyWithValue("roles", test.getRoles())
+                .hasFieldOrPropertyWithValue("props", test.getProps());
     }
 
     @Test

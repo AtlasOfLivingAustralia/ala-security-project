@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import retrofit2.Call;
+import retrofit2.Response;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -28,6 +29,7 @@ public class UserDetailsClientIntegrationTest {
     static final String USER_ID = "0";
     static final String EMAIL = "replace@me";
     static final String DISPLAY_NAME = "Replace Me";
+    static final String PRIMARY_USER_TYPE = "IT specialist";
 
     OkHttpClient okHttpClient;
     UserDetailsClient userDetailsClient;
@@ -41,18 +43,51 @@ public class UserDetailsClientIntegrationTest {
     @Test
     public void testGetUserDetails() throws IOException {
         Call<UserDetails> userDetailsCall = userDetailsClient.getUserDetails(EMAIL, true);
-        UserDetails userDetails = userDetailsCall.execute().body();
-        assertThat(userDetails).isNotNull().hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME).hasFieldOrPropertyWithValue("userName", EMAIL);
+        Response<UserDetails> response = userDetailsCall.execute();
+        assertThat(response.isSuccessful()).isTrue();
+        UserDetails userDetails = response.body();
+        assertThat(userDetails).isNotNull().hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME).hasFieldOrPropertyWithValue("userName", EMAIL).hasFieldOrPropertyWithValue("primaryUserType", PRIMARY_USER_TYPE);
+    }
+
+    @Test
+    public void testGetUserDetailsNoProps() throws IOException {
+        Call<UserDetails> userDetailsCall = userDetailsClient.getUserDetails(EMAIL, false);
+        Response<UserDetails> response = userDetailsCall.execute();
+        assertThat(response.isSuccessful()).isTrue();
+        UserDetails userDetails = response.body();
+        assertThat(userDetails).isNotNull().hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME).hasFieldOrPropertyWithValue("userName", EMAIL).hasFieldOrPropertyWithValue("primaryUserType", null);
     }
 
     @Test
     public void testGetUserDetailsFromIdList() throws IOException {
         Call<UserDetailsFromIdListResponse> allUserDetailsCall = userDetailsClient.getUserDetailsFromIdList(new UserDetailsFromIdListRequest(Arrays.asList(USER_ID), true));
-        UserDetailsFromIdListResponse userDetails = allUserDetailsCall.execute().body();
+        Response<UserDetailsFromIdListResponse> response = allUserDetailsCall.execute();
+        assertThat(response.isSuccessful()).isTrue();
+        UserDetailsFromIdListResponse userDetails = response.body();
         assertThat(userDetails).isNotNull();
         assertThat(userDetails.isSuccess()).isTrue();
         assertThat(userDetails.getUsers()).containsKeys(USER_ID);
-        assertThat(userDetails.getUsers().get(USER_ID)).hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME).hasFieldOrPropertyWithValue("userName", EMAIL).hasFieldOrPropertyWithValue("userId", USER_ID);
+        assertThat(userDetails.getUsers().get(USER_ID))
+                .hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME)
+                .hasFieldOrPropertyWithValue("userName", EMAIL)
+                .hasFieldOrPropertyWithValue("userId", USER_ID)
+                .hasFieldOrPropertyWithValue("primaryUserType", PRIMARY_USER_TYPE);
+    }
+
+    @Test
+    public void testGetUserDetailsFromIdListNoProps() throws IOException {
+        Call<UserDetailsFromIdListResponse> allUserDetailsCall = userDetailsClient.getUserDetailsFromIdList(new UserDetailsFromIdListRequest(Arrays.asList(USER_ID), false));
+        Response<UserDetailsFromIdListResponse> response = allUserDetailsCall.execute();
+        assertThat(response.isSuccessful()).isTrue();
+        UserDetailsFromIdListResponse userDetails = response.body();
+        assertThat(userDetails).isNotNull();
+        assertThat(userDetails.isSuccess()).isTrue();
+        assertThat(userDetails.getUsers()).containsKeys(USER_ID);
+        assertThat(userDetails.getUsers().get(USER_ID))
+                .hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME)
+                .hasFieldOrPropertyWithValue("userName", EMAIL)
+                .hasFieldOrPropertyWithValue("userId", USER_ID)
+                .hasFieldOrPropertyWithValue("primaryUserType", null);
     }
 
     @Test
