@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "au.org.ala"
-val versionString = "1.0.0-SNAPSHOT"
+val versionString = "1.4.0-SNAPSHOT"
 version = versionString
 
 configure<JavaPluginConvention> {
