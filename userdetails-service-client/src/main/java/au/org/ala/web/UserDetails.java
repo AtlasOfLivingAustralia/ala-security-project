@@ -22,6 +22,7 @@ public class UserDetails implements Serializable {
     public static final String ORGANISATION_PROPERTY = "organisation";
     public static final String CITY_PROPERTY = "city";
     public static final String STATE_PROPERTY = "state";
+    public static final String COUNTRY_PROPERTY = "country";
     public static final String TELEPHONE_PROPERTY = "telephone";
 
     private static final long serialVersionUID = 46L;
@@ -39,8 +40,8 @@ public class UserDetails implements Serializable {
 
     private Set<String> roles = new HashSet<String>();
 
-    @ConstructorProperties({"id", "firstName", "lastName", "userName", "userId", "locked", "primaryUserType", "secondaryUserType", "organisation", "city", "state", "telephone", "roles"})
-    public UserDetails(Long id, String firstName, String lastName, String userName, String userId, Boolean locked, String primaryUserType, String secondaryUserType, String organisation, String city, String state, String telephone, Set<String> roles) {
+    @ConstructorProperties({"id", "firstName", "lastName", "userName", "userId", "locked", "roles"})
+    public UserDetails(Long id, String firstName, String lastName, String userName, String userId, Boolean locked, Set<String> roles) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -48,12 +49,26 @@ public class UserDetails implements Serializable {
         this.userId = userId;
         this.locked = locked;
         this.roles = roles;
+    }
+
+    @ConstructorProperties({"id", "firstName", "lastName", "userName", "userId", "locked", "primaryUserType", "secondaryUserType", "organisation", "city", "state", "telephone", "roles"})
+    public UserDetails(Long id, String firstName, String lastName, String userName, String userId, Boolean locked, @Deprecated String primaryUserType, @Deprecated String secondaryUserType, String organisation, String city, String state, @Deprecated String telephone, Set<String> roles) {
+        this(id, firstName, lastName, userName, userId, locked, roles);
         setPrimaryUserType(primaryUserType);
         setSecondaryUserTypeProperty(secondaryUserType);
         setOrganisation(organisation);
         setCity(city);
         setState(state);
         setTelephone(telephone);
+    }
+
+    @ConstructorProperties({"id", "firstName", "lastName", "userName", "userId", "locked", "organisation", "city", "state", "country", "roles"})
+    public UserDetails(Long id, String firstName, String lastName, String userName, String userId, Boolean locked, String organisation, String city, String state, String country, Set<String> roles) {
+        this(id, firstName, lastName, userName, userId, locked, roles);
+        setOrganisation(organisation);
+        setCity(city);
+        setState(state);
+        setCountry(country);
     }
 
     public String getUserId() {
@@ -72,18 +87,22 @@ public class UserDetails implements Serializable {
         return firstName + " " + lastName;
     }
 
+    @Deprecated
     public String getPrimaryUserType() {
         return props.get(PRIMARY_USER_TYPE_PROPERTY);
     }
 
+    @Deprecated
     public void setPrimaryUserType(String primaryUserType) {
         props.put(PRIMARY_USER_TYPE_PROPERTY, primaryUserType);
     }
 
+    @Deprecated
     public String getSecondaryUserType() {
         return props.get(SECONDARY_USER_TYPE_PROPERTY);
     }
 
+    @Deprecated
     public void setSecondaryUserTypeProperty(String secondaryUserType) {
         props.put(SECONDARY_USER_TYPE_PROPERTY, secondaryUserType);
     }
@@ -112,10 +131,20 @@ public class UserDetails implements Serializable {
         props.put(STATE_PROPERTY, state);
     }
 
+    public String getCountry() {
+        return props.get(COUNTRY_PROPERTY);
+    }
+
+    public void setCountry(String country) {
+        props.put(COUNTRY_PROPERTY, country);
+    }
+
+    @Deprecated
     public String getTelephone() {
         return props.get(TELEPHONE_PROPERTY);
     }
 
+    @Deprecated
     public void setTelephone(String telephone) {
         props.put(TELEPHONE_PROPERTY, telephone);
     }

@@ -30,6 +30,7 @@ public class UserDetailsClientIntegrationTest {
     static final String EMAIL = "replace@me";
     static final String DISPLAY_NAME = "Replace Me";
     static final String PRIMARY_USER_TYPE = "IT specialist";
+    static final String BASE_URL = "https://auth.ala.org.au/userdetails/";
 
     OkHttpClient okHttpClient;
     UserDetailsClient userDetailsClient;
@@ -37,7 +38,7 @@ public class UserDetailsClientIntegrationTest {
     @Before
     public void setup() {
         this.okHttpClient = new OkHttpClient.Builder().addInterceptor(new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)).build();
-        this.userDetailsClient = new UserDetailsClient.Builder(okHttpClient, "https://auth.ala.org.au/userdetails/").build();
+        this.userDetailsClient = new UserDetailsClient.Builder(okHttpClient, BASE_URL).build();
     }
 
     @Test

@@ -10,6 +10,7 @@ public class UserDetailsTest {
         UserDetails userDetails = new UserDetails();
         final String city = "city";
         final String state = "state";
+        final String country = "country";
         final String organisation = "organisation";
         final String primaryUserType = "primaryUserType";
         final String secondaryUserType = "secondaryUserType";
@@ -20,6 +21,7 @@ public class UserDetailsTest {
         userDetails.setOrganisation(organisation);
         userDetails.setCity(city);
         userDetails.setState(state);
+        userDetails.setCountry(country);
         userDetails.setTelephone(telephone);
 
         assertTrue(userDetails.getPrimaryUserType().equals(primaryUserType));
@@ -27,9 +29,11 @@ public class UserDetailsTest {
         assertTrue(userDetails.getOrganisation().equals(organisation));
         assertTrue(userDetails.getCity().equals(city));
         assertTrue(userDetails.getState().equals(state));
+        assertTrue(userDetails.getCountry().equals(country));
         assertTrue(userDetails.getTelephone().equals(telephone));
 
         userDetails.setTelephone(telephone);
+        userDetails.setCountry(country);
         userDetails.setState(state);
         userDetails.setCity(city);
         userDetails.setOrganisation(organisation);
@@ -37,6 +41,7 @@ public class UserDetailsTest {
         userDetails.setPrimaryUserType(primaryUserType);
 
         assertTrue(userDetails.getTelephone().equals(telephone));
+        assertTrue(userDetails.getCountry().equals(country));
         assertTrue(userDetails.getState().equals(state));
         assertTrue(userDetails.getCity().equals(city));
         assertTrue(userDetails.getOrganisation().equals(organisation));

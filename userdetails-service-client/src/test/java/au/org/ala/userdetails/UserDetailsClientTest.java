@@ -30,7 +30,7 @@ public class UserDetailsClientTest {
     Moshi moshi;
     UserDetailsClient userDetailsClient;
 
-    static final UserDetails test = new UserDetails(1l, "Test", "Tester", "test@test.com", "1", false, "testing", "checking", "Test Org", "City of Test", "TST", "555-TEST", newHashSet("ROLE_POTATO"));
+    static final UserDetails test = new UserDetails(1l, "Test", "Tester", "test@test.com", "1", false, "Test Org", "City of Test", "TST", "country", newHashSet("ROLE_POTATO"));
 
     @Before
     public void setup() throws IOException {
@@ -129,12 +129,10 @@ public class UserDetailsClientTest {
                 .hasFieldOrPropertyWithValue("lastName", test.getLastName())
                 .hasFieldOrPropertyWithValue("userName", test.getUserName())
                 .hasFieldOrPropertyWithValue("locked", test.getLocked())
-                .hasFieldOrPropertyWithValue("primaryUserType", test.getPrimaryUserType())
-                .hasFieldOrPropertyWithValue("secondaryUserType", test.getSecondaryUserType())
                 .hasFieldOrPropertyWithValue("organisation", test.getOrganisation())
                 .hasFieldOrPropertyWithValue("city", test.getCity())
                 .hasFieldOrPropertyWithValue("state", test.getState())
-                .hasFieldOrPropertyWithValue("telephone", test.getTelephone())
+                .hasFieldOrPropertyWithValue("country", test.getCountry())
                 .hasFieldOrPropertyWithValue("roles", test.getRoles())
                 .hasFieldOrPropertyWithValue("props", test.getProps());
     }
