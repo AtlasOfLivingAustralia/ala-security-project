@@ -9,6 +9,7 @@ import grails.util.Holders
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.jasig.cas.client.authentication.AuthenticationFilter
 import org.jasig.cas.client.session.SingleSignOutHttpSessionListener
+import org.jasig.cas.client.util.HttpServletRequestWrapperFilter
 import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 import org.springframework.web.filter.DelegatingFilterProxy
 
@@ -85,7 +86,7 @@ class AlaAuthGrailsPlugin {
             }
             'filter' {
                 'filter-name'('casHttpServletRequestWrapperFilter')
-                'filter-class'(DelegatingFilterProxy.name)
+                'filter-class'(HttpServletRequestWrapperFilter.name)
                 'async-supported'('true')
                 'init-param' {
                     'param-name'('targetFilterLifecycle')
@@ -99,19 +100,19 @@ class AlaAuthGrailsPlugin {
             'filter-mapping' {
                 'filter-name' ('casSingleSignOutFilter')
                 'url-pattern' ('/*')
-                dispatcher('ERROR')
+//                dispatcher('ERROR')
                 dispatcher('REQUEST')
             }
             'filter-mapping' {
                 'filter-name' ('casAuthenticationFilter')
                 'url-pattern' ('/*')
-                dispatcher('ERROR')
+//                dispatcher('ERROR')
                 dispatcher('REQUEST')
             }
             'filter-mapping' {
                 'filter-name' ('casValidationFilter')
                 'url-pattern' ('/*')
-                dispatcher('ERROR')
+//                dispatcher('ERROR')
                 dispatcher('REQUEST')
             }
             'filter-mapping' {
@@ -152,13 +153,6 @@ class AlaAuthGrailsPlugin {
             filter = new UriFilter()
             initParameters = [
                     'filterClass': Cas30ProxyReceivingTicketValidationFilter.name,
-                    'disableCAS': disableCAS
-            ]
-        }
-        casHttpServletRequestWrapperFilter(ParametersFilterProxy) {
-            filter = new UriFilter()
-            initParameters = [
-                    'filterClass': AlaHttpServletRequestWrapperFilter.name,
                     'disableCAS': disableCAS
             ]
         }
