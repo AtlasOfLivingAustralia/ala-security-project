@@ -104,8 +104,7 @@ This plugin provides auth services for ALA.
                 order = filterOrder + 3
                 urlPatterns = ['/*']
                 asyncSupported = true
-                initParameters = [
-                ]
+                initParameters = [:]
             }
 
             alaAuthPluginConfiguration(AuthPluginConfig)
