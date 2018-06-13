@@ -14,7 +14,7 @@ class AlaSecuredInterceptor {
     SecurityPrimitives securityPrimitives
 
     AlaSecuredInterceptor() {
-        matchAll()
+        matchAll().except(uri: '/error')
     }
 
     boolean before() {

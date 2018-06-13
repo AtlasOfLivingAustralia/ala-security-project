@@ -67,6 +67,11 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 3.1.0**:
+  - Updates for ALA CAS 5
+  - Update ALA CAS client
+  - Update userdetails-service-client
+  - Always use the CAS HttpServletRequestFilter to put the CAS principal in the request scope if it's available.
 - **Version 3.0.3**:
   - Fix @Cacheable annotations to use the Grails versions instead of Spring
 - **Version 3.0.2**:

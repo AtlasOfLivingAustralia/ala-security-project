@@ -18,7 +18,7 @@ security {
         authenticateOnlyIfLoggedInPattern =  ''
         authenticateOnlyIfLoggedInFilterPattern =  ''
         gatewayStorageClass = AjaxAwareGatewayStorage.name
-        roleAttribute = 'authority'
+        roleAttribute = 'role'
         ignoreCase = true
 //        encodeServiceUrl = 'true'
 //        contextPath = '/set-this-to-override-default'

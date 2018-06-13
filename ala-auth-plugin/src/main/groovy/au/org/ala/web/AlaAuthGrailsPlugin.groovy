@@ -8,6 +8,7 @@ import grails.util.Metadata
 import org.jasig.cas.client.authentication.AuthenticationFilter
 import org.jasig.cas.client.session.SingleSignOutFilter
 import org.jasig.cas.client.session.SingleSignOutHttpSessionListener
+import org.jasig.cas.client.util.HttpServletRequestWrapperFilter
 import org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter
 import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 import org.springframework.boot.web.servlet.FilterRegistrationBean
@@ -67,7 +68,7 @@ This plugin provides auth services for ALA.
             casSSOFilter(FilterRegistrationBean) {
                 name = 'Cas Single Sign Out Filter'
                 filter = bean(SingleSignOutFilter)
-                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
+                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
                 order = filterOrder
                 urlPatterns = ['/*']
                 asyncSupported = true
@@ -75,7 +76,7 @@ This plugin provides auth services for ALA.
             casAuthFilter(FilterRegistrationBean) {
                 name = 'CAS Authentication Filter'
                 filter = bean(UriFilter)
-                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
+                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
                 order = filterOrder + 1
                 urlPatterns = ['/*']
                 asyncSupported = true
@@ -87,7 +88,7 @@ This plugin provides auth services for ALA.
             casValidationFilter(FilterRegistrationBean) {
                 name = 'CAS Validation Filter'
                 filter = bean(UriFilter)
-                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
+                dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
                 order = filterOrder + 2
                 urlPatterns = ['/*']
                 asyncSupported = true
@@ -98,14 +99,12 @@ This plugin provides auth services for ALA.
             }
             casHttpServletRequestWrapperFilter(FilterRegistrationBean) {
                 name = 'CAS HttpServletRequest Wrapper Filter'
-                filter = bean(UriFilter)
+                filter = bean(HttpServletRequestWrapperFilter)
                 dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
                 order = filterOrder + 3
                 urlPatterns = ['/*']
                 asyncSupported = true
                 initParameters = [
-                        'filterClass': AlaHttpServletRequestWrapperFilter.name,
-                        'disableCAS': grailsApplication.config.security.cas.bypass.toString(),
                 ]
             }
 
