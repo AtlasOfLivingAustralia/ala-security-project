@@ -66,6 +66,11 @@ class AuthService {
                 userName: attr?.email?.toString()?.toLowerCase(),
                 firstName: attr?.firstname?.toString() ?: "",
                 lastName: attr?.lastname?.toString() ?: "",
+                locked: attr?.locked?.toBoolean() ?: false,
+                organisation: attr?.organisation?.toString() ?: "",
+                city: attr?.country?.toString() ?: "",
+                state: attr?.state?.toString() ?: "",
+                country: attr?.country?.toString() ?: "",
                 roles: AuthenticationUtils.getUserRoles(RequestContextHolder.currentRequestAttributes().request)
             )
         }
