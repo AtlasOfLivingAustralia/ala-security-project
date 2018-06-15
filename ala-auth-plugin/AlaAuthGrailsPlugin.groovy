@@ -85,12 +85,8 @@ class AlaAuthGrailsPlugin {
             }
             'filter' {
                 'filter-name'('casHttpServletRequestWrapperFilter')
-                'filter-class'(DelegatingFilterProxy.name)
+                'filter-class'(AlaHttpServletRequestWrapperFilter.name)
                 'async-supported'('true')
-                'init-param' {
-                    'param-name'('targetFilterLifecycle')
-                    'param-value'('true')
-                }
             }
         }
         findMappingLocation.delegate = delegate
@@ -99,19 +95,16 @@ class AlaAuthGrailsPlugin {
             'filter-mapping' {
                 'filter-name' ('casSingleSignOutFilter')
                 'url-pattern' ('/*')
-                dispatcher('ERROR')
                 dispatcher('REQUEST')
             }
             'filter-mapping' {
                 'filter-name' ('casAuthenticationFilter')
                 'url-pattern' ('/*')
-                dispatcher('ERROR')
                 dispatcher('REQUEST')
             }
             'filter-mapping' {
                 'filter-name' ('casValidationFilter')
                 'url-pattern' ('/*')
-                dispatcher('ERROR')
                 dispatcher('REQUEST')
             }
             'filter-mapping' {
@@ -152,13 +145,6 @@ class AlaAuthGrailsPlugin {
             filter = new UriFilter()
             initParameters = [
                     'filterClass': Cas30ProxyReceivingTicketValidationFilter.name,
-                    'disableCAS': disableCAS
-            ]
-        }
-        casHttpServletRequestWrapperFilter(ParametersFilterProxy) {
-            filter = new UriFilter()
-            initParameters = [
-                    'filterClass': AlaHttpServletRequestWrapperFilter.name,
                     'disableCAS': disableCAS
             ]
         }
