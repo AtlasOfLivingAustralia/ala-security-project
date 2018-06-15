@@ -6,6 +6,8 @@ branches:
   only:
     - master
     - grails2
+    - 3.0.x
+    - 2.1.x
 cache:
   directories:
     - ~/.m2/repository
