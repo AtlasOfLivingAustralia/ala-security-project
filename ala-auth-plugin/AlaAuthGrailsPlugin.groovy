@@ -100,19 +100,16 @@ class AlaAuthGrailsPlugin {
             'filter-mapping' {
                 'filter-name' ('casSingleSignOutFilter')
                 'url-pattern' ('/*')
-//                dispatcher('ERROR')
                 dispatcher('REQUEST')
             }
             'filter-mapping' {
                 'filter-name' ('casAuthenticationFilter')
                 'url-pattern' ('/*')
-//                dispatcher('ERROR')
                 dispatcher('REQUEST')
             }
             'filter-mapping' {
                 'filter-name' ('casValidationFilter')
                 'url-pattern' ('/*')
-//                dispatcher('ERROR')
                 dispatcher('REQUEST')
             }
             'filter-mapping' {
