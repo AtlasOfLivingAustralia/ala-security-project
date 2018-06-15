@@ -15,7 +15,7 @@ import org.springframework.web.filter.DelegatingFilterProxy
 
 class AlaAuthGrailsPlugin {
     // the plugin version
-    def version = "2.2-SNAPSHOT"
+    def version = "2.2.0"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.3.0 > *"
     // the other plugins this plugin depends on
