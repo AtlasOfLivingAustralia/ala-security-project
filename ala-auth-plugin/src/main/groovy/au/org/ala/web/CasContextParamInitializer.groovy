@@ -1,40 +1,42 @@
 package au.org.ala.web
 
-import grails.core.GrailsApplication
 import groovy.util.logging.Slf4j
+import org.jasig.cas.client.configuration.ConfigurationKeys
 import org.jasig.cas.client.configuration.ConfigurationStrategyName
 import org.jasig.cas.client.session.SingleSignOutHttpSessionListener
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.web.servlet.ServletContextInitializer
 import org.springframework.stereotype.Component
 
 import javax.servlet.ServletContext
 import javax.servlet.ServletException
 
-import static au.org.ala.cas.client.UriFilter.AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN
-import static au.org.ala.cas.client.UriFilter.URI_EXCLUSION_FILTER_PATTERN
-import static au.org.ala.cas.client.UriFilter.URI_FILTER_PATTERN
 import static org.jasig.cas.client.configuration.ConfigurationKeys.*
 
 @Component
 @Slf4j
 class CasContextParamInitializer implements ServletContextInitializer {
 
-    @Autowired
-    GrailsApplication grailsApplication
+//    @Autowired
+//    GrailsApplication grailsApplication
+
+    private final CasClientProperties casClientProperties
+
+    CasContextParamInitializer(CasClientProperties casClientProperties) {
+        this.casClientProperties = casClientProperties
+    }
 
     @Override
     void onStartup(ServletContext servletContext) throws ServletException {
         log.debug("CAS Servlet Context Initializer")
 
-        def config = grailsApplication.config
+//        def config = grailsApplication.config
 
         servletContext.addListener(SingleSignOutHttpSessionListener)
 
         servletContext.setInitParameter('configurationStrategy', ConfigurationStrategyName.WEB_XML.name())
 
-        def appServerName = config.security.cas.appServerName
-        def service = config.security.cas.service
+        def appServerName = casClientProperties.appServerName
+        def service = casClientProperties.service
         if (!appServerName && !service) {
             def message = "One of 'security.cas.appServerName' or 'security.cas.service' config settings is required by the CAS filters."
             log.error(message)
@@ -46,49 +48,51 @@ class CasContextParamInitializer implements ServletContextInitializer {
         if (service) {
             servletContext.setInitParameter(SERVICE.name, service)
         }
-        servletContext.setInitParameter(CAS_SERVER_URL_PREFIX.name, config.security.cas.casServerUrlPrefix)
-        servletContext.setInitParameter(CAS_SERVER_LOGIN_URL.name, config.security.cas.loginUrl)
-        servletContext.setInitParameter(ROLE_ATTRIBUTE.name, config.security.cas.roleAttribute)
+        servletContext.setInitParameter(CAS_SERVER_URL_PREFIX.name, casClientProperties.casServerUrlPrefix)
+        servletContext.setInitParameter(CAS_SERVER_LOGIN_URL.name, casClientProperties.loginUrl)
+        servletContext.setInitParameter(ROLE_ATTRIBUTE.name, casClientProperties.roleAttribute)
+        servletContext.setInitParameter(IGNORE_PATTERN.name, casClientProperties.uriExclusionFilterPattern.join(','))
+        servletContext.setInitParameter(IGNORE_URL_PATTERN_TYPE.name, RegexListUrlPatternMatcherStrategy.name)
 
-        def ignoreCase = config.security.cas.ignoreCase
+        def ignoreCase = casClientProperties.ignoreCase
         if (isBoolesque(ignoreCase)) {
             servletContext.setInitParameter(IGNORE_CASE.name, ignoreCase.toString())
         }
 
-        servletContext.setInitParameter('casServerName', config.security.cas.casServerName)
+        servletContext.setInitParameter('casServerName', casClientProperties.casServerName)
 
-        servletContext.setInitParameter(URI_FILTER_PATTERN, config.security.cas.uriFilterPattern)
-        servletContext.setInitParameter(URI_EXCLUSION_FILTER_PATTERN, config.security.cas.uriExclusionFilterPattern)
-        def onlyIfLoggedInPattern = config.security.cas.authenticateOnlyIfLoggedInPattern
-        def onlyIfLoggedInFilterPattern = config.security.cas.authenticateOnlyIfLoggedInFilterPattern
-        if (onlyIfLoggedInPattern && onlyIfLoggedInFilterPattern) {
-            servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, onlyIfLoggedInPattern + ',' + onlyIfLoggedInFilterPattern)
-        } else {
-            servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, onlyIfLoggedInPattern ?: onlyIfLoggedInFilterPattern)
-        }
+//        servletContext.setInitParameter(URI_FILTER_PATTERN, config.security.cas.uriFilterPattern)
+//        servletContext.setInitParameter(URI_EXCLUSION_FILTER_PATTERN, config.security.cas.uriExclusionFilterPattern)
+//        def onlyIfLoggedInPattern = config.security.cas.authenticateOnlyIfLoggedInPattern
+//        def onlyIfLoggedInFilterPattern = config.security.cas.authenticateOnlyIfLoggedInFilterPattern
+//        if (onlyIfLoggedInPattern && onlyIfLoggedInFilterPattern) {
+//            servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, onlyIfLoggedInPattern + ',' + onlyIfLoggedInFilterPattern)
+//        } else {
+//            servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, onlyIfLoggedInPattern ?: onlyIfLoggedInFilterPattern)
+//        }
 
-        def encodeServiceUrl = config.security.cas.encodeServiceUrl
+        def encodeServiceUrl = casClientProperties.encodeServiceUrl
         if (isBoolesque(encodeServiceUrl)) {
             servletContext.setInitParameter(ENCODE_SERVICE_URL.name, encodeServiceUrl.toString())
         }
 
-        def contextPath = config.security.cas.contextPath
+        def contextPath = casClientProperties.contextPath
         if (contextPath) {
             log.warn("Setting security.cas.contextPath is unnecessary, ala-cas-client can now retrieve it from the ServletContext")
             servletContext.setInitParameter('contextPath', contextPath)
         }
 
-        def gateway = config.security.cas.gateway
-        if (isBoolesque(gateway)) {
-            servletContext.setInitParameter(GATEWAY.name, gateway.toString())
-        }
+//        def gateway = casClientProperties.gateway
+//        if (isBoolesque(gateway)) {
+//            servletContext.setInitParameter(GATEWAY.name, gateway.toString())
+//        }
 
-        def gatewayStorageClass = config.security.cas.gatewayStorageClass
+        def gatewayStorageClass = casClientProperties.gatewayStorageClass
         if (gatewayStorageClass) {
             servletContext.setInitParameter(GATEWAY_STORAGE_CLASS.name, gatewayStorageClass)
         }
 
-        def renew = config.security.cas.renew
+        def renew = casClientProperties.renew
         if (isBoolesque(renew)) {
             servletContext.setInitParameter(RENEW.name, renew.toString())
         }

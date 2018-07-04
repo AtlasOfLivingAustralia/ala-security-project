@@ -10,8 +10,9 @@ buildscript {
     }
 }
 
-version "3.2-SNAPSHOT"
-group 'org.grails.plugins'
+plugins {
+    id "net.ltgt.apt" version "0.15"
+}
 
 apply plugin:"eclipse"
 apply plugin:"idea"
@@ -19,6 +20,9 @@ apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-plugin-publish"
 apply plugin:"org.grails.grails-gsp"
 //apply plugin:"asset-pipeline"
+
+version "3.2-SNAPSHOT"
+group 'org.grails.plugins'
 
 repositories {
     mavenLocal()
@@ -61,7 +65,16 @@ dependencies {
     testCompile "com.squareup.retrofit2:retrofit-mock:2.4.0"
 
     compile 'au.org.ala:ala-cas-client:2.4'
+
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor"
 }
+
+compileGroovy {
+    groovyOptions.javaAnnotationProcessing = true
+}
+
+compileJava.dependsOn(processResources)
 
 bootRun {
     jvmArgs('-Dspring.output.ansi.enabled=always')

@@ -1,4 +1,5 @@
 import au.org.ala.cas.client.AjaxAwareGatewayStorage
+import org.jasig.cas.client.authentication.DefaultGatewayResolverImpl
 
 userDetails {
     url = 'https://auth.ala.org.au/userdetails/'
@@ -13,11 +14,11 @@ security {
         logoutUrl = 'https://auth.ala.org.au/cas/logout'
         bypass = false
         gateway = false
-        uriFilterPattern = '/admin/.*,/testAuth,/authTest/.*'
-        uriExclusionFilterPattern = '/assets/.*,/static/.*,/fonts/.*,/images/.*,/css/.*,/js/.*,/less/.*'
-        authenticateOnlyIfLoggedInPattern =  ''
-        authenticateOnlyIfLoggedInFilterPattern =  ''
-        gatewayStorageClass = AjaxAwareGatewayStorage.name
+        uriFilterPattern = ['/admin/*','/testAuth','/authTest/*']
+        uriExclusionFilterPattern = ['/assets/.*','/static/.*','/fonts/.*','/images/.*','/css/.*','/js/.*','/less/.*']
+        authenticateOnlyIfLoggedInPattern = []
+        authenticateOnlyIfLoggedInFilterPattern = ['/']
+        gatewayStorageClass = DefaultGatewayResolverImpl.name
         roleAttribute = 'role'
         ignoreCase = true
 //        encodeServiceUrl = 'true'
