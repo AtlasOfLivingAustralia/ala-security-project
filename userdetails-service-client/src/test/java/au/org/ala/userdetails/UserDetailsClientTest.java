@@ -64,11 +64,17 @@ public class UserDetailsClientTest {
                             }
                             response.setResponseCode(200).setBody(moshi.adapter(UserDetailsFromIdListResponse.class).toJson(responseBody));
                             break;
+                        case GET_USER_DETAILS_BY_ROLE_PATH:
+                            response.setResponseCode(200).setBody(moshi.adapter(Types.newParameterizedType(List.class, UserDetails.class)).toJson(newArrayList(test)));
+                            break;
                         case GET_USER_LIST_FULL_PATH:
                             response.setResponseCode(200).setBody(moshi.adapter(Types.newParameterizedType(List.class, UserDetails.class)).toJson(newArrayList(test)));
                             break;
                         case GET_USER_STATS_PATH:
                             response.setResponseCode(200).setBody(moshi.adapter(UserStatsResponse.class).toJson(new UserStatsResponse("description", 2, 1)));
+                            break;
+                        case SEARCH_USERDETAILS_PATH:
+                            response.setResponseCode(200).setBody(moshi.adapter(Types.newParameterizedType(List.class, UserDetails.class)).toJson(newArrayList(test)));
                             break;
                         case GET_USER_LIST_PATH:
                         case GET_USER_LIST_WITH_IDS_PATH:
@@ -135,6 +141,30 @@ public class UserDetailsClientTest {
                 .hasFieldOrPropertyWithValue("country", test.getCountry())
                 .hasFieldOrPropertyWithValue("roles", test.getRoles())
                 .hasFieldOrPropertyWithValue("props", test.getProps());
+    }
+
+    @Test
+    public void testGetUsersByRole() throws IOException {
+        Call<List<UserDetails>> usersCall = userDetailsClient.getUserDetailsByRole("ROLE_USER", false, newArrayList("test@test.com"));
+        Response<List<UserDetails>> response = usersCall.execute();
+
+        assertThat(response.isSuccessful()).isTrue();
+
+        List<UserDetails> usersDetails = response.body();
+
+        assertThat(usersDetails).isNotEmpty();
+    }
+
+    @Test
+    public void testSearch() throws IOException {
+        Call<List<UserDetails>> usersCall = userDetailsClient.searchUserDetails("test test", 10);
+        Response<List<UserDetails>> response = usersCall.execute();
+
+        assertThat(response.isSuccessful()).isTrue();
+
+        List<UserDetails> usersDetails = response.body();
+
+        assertThat(usersDetails).isNotEmpty();
     }
 
     @Test

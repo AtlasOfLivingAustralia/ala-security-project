@@ -29,7 +29,7 @@ public class UserDetailsClientIntegrationTest {
     static final String USER_ID = "0";
     static final String EMAIL = "replace@me";
     static final String DISPLAY_NAME = "Replace Me";
-    static final String PRIMARY_USER_TYPE = "IT specialist";
+    static final String STATE = "NSW";
     static final String BASE_URL = "https://auth.ala.org.au/userdetails/";
 
     OkHttpClient okHttpClient;
@@ -47,7 +47,7 @@ public class UserDetailsClientIntegrationTest {
         Response<UserDetails> response = userDetailsCall.execute();
         assertThat(response.isSuccessful()).isTrue();
         UserDetails userDetails = response.body();
-        assertThat(userDetails).isNotNull().hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME).hasFieldOrPropertyWithValue("userName", EMAIL).hasFieldOrPropertyWithValue("primaryUserType", PRIMARY_USER_TYPE);
+        assertThat(userDetails).isNotNull().hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME).hasFieldOrPropertyWithValue("userName", EMAIL).hasFieldOrPropertyWithValue("primaryUserType", STATE);
     }
 
     @Test
@@ -72,7 +72,7 @@ public class UserDetailsClientIntegrationTest {
                 .hasFieldOrPropertyWithValue("displayName", DISPLAY_NAME)
                 .hasFieldOrPropertyWithValue("userName", EMAIL)
                 .hasFieldOrPropertyWithValue("userId", USER_ID)
-                .hasFieldOrPropertyWithValue("primaryUserType", PRIMARY_USER_TYPE);
+                .hasFieldOrPropertyWithValue("state", STATE);
     }
 
     @Test
@@ -118,6 +118,20 @@ public class UserDetailsClientIntegrationTest {
         List<UserDetails> userDetailsList = listUserDetailsCall.execute().body();
         assertThat(userDetailsList).isNotNull().hasAtLeastOneElementOfType(UserDetails.class).first().hasFieldOrProperty("userName").hasFieldOrProperty("userId");
         assertThat(userDetailsList).extracting("userId", String.class).doesNotContainNull().are(onlyDigits);
+    }
+
+    @Test
+    public void testByRole() throws IOException {
+        Call<List<UserDetails>> usersCall = userDetailsClient.getUserDetailsByRole("ROLE_ADMIN", false, Arrays.asList(EMAIL, USER_ID));
+        List<UserDetails> users = usersCall.execute().body();
+        assertThat(users).isNotNull().isNotEmpty();
+    }
+
+    @Test
+    public void testSearch() throws IOException {
+        Call<List<UserDetails>> searchCall = userDetailsClient.searchUserDetails(EMAIL, 10);
+        List<UserDetails> users = searchCall.execute().body();
+        assertThat(users).isNotNull().isNotEmpty();
     }
 
     @Ignore

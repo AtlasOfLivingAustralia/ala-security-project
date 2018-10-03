@@ -32,6 +32,8 @@ public interface UserDetailsClient {
     String GET_USER_LIST_FULL_PATH = "userDetails/getUserListFull";
     String GET_USER_LIST_PATH = "userDetails/getUserList";
     String GET_USER_LIST_WITH_IDS_PATH = "userDetails/getUserListWithIds";
+    String GET_USER_DETAILS_BY_ROLE_PATH = "userDetails/byRole";
+    String SEARCH_USERDETAILS_PATH = "userDetails/search";
     String GET_USER_STATS_PATH = "ws/getUserStats";
 
     /**
@@ -53,8 +55,31 @@ public interface UserDetailsClient {
     @POST(GET_USER_DETAILS_FROM_ID_LIST_PATH)
     Call<UserDetailsFromIdListResponse> getUserDetailsFromIdList(@Body UserDetailsFromIdListRequest request);
 
+    /**
+     * return the User stats
+     * @return A response object with the user stats
+     */
     @GET(GET_USER_STATS_PATH)
     Call<UserStatsResponse> getUserStats();
+
+    /**
+     * Get the user details for all users with a given role, with optional filtering by user id / username / email
+     * @param role The role to filter for (eg ROLE_USER)
+     * @param includeProps Whether to include extended properties or not
+     * @param ids List of numeric ids as Strings / user names / passwords
+     * @return The list of users that match the restrictions
+     */
+    @GET(GET_USER_DETAILS_BY_ROLE_PATH)
+    Call<List<UserDetails>> getUserDetailsByRole(@Query("role") String role, @Query("includeProps") boolean includeProps, @Query("id") List<String> ids);
+
+    /**
+     * Search the users for all users whose email or name matches the query.
+     * @param query The query string to search for
+     * @param max Max number of results to return
+     * @return The list of users that match the query
+     */
+    @GET(SEARCH_USERDETAILS_PATH)
+    Call<List<UserDetails>> searchUserDetails(@Query("q") String query, @Query("max") int max);
 
     /**
      * Return all the UserDetails.  This will be super slow probably so caching the result is advised.
@@ -92,7 +117,12 @@ public interface UserDetailsClient {
     @Accessors(fluent = true, chain = true)
     @RequiredArgsConstructor
     class Builder {
-        private final OkHttpClient okHttpClient;
+        /**
+         * The Call.Factory to use for calling the web services.  Most of the time this will be an OkHttpClient but
+         * this accepts a Call.Factory to allow the OkHttpClient to be proxied via a Call.Factory in order to allow
+         * health checks and metrics gathering, for example.
+         */
+        private final okhttp3.Call.Factory callFactory;
         private final HttpUrl baseUrl;
 
         private Moshi moshi = null;
@@ -101,16 +131,20 @@ public interface UserDetailsClient {
          * Create a Builder using an okHttpClient and String baseUrl.  The baseUrl will be
          * converted to an HttpUrl and a trailing / will be added if required.
          *
-         * @param okHttpClient The OkHttpClient to use
+         * @param callFactory The call factory to use (usually an {@link okhttp3.OkHttpClient})
          * @param baseUrl      The base URL of the User Details service
          */
-        public Builder(OkHttpClient okHttpClient, String baseUrl) {
-            this.okHttpClient = okHttpClient;
+        public Builder(okhttp3.Call.Factory callFactory, String baseUrl) {
+            this.callFactory = callFactory;
             if (!baseUrl.endsWith("/")) {
                 log.warning("User Details Client Base URL (" + baseUrl + ") does not end with a /");
                 baseUrl += "/";
             }
             this.baseUrl = HttpUrl.parse(baseUrl);
+        }
+
+        Moshi defaultMoshi() {
+            return new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build();
         }
 
         /**
@@ -120,11 +154,11 @@ public interface UserDetailsClient {
          * @return A UserDetailsClient using the supplied okhttpclient, baseUrl and moshi.
          */
         public UserDetailsClient build() {
-            val moshi = this.moshi != null ? this.moshi : new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build();
+            val moshi = this.moshi != null ? this.moshi : defaultMoshi();
 
             return new Retrofit.Builder()
                     .addConverterFactory(MoshiConverterFactory.create(moshi))
-                    .client(okHttpClient)
+                    .callFactory(callFactory)
                     .baseUrl(baseUrl)
                     .build()
                     .create(UserDetailsClient.class);
