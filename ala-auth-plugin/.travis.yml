@@ -8,6 +8,7 @@ branches:
   - grails2
   - 3.0.x
   - 2.1.x
+  - gateway-experiment
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
