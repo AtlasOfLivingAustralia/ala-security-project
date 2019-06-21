@@ -14,10 +14,14 @@ security {
         logoutUrl = 'https://auth.ala.org.au/cas/logout'
         bypass = false
         gateway = false
+        renew = false
+        encodeServiceUrl = true
         uriFilterPattern = ['/admin/*','/testAuth','/authTest/*']
         uriExclusionFilterPattern = ['/assets/.*','/static/.*','/fonts/.*','/images/.*','/css/.*','/js/.*','/less/.*']
         authenticateOnlyIfLoggedInPattern = []
         authenticateOnlyIfLoggedInFilterPattern = ['/']
+        gatewayFilterPattern = []
+        gatewayIfCookieFilterPattern = []
         gatewayStorageClass = DefaultGatewayResolverImpl.name
         roleAttribute = 'role'
         ignoreCase = true

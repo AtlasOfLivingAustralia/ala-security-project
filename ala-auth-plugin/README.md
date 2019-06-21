@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-compile "org.grails.plugins:ala-auth:3.1.0"
+compile "org.grails.plugins:ala-auth:4.0.0-SNAPSHOT"
 ```
 
 ## Description
@@ -15,13 +15,19 @@ be found on the grails2 branch.
 In your `application.yml` or `application.groovy` you should define the following
 properties:
 
+**NOTE** `uriFilterPattern`, `authenticateOnlyIfLoggedInFilterPattern` and `uriExclusionFilterPattern` have changed:
+ - All properties are now lists instead of comma separated strings
+ - Only the exclusion pattern supports regexes now, all others only support Java Servlet Filter paths
+
 ```groovy
 security {
     cas {
         appServerName = 'http://devt.ala.org.au:8080' # or similar, up to the request path part
-        uriFilterPattern = '/paths/.*,/that,/require/.*,/auth.*'
-        uriExclusionFilterPattern = '/assets/.*,/images/.*,/css/.*,/js/.*,/less/.*' # this is the default value
-        authenticateOnlyIfLoggedInPattern =  '/optional-auth/.*'
+        uriFilterPattern = ['/paths/*','/that','/require/*,'/auth/**'] # Java servlet filter style paths only
+        authenticateOnlyIfCookieFilterPattern =  ['/optional-auth/*'] # Will force CAS auth if the Auth Cookie is defined
+        gatewayFilterPattern = ['/api/**'] # Use CAS gateway requests for these paths
+        gatewayIfCookieFilterPattern = ['/sso-only/**'] # Uses CAS gateway requests for these paths if the Auth Cookie is defined
+        uriExclusionFilterPattern = ['/paths/anonymous'] # Regex paths supported, only necessary to exclude a path from one of the above.
     }
 }
 ```
@@ -44,6 +50,7 @@ security:
         bypass: false
         roleAttribute: authority
         ignoreCase: true
+        authCookieName: 'ALA-Auth'
 ```
 
 `ala-cas-client` v2.3+ will now get the context path from the Servlet Context, so that property is
@@ -67,6 +74,9 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 4.0.0**:
+  - Add support for using CAS gateway requests for certain paths
+  - Convert paths to Java Servlet Filter paths
 - **Version 3.1.0**:
   - Updates for ALA CAS 5
   - Update ALA CAS client

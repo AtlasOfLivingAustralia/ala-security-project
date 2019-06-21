@@ -21,7 +21,7 @@ apply plugin:"org.grails.grails-plugin-publish"
 apply plugin:"org.grails.grails-gsp"
 //apply plugin:"asset-pipeline"
 
-version "3.2-SNAPSHOT"
+version "4.0-SNAPSHOT"
 group 'org.grails.plugins'
 
 repositories {
@@ -61,13 +61,16 @@ dependencies {
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
 
-    compile "au.org.ala:userdetails-service-client:1.4.0"
+    compile "au.org.ala:userdetails-service-client:1.5.0"
     testCompile "com.squareup.retrofit2:retrofit-mock:2.4.0"
 
-    compile 'au.org.ala:ala-cas-client:2.4'
+    compile 'au.org.ala:ala-cas-client:2.5'
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
     compileOnly "org.springframework.boot:spring-boot-configuration-processor"
+
+    compile group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '2.7.0'
+
 }
 
 compileGroovy {

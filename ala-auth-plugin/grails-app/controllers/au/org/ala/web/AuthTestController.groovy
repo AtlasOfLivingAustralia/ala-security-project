@@ -10,27 +10,16 @@ class AuthTestController {
         }
     }
 
+    @AlaSecured(value = CASRoles.ROLE_ADMIN, action = 'index')
     def userList() {
-        if (!authService.userInRole(CASRoles.ROLE_ADMIN)) {
-            redirect(action:'index')
-            return
-        }
     }
 
+    @AlaSecured(value = CASRoles.ROLE_ADMIN, action = 'index')
     def userDetailsSearch() {
-        if (!authService.userInRole(CASRoles.ROLE_ADMIN)) {
-            redirect(action:'index')
-            return
-        }
-
     }
 
+    @AlaSecured(value = CASRoles.ROLE_ADMIN, action = 'index')
     def userSearchResults(String userId) {
-        if (!authService.userInRole(CASRoles.ROLE_ADMIN)) {
-            redirect(action:'index')
-            return
-        }
-
         UserDetails user = null
         if (userId) {
             user = authService.getUserForUserId(userId)
@@ -38,10 +27,7 @@ class AuthTestController {
         [user: user]
     }
 
+    @AlaSecured(value = CASRoles.ROLE_ADMIN, action = 'index')
     def currentUserDetails() {
-        if (!authService.userInRole(CASRoles.ROLE_ADMIN)) {
-            redirect(action:'index')
-            return
-        }
     }
 }

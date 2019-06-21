@@ -61,16 +61,6 @@ class CasContextParamInitializer implements ServletContextInitializer {
 
         servletContext.setInitParameter('casServerName', casClientProperties.casServerName)
 
-//        servletContext.setInitParameter(URI_FILTER_PATTERN, config.security.cas.uriFilterPattern)
-//        servletContext.setInitParameter(URI_EXCLUSION_FILTER_PATTERN, config.security.cas.uriExclusionFilterPattern)
-//        def onlyIfLoggedInPattern = config.security.cas.authenticateOnlyIfLoggedInPattern
-//        def onlyIfLoggedInFilterPattern = config.security.cas.authenticateOnlyIfLoggedInFilterPattern
-//        if (onlyIfLoggedInPattern && onlyIfLoggedInFilterPattern) {
-//            servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, onlyIfLoggedInPattern + ',' + onlyIfLoggedInFilterPattern)
-//        } else {
-//            servletContext.setInitParameter(AUTHENTICATE_ONLY_IF_LOGGED_IN_FILTER_PATTERN, onlyIfLoggedInPattern ?: onlyIfLoggedInFilterPattern)
-//        }
-
         def encodeServiceUrl = casClientProperties.encodeServiceUrl
         if (isBoolesque(encodeServiceUrl)) {
             servletContext.setInitParameter(ENCODE_SERVICE_URL.name, encodeServiceUrl.toString())
@@ -81,11 +71,6 @@ class CasContextParamInitializer implements ServletContextInitializer {
             log.warn("Setting security.cas.contextPath is unnecessary, ala-cas-client can now retrieve it from the ServletContext")
             servletContext.setInitParameter('contextPath', contextPath)
         }
-
-//        def gateway = casClientProperties.gateway
-//        if (isBoolesque(gateway)) {
-//            servletContext.setInitParameter(GATEWAY.name, gateway.toString())
-//        }
 
         def gatewayStorageClass = casClientProperties.gatewayStorageClass
         if (gatewayStorageClass) {

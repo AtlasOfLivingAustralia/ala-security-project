@@ -1,7 +1,8 @@
 package au.org.ala.web
 
-import au.org.ala.cas.util.AuthenticationCookieUtils
 import grails.core.GrailsApplication
+
+import javax.servlet.http.HttpServletRequest
 
 class SecurityPrimitives {
 
@@ -26,8 +27,8 @@ class SecurityPrimitives {
      * @param request The http request object
      * @return true if logged in
      */
-    boolean isLoggedIn(request) {
-        AuthenticationCookieUtils.cookieExists(request, AuthenticationCookieUtils.ALA_AUTH_COOKIE) || request.userPrincipal
+    boolean isLoggedIn(HttpServletRequest request) {
+        request.userPrincipal != null
     }
 
     /**
@@ -43,8 +44,13 @@ class SecurityPrimitives {
      * @param request The http request object
      * @return true if logged out
      */
-    boolean isNotLoggedIn(request) {
+    boolean isNotLoggedIn(HttpServletRequest request) {
         !isLoggedIn(request)
+    }
+
+    boolean bypassCas() {
+        def bypass = grailsApplication.config.security.cas.bypass
+        return bypass?.toString()?.toBoolean() ?: false
     }
 
     /**
@@ -55,6 +61,17 @@ class SecurityPrimitives {
     boolean isAnyGranted(Iterable<String> roles) {
         fixAlaAdminRole(roles).any { role ->
             authService.userInRole(role?.trim())
+        }
+    }
+
+    /**
+     * Does the currently logged in user have any of the given roles?
+     *
+     * @param roles A list of roles to check
+     */
+    boolean isAnyGranted(HttpServletRequest request, Iterable<String> roles) {
+        bypassCas() || fixAlaAdminRole(roles).any { role ->
+            request.isUserInRole(role)
         }
     }
 
@@ -70,12 +87,33 @@ class SecurityPrimitives {
     }
 
     /**
+     * Does the currently logged in user have all of the given roles?
+     *
+     * @param roles A list of roles to check
+     */
+    boolean isAllGranted(HttpServletRequest request, Iterable<String> roles) {
+        bypassCas() || fixAlaAdminRole(roles).every { role ->
+            request.isUserInRole(role)
+        }
+    }
+
+
+    /**
      * Does the currently logged in user have none of the given roles?
      *
      * @param roles A list of roles to check
      */
     boolean isNotGranted(Iterable<String> roles) {
         !isAnyGranted(roles)
+    }
+
+    /**
+     * Does the currently logged in user have none of the given roles?
+     *
+     * @param roles A list of roles to check
+     */
+    boolean isNotGranted(HttpServletRequest request, Iterable<String> roles) {
+        bypassCas() || !isAnyGranted(request, roles)
     }
 
     /**

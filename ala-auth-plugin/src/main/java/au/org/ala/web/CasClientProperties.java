@@ -8,24 +8,28 @@ import java.util.List;
 @ConfigurationProperties(value = "security.cas")
 public class CasClientProperties {
 
-    public String appServerName;
-    public String service;
-    public String casServerName;
-    public String casServerUrlPrefix;
-    public String loginUrl;
-    public String logoutUrl;
-    public boolean enabled = true;
-    public boolean gateway;
-    public boolean renew;
-    public List<String> uriFilterPattern = new ArrayList<>();
-    public List<String> uriExclusionFilterPattern = new ArrayList<>();
-    public List<String> authenticateOnlyIfLoggedInPattern = new ArrayList<>();
-    public List<String> authenticateOnlyIfLoggedInFilterPattern = new ArrayList<>();
-    public String gatewayStorageClass;
-    public String roleAttribute = "role";
-    public boolean ignoreCase = true;
-    public boolean encodeServiceUrl = true;
-    public String contextPath = null;
+    private String appServerName;
+    private String service;
+    private String casServerName;
+    private String casServerUrlPrefix;
+    private String loginUrl;
+    private String logoutUrl;
+    private boolean enabled = true;
+    private boolean gateway = false;
+    private boolean renew = false;
+    private List<String> uriFilterPattern = new ArrayList<>();
+    private List<String> uriExclusionFilterPattern = new ArrayList<>();
+    private List<String> authenticateOnlyIfLoggedInPattern = new ArrayList<>();
+    private List<String> authenticateOnlyIfLoggedInFilterPattern = new ArrayList<>();
+    private List<String> authenticateOnlyIfCookieFilterPattern = new ArrayList<>();
+    private List<String> gatewayIfCookieFilterPattern = new ArrayList<>();
+    private List<String> gatewayFilterPattern = new ArrayList<>();
+    private String gatewayStorageClass;
+    private String roleAttribute = "role";
+    private boolean ignoreCase = true;
+    private boolean encodeServiceUrl = true;
+    private String contextPath = null;
+    private String authCookieName = "ALA-Auth";
 
     public String getAppServerName() {
         return appServerName;
@@ -171,4 +175,35 @@ public class CasClientProperties {
         this.contextPath = contextPath;
     }
 
+    public List<String> getAuthenticateOnlyIfCookieFilterPattern() {
+        return authenticateOnlyIfCookieFilterPattern;
+    }
+
+    public void setAuthenticateOnlyIfCookieFilterPattern(List<String> authenticateOnlyIfCookieFilterPattern) {
+        this.authenticateOnlyIfCookieFilterPattern = authenticateOnlyIfCookieFilterPattern;
+    }
+
+    public List<String> getGatewayIfCookieFilterPattern() {
+        return gatewayIfCookieFilterPattern;
+    }
+
+    public void setGatewayIfCookieFilterPattern(List<String> gatewayIfCookieFilterPattern) {
+        this.gatewayIfCookieFilterPattern = gatewayIfCookieFilterPattern;
+    }
+
+    public String getAuthCookieName() {
+        return authCookieName;
+    }
+
+    public void setAuthCookieName(String authCookieName) {
+        this.authCookieName = authCookieName;
+    }
+
+    public List<String> getGatewayFilterPattern() {
+        return gatewayFilterPattern;
+    }
+
+    public void setGatewayFilterPattern(List<String> gatewayFilterPattern) {
+        this.gatewayFilterPattern = gatewayFilterPattern;
+    }
 }

@@ -3,15 +3,23 @@ package au.org.ala.web.config
 import au.org.ala.userdetails.UserDetailsClient
 import au.org.ala.web.CasClientProperties
 import au.org.ala.web.CasContextParamInitializer
+import au.org.ala.web.CookieFilterWrapper
 import au.org.ala.web.CooperatingFilterWrapper
+import au.org.ala.web.RegexListUrlPatternMatcherStrategy
 import au.org.ala.web.UserAgentBypassFilterWrapper
+import au.org.ala.web.UserAgentFilterService
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Rfc3339DateJsonAdapter
 import grails.core.GrailsApplication
 import grails.util.Metadata
+import groovy.json.JsonSlurper
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import okhttp3.OkHttpClient
 import org.jasig.cas.client.authentication.AuthenticationFilter
+import org.jasig.cas.client.authentication.DefaultGatewayResolverImpl
+import org.jasig.cas.client.authentication.GatewayResolver
+import org.jasig.cas.client.authentication.UrlPatternMatcherStrategy
 import org.jasig.cas.client.configuration.ConfigurationKeys
 import org.jasig.cas.client.session.SingleSignOutFilter
 import org.jasig.cas.client.util.HttpServletRequestWrapperFilter
@@ -27,6 +35,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 
 import javax.servlet.DispatcherType
+import java.util.regex.Pattern
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
@@ -36,7 +45,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 class AuthPluginConfig {
 
     static final String AUTH_FILTER_KEY = '_cas_authentication_filter_'
-    static final String VALIDATION_FILTER_KEY = '_cas_validation_filter_'
 
     @Autowired
     CasClientProperties casClientProperties
@@ -66,6 +74,38 @@ class AuthPluginConfig {
     @Bean
     CasContextParamInitializer casContextParamInitializer() {
         new CasContextParamInitializer(casClientProperties)
+    }
+
+    @ConditionalOnMissingBean(name = "crawlerPatterns")
+    @Bean
+    @CompileDynamic
+    List<Pattern> crawlerPatterns() {
+        List crawlerUserAgents = new JsonSlurper().parse(this.class.classLoader.getResource('crawler-user-agents.json'))
+        return crawlerUserAgents*.pattern.collect { Pattern.compile(it) }
+    }
+
+    @Bean
+    UserAgentFilterService userAgentFilterService() {
+        return new UserAgentFilterService('', crawlerPatterns())
+    }
+
+    @Bean("ignoreUrlPatternMatcherStrategy")
+    UrlPatternMatcherStrategy ignoreUrlPatternMatcherStrategy() {
+        def strat = new RegexListUrlPatternMatcherStrategy()
+        strat.setPattern(casClientProperties.uriExclusionFilterPattern.join(','))
+        return strat
+    }
+
+    @ConditionalOnMissingBean(name = 'gatewayResolver')
+    @Bean('gatewayResolver')
+    GatewayResolver gatewayResolver() {
+        final GatewayResolver resolver
+        if (casClientProperties.gatewayStorageClass) {
+            resolver = (GatewayResolver) Class.forName(casClientProperties.gatewayStorageClass).newInstance()
+        } else {
+            resolver = new DefaultGatewayResolverImpl()
+        }
+        return resolver
     }
 
     // The filter chain has to be before grailsWebRequestFilter but after the encoding filter.
@@ -102,6 +142,7 @@ class AuthPluginConfig {
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = filterOrder() + 1
         frb.urlPatterns = casClientProperties.uriFilterPattern
+        frb.enabled = !frb.urlPatterns.empty
         frb.asyncSupported = true
         frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'false']
         return frb
@@ -112,10 +153,41 @@ class AuthPluginConfig {
     FilterRegistrationBean casAuthGatewayFilter() {
         def frb = new FilterRegistrationBean()
         frb.name = 'CAS Gateway Authentication Filter'
-        frb.filter = new CooperatingFilterWrapper(new UserAgentBypassFilterWrapper(new AuthenticationFilter()), AUTH_FILTER_KEY)
+        frb.filter = new CooperatingFilterWrapper(new UserAgentBypassFilterWrapper(new AuthenticationFilter(), userAgentFilterService()), AUTH_FILTER_KEY)
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = filterOrder() + 2
-        frb.urlPatterns = casClientProperties.authenticateOnlyIfLoggedInPattern + casClientProperties.authenticateOnlyIfLoggedInFilterPattern
+        frb.urlPatterns =  casClientProperties.gatewayFilterPattern
+        frb.enabled = !frb.urlPatterns.empty
+        frb.asyncSupported = true
+        frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'true']
+        return frb
+    }
+
+    @ConditionalOnProperty(prefix= 'security.cas', name='enabled', matchIfMissing = true)
+    @Bean
+    FilterRegistrationBean casAuthCookieFilter() {
+        def frb = new FilterRegistrationBean()
+        frb.name = 'CAS Cookie Authentication Filter'
+        frb.filter = new CooperatingFilterWrapper(new CookieFilterWrapper(new AuthenticationFilter(), casClientProperties.authCookieName), AUTH_FILTER_KEY)
+        frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
+        frb.order = filterOrder() + 3
+        frb.urlPatterns = casClientProperties.authenticateOnlyIfCookieFilterPattern + casClientProperties.authenticateOnlyIfLoggedInPattern + casClientProperties.authenticateOnlyIfLoggedInFilterPattern
+        frb.enabled = !frb.urlPatterns.empty
+        frb.asyncSupported = true
+        frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'false']
+        return frb
+    }
+
+    @ConditionalOnProperty(prefix= 'security.cas', name='enabled', matchIfMissing = true)
+    @Bean
+    FilterRegistrationBean casAuthCookieGatewayFilter() {
+        def frb = new FilterRegistrationBean()
+        frb.name = 'CAS Gateway Cookie Authentication Filter'
+        frb.filter = new CooperatingFilterWrapper(new CookieFilterWrapper(new UserAgentBypassFilterWrapper(new AuthenticationFilter(), userAgentFilterService()), casClientProperties.authCookieName), AUTH_FILTER_KEY)
+        frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
+        frb.order = filterOrder() + 4
+        frb.urlPatterns = casClientProperties.gatewayIfCookieFilterPattern
+        frb.enabled = !frb.urlPatterns.empty
         frb.asyncSupported = true
         frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'true']
         return frb
@@ -126,28 +198,21 @@ class AuthPluginConfig {
     FilterRegistrationBean casValidationFilter() {
         def frb = new FilterRegistrationBean()
         frb.name = 'CAS Validation Filter'
-        frb.filter = new CooperatingFilterWrapper(new Cas30ProxyReceivingTicketValidationFilter(), VALIDATION_FILTER_KEY)
+        frb.filter = new Cas30ProxyReceivingTicketValidationFilter()
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
-        frb.order = filterOrder() + 3
-        frb.urlPatterns = casClientProperties.uriFilterPattern
+        frb.order = filterOrder() + 5
+        frb.urlPatterns = ['/*']
+//                casClientProperties.uriFilterPattern +
+//                        casClientProperties.gatewayFilterPattern +
+//                        casClientProperties.authenticateOnlyIfCookieFilterPattern +
+//                        casClientProperties.authenticateOnlyIfLoggedInPattern +
+//                        casClientProperties.authenticateOnlyIfLoggedInFilterPattern +
+//                        casClientProperties.gatewayIfCookieFilterPattern
         frb.asyncSupported = true
-        frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'false']
+        frb.initParameters = [:]
         return frb
     }
 
-    @ConditionalOnProperty(prefix= 'security.cas', name='enabled', matchIfMissing = true)
-    @Bean
-    FilterRegistrationBean casValidationGatewayFilter() {
-        def frb = new FilterRegistrationBean()
-        frb.name = 'CAS Gateway Validation Filter'
-        frb.filter = new CooperatingFilterWrapper(new UserAgentBypassFilterWrapper(new Cas30ProxyReceivingTicketValidationFilter()), VALIDATION_FILTER_KEY)
-        frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
-        frb.order = filterOrder() + 4
-        frb.urlPatterns = casClientProperties.authenticateOnlyIfLoggedInPattern + casClientProperties.authenticateOnlyIfLoggedInFilterPattern
-        frb.asyncSupported = true
-        frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'true']
-        return frb
-    }
 
     @Bean
     FilterRegistrationBean casHttpServletRequestWrapperFilter() {
@@ -155,7 +220,7 @@ class AuthPluginConfig {
         frb.name = 'CAS HttpServletRequest Wrapper Filter'
         frb.filter = new HttpServletRequestWrapperFilter()
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
-        frb.order = filterOrder() + 5
+        frb.order = filterOrder() + 6
         frb.urlPatterns = ['/*']
         frb.asyncSupported = true
         frb.initParameters = [:]
