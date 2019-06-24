@@ -37,4 +37,9 @@ class CooperatingFilterWrapper implements Filter {
     void destroy() {
 
     }
+
+    @Override
+    String toString() {
+        return "CooperatingFilterWrapper(key = " + key + " delegate = " + delegate.toString() + ")"
+    }
 }

@@ -43,4 +43,9 @@ class UserAgentBypassFilterWrapper implements Filter {
     void destroy() {
 
     }
+
+    @Override
+    String toString() {
+        return "UserAgentFilterWrapper(delegate = " + delegate.toString() + ")"
+    }
 }

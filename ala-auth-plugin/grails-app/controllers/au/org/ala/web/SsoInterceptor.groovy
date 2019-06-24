@@ -38,14 +38,14 @@ class SsoInterceptor {
     @Value('${security.cas.authCookieName:ALA-Auth}')
     String authCookieName
 
-//    @Autowired
-//    CasClientProperties casClientProperties
-
     @Value('${security.cas.encodeServiceUrl:true}')
     boolean encodeServiceUrl
 
     @Value('${security.cas.enabled:true}')
     boolean enabled
+
+    @Value('${security.cas.renew:false}')
+    boolean renew
 
     @Autowired
     UrlPatternMatcherStrategy ignoreUrlPatternMatcherStrategy
@@ -99,7 +99,7 @@ class SsoInterceptor {
             return true
         }
 
-        return doCasAuthenticate(request, response, effectiveAnnotation.gateway(), effectiveAnnotation.renew())
+        return doCasAuthenticate(request, response, effectiveAnnotation.gateway(), renew)
     }
 
     boolean after() { true }

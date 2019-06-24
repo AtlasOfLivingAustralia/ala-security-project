@@ -48,4 +48,9 @@ class CookieFilterWrapper implements Filter {
     void destroy() {
         this.filter.destroy()
     }
+
+    @Override
+    String toString() {
+        return "CookieFilterWrapper(cookieName = " + cookieName + " delegate = " + filter.toString() + ")"
+    }
 }

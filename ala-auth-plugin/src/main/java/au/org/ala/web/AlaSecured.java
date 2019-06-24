@@ -78,6 +78,4 @@ public @interface AlaSecured {
      * @return true to use forward instead of redirect
      */
     boolean forward() default false;
-
-    boolean chain() default false;
 }

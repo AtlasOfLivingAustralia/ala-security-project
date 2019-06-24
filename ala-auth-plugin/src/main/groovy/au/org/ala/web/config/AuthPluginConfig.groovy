@@ -15,6 +15,7 @@ import grails.util.Metadata
 import groovy.json.JsonSlurper
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import okhttp3.OkHttpClient
 import org.jasig.cas.client.authentication.AuthenticationFilter
 import org.jasig.cas.client.authentication.DefaultGatewayResolverImpl
@@ -42,6 +43,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 @CompileStatic
 @Configuration("alaAuthPluginConfiguration")
 @EnableConfigurationProperties(CasClientProperties)
+@Slf4j
 class AuthPluginConfig {
 
     static final String AUTH_FILTER_KEY = '_cas_authentication_filter_'
@@ -133,11 +135,22 @@ class AuthPluginConfig {
         return frb
     }
 
+    private static void logFilter(String name, FilterRegistrationBean frb) {
+        if (frb.enabled) {
+            log.debug('{} enabled with type: {}', name, frb.filter)
+            log.debug('{} enabled with params: {}', name, frb.initParameters)
+            log.debug('{} enabled for paths: {}', name, frb.urlPatterns)
+        } else {
+            log.debug('{} disabled', name)
+        }
+    }
+
     @ConditionalOnProperty(prefix= 'security.cas', name='enabled', matchIfMissing = true)
     @Bean
     FilterRegistrationBean casAuthFilter() {
+        final name = 'CAS Authentication Filter'
         def frb = new FilterRegistrationBean()
-        frb.name = 'CAS Authentication Filter'
+        frb.name = name
         frb.filter = new CooperatingFilterWrapper(new AuthenticationFilter(), AUTH_FILTER_KEY)
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = filterOrder() + 1
@@ -145,14 +158,16 @@ class AuthPluginConfig {
         frb.enabled = !frb.urlPatterns.empty
         frb.asyncSupported = true
         frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'false']
+        logFilter(name, frb)
         return frb
     }
 
     @ConditionalOnProperty(prefix= 'security.cas', name='enabled', matchIfMissing = true)
     @Bean
     FilterRegistrationBean casAuthGatewayFilter() {
+        final name = 'CAS Gateway Authentication Filter'
         def frb = new FilterRegistrationBean()
-        frb.name = 'CAS Gateway Authentication Filter'
+        frb.name = name
         frb.filter = new CooperatingFilterWrapper(new UserAgentBypassFilterWrapper(new AuthenticationFilter(), userAgentFilterService()), AUTH_FILTER_KEY)
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = filterOrder() + 2
@@ -160,14 +175,16 @@ class AuthPluginConfig {
         frb.enabled = !frb.urlPatterns.empty
         frb.asyncSupported = true
         frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'true']
+        logFilter(name, frb)
         return frb
     }
 
     @ConditionalOnProperty(prefix= 'security.cas', name='enabled', matchIfMissing = true)
     @Bean
     FilterRegistrationBean casAuthCookieFilter() {
+        final name = 'CAS Cookie Authentication Filter'
         def frb = new FilterRegistrationBean()
-        frb.name = 'CAS Cookie Authentication Filter'
+        frb.name = name
         frb.filter = new CooperatingFilterWrapper(new CookieFilterWrapper(new AuthenticationFilter(), casClientProperties.authCookieName), AUTH_FILTER_KEY)
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = filterOrder() + 3
@@ -175,14 +192,16 @@ class AuthPluginConfig {
         frb.enabled = !frb.urlPatterns.empty
         frb.asyncSupported = true
         frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'false']
+        logFilter(name, frb)
         return frb
     }
 
     @ConditionalOnProperty(prefix= 'security.cas', name='enabled', matchIfMissing = true)
     @Bean
     FilterRegistrationBean casAuthCookieGatewayFilter() {
+        final name = 'CAS Gateway Cookie Authentication Filter'
         def frb = new FilterRegistrationBean()
-        frb.name = 'CAS Gateway Cookie Authentication Filter'
+        frb.name = name
         frb.filter = new CooperatingFilterWrapper(new CookieFilterWrapper(new UserAgentBypassFilterWrapper(new AuthenticationFilter(), userAgentFilterService()), casClientProperties.authCookieName), AUTH_FILTER_KEY)
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = filterOrder() + 4
@@ -190,6 +209,7 @@ class AuthPluginConfig {
         frb.enabled = !frb.urlPatterns.empty
         frb.asyncSupported = true
         frb.initParameters = [(ConfigurationKeys.GATEWAY.name) : 'true']
+        logFilter(name, frb)
         return frb
     }
 
@@ -210,6 +230,7 @@ class AuthPluginConfig {
 //                        casClientProperties.gatewayIfCookieFilterPattern
         frb.asyncSupported = true
         frb.initParameters = [:]
+        log.debug('CAS Validation Filter enabled')
         return frb
     }
 
@@ -224,6 +245,7 @@ class AuthPluginConfig {
         frb.urlPatterns = ['/*']
         frb.asyncSupported = true
         frb.initParameters = [:]
+        log.debug('CAS HttpServletRequest Wrapper Filter enabled')
         return frb
     }
 

@@ -16,18 +16,19 @@ In your `application.yml` or `application.groovy` you should define the followin
 properties:
 
 **NOTE** `uriFilterPattern`, `authenticateOnlyIfLoggedInFilterPattern` and `uriExclusionFilterPattern` have changed:
- - All properties are now lists instead of comma separated strings
- - Only the exclusion pattern supports regexes now, all others only support Java Servlet Filter paths
+ - All properties are now lists instead of comma separated strings,
+ - Only the `uriExclusionFilterPattern` supports regexes now, all others only support Java Servlet Filter paths,
+ - 
 
 ```groovy
 security {
     cas {
-        appServerName = 'http://devt.ala.org.au:8080' # or similar, up to the request path part
-        uriFilterPattern = ['/paths/*','/that','/require/*,'/auth/**'] # Java servlet filter style paths only
-        authenticateOnlyIfCookieFilterPattern =  ['/optional-auth/*'] # Will force CAS auth if the Auth Cookie is defined
-        gatewayFilterPattern = ['/api/**'] # Use CAS gateway requests for these paths
-        gatewayIfCookieFilterPattern = ['/sso-only/**'] # Uses CAS gateway requests for these paths if the Auth Cookie is defined
-        uriExclusionFilterPattern = ['/paths/anonymous'] # Regex paths supported, only necessary to exclude a path from one of the above.
+        appServerName = 'http://devt.ala.org.au:8080' // or similar, up to the request path part
+        uriFilterPattern = ['/paths/*','/that','/require/*,'/auth/**'] // Java servlet filter style paths only
+        authenticateOnlyIfCookieFilterPattern =  ['/optional-auth/*'] // Will force CAS auth if the Auth Cookie is defined
+        gatewayFilterPattern = ['/api/**'] // Use CAS gateway requests for these paths
+        gatewayIfCookieFilterPattern = ['/sso-only/**'] // Uses CAS gateway requests for these paths if the Auth Cookie is defined
+        uriExclusionFilterPattern = ['/paths/anonymous'] // Regex paths supported, only necessary to exclude a path from one / all of the above.
     }
 }
 ```
@@ -50,6 +51,7 @@ security:
         bypass: false
         roleAttribute: authority
         ignoreCase: true
+        renew: false
         authCookieName: 'ALA-Auth'
 ```
 
@@ -66,7 +68,6 @@ The `@SSO` annotation also supports the following arguments:
 
  - `gateway` - Use a CAS gateway request
  - `cookie` - Only force authentication if the ALA Auth cookie is present
- - `renew` - Force a new CAS authentication session to be established even if one already exists
 
 If `@SSO` is applied to a controller and an action within the controller doesn't require authentication
 then a corresponding `@NoSSO` annotation may be used to opt out of the authentication for that action, eg:

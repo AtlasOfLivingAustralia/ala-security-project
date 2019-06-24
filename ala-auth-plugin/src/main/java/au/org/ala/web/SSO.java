@@ -20,11 +20,6 @@ public @interface SSO {
     boolean gateway() default false;
 
     /**
-     * Force the user to re-enter credentials even if they have an active SSO session
-     */
-    boolean renew() default false;
-
-    /**
      * Only redirect for SSO if the user has a cookie set
      */
     boolean cookie() default false;
