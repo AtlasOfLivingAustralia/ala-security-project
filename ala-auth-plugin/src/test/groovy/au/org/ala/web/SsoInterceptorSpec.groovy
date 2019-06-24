@@ -2,6 +2,10 @@ package au.org.ala.web
 
 
 import grails.test.mixin.TestFor
+import org.jasig.cas.client.authentication.DefaultGatewayResolverImpl
+import org.jasig.cas.client.authentication.GatewayResolver
+import org.jasig.cas.client.authentication.UrlPatternMatcherStrategy
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Specification
 
 /**
@@ -11,10 +15,20 @@ import spock.lang.Specification
 class SsoInterceptorSpec extends Specification {
 
     def setup() {
+        defineBeans(true) {
+            grailsApplication(grailsApplication)
+        }
     }
 
     def cleanup() {
 
+    }
+
+    def doWithSpring = {
+        ignoreUrlPatternMatcherStrategy(RegexListUrlPatternMatcherStrategy)
+        userAgentFilterService(UserAgentFilterService, null, [])
+        gatewayStorage(DefaultGatewayResolverImpl)
+        grailsApplication(grailsApplication)
     }
 
     void "Test sso interceptor matching"() {

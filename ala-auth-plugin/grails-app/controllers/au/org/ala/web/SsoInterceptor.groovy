@@ -60,6 +60,7 @@ class SsoInterceptor {
 
     AuthenticationRedirectStrategy authenticationRedirectStrategy = new DefaultAuthenticationRedirectStrategy()
 
+    @Autowired
     GrailsApplication grailsApplication
 
     SsoInterceptor() {
