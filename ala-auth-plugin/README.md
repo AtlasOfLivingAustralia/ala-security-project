@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-compile "org.grails.plugins:ala-auth:3.2.0-SNAPSHOT"
+compile "org.grails.plugins:ala-auth:3.2.0"
 ```
 
 ## Description
@@ -18,7 +18,6 @@ properties:
 **NOTE** `uriFilterPattern`, `authenticateOnlyIfLoggedInFilterPattern` and `uriExclusionFilterPattern` have changed:
  - All properties are now lists instead of comma separated strings,
  - Only the `uriExclusionFilterPattern` supports regexes now, all others only support Java Servlet Filter paths,
- - 
 
 ```groovy
 security {
