@@ -142,7 +142,7 @@ class SsoInterceptor {
             modifiedServiceUrl = serviceUrl
         }
 
-        log.error("Constructed service url: {}", modifiedServiceUrl)
+        log.debug("Constructed service url: {}", modifiedServiceUrl)
 
         final String urlToRedirectTo = CommonUtils.constructRedirectUrl(this.casServerLoginUrl,
                 getProtocol().getServiceParameterName(), modifiedServiceUrl, renew, gateway)
