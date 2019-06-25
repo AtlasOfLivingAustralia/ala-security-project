@@ -3,7 +3,6 @@ package au.org.ala.web
 import grails.core.GrailsApplication
 import grails.core.GrailsClass
 import grails.artefact.Interceptor
-import grails.core.GrailsControllerClass
 import groovy.util.logging.Slf4j
 
 import java.lang.annotation.Annotation
