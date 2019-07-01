@@ -6,7 +6,7 @@ Web service specific security code, e.g. API Key filters
 
 ## Usage
 ```
-compile "org.grails.plugins:ala-ws-security:2.0"
+compile "org.grails.plugins:ala-ws-security-plugin:2.0"
 ```
 
 From the client side, set the ```apiKey``` request _header_  on all secured service requests to a valid API Key (registered in the API Key service).
