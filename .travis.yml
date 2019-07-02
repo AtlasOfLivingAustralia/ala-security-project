@@ -1,11 +1,10 @@
 language: groovy
 sudo: false
 jdk:
-- oraclejdk8
+- openjdk8
 branches:
   only:
   - master
-  - grails3
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
@@ -17,7 +16,6 @@ cache:
 before_install:
 - export TZ=Australia/Canberra
 after_success:
-  - jdk_switcher use oraclejdk8
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && ./gradlew clean && travis_retry ./gradlew publish'
 env:
   global:
