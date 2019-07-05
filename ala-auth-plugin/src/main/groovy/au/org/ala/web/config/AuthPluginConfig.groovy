@@ -6,6 +6,7 @@ import au.org.ala.web.CasContextParamInitializer
 import au.org.ala.web.CookieFilterWrapper
 import au.org.ala.web.CooperatingFilterWrapper
 import au.org.ala.web.RegexListUrlPatternMatcherStrategy
+import au.org.ala.web.UriExclusionFilter
 import au.org.ala.web.UserAgentBypassFilterWrapper
 import au.org.ala.web.UserAgentFilterService
 import com.squareup.moshi.Moshi
@@ -34,8 +35,10 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
+import org.springframework.util.AntPathMatcher
 
 import javax.servlet.DispatcherType
+import javax.servlet.Filter
 import java.util.regex.Pattern
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -50,6 +53,9 @@ class AuthPluginConfig {
 
     @Autowired
     CasClientProperties casClientProperties
+
+    @Autowired
+    GrailsApplication grailsApplication
 
     @ConditionalOnMissingBean(name = "userDetailsHttpClient")
     @Bean(name = ["defaultUserDetailsHttpClient", "userDetailsHttpClient"])
@@ -222,12 +228,6 @@ class AuthPluginConfig {
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = filterOrder() + 5
         frb.urlPatterns = ['/*']
-//                casClientProperties.uriFilterPattern +
-//                        casClientProperties.gatewayFilterPattern +
-//                        casClientProperties.authenticateOnlyIfCookieFilterPattern +
-//                        casClientProperties.authenticateOnlyIfLoggedInPattern +
-//                        casClientProperties.authenticateOnlyIfLoggedInFilterPattern +
-//                        casClientProperties.gatewayIfCookieFilterPattern
         frb.asyncSupported = true
         frb.initParameters = [:]
         log.debug('CAS Validation Filter enabled')
@@ -239,7 +239,7 @@ class AuthPluginConfig {
     FilterRegistrationBean casHttpServletRequestWrapperFilter() {
         FilterRegistrationBean frb = new FilterRegistrationBean()
         frb.name = 'CAS HttpServletRequest Wrapper Filter'
-        frb.filter = new HttpServletRequestWrapperFilter()
+        frb.filter = wrapFilterForActuator(new HttpServletRequestWrapperFilter())
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.ERROR)
         frb.order = filterOrder() + 6
         frb.urlPatterns = ['/*']
@@ -247,6 +247,37 @@ class AuthPluginConfig {
         frb.initParameters = [:]
         log.debug('CAS HttpServletRequest Wrapper Filter enabled')
         return frb
+    }
+
+    // nb this would be nicer if we could use the Spring Boot Configuration Property classes but these seem to cause
+    // problems for grails.
+    private Filter wrapFilterForActuator(Filter delegate) {
+        final filter
+        final config = grailsApplication.config
+        final managementSecurityEnabled = config.getProperty('management.security.enabled', Boolean, false)
+        final springSecurityBasicEnabled = config.getProperty('security.basic.enabled', Boolean, false)
+        if (managementSecurityEnabled && springSecurityBasicEnabled) {
+            AntPathMatcher matcher = new AntPathMatcher()
+            final path = config.getProperty('management.contextPath') ?: config.getProperty('management.context-path', '')
+            if (path) {
+                final basicPaths = config.getProperty('security.basic.path', String[])
+                final matches = basicPaths?.any { String pattern -> matcher.match(pattern, path) }
+                if (matches) {
+                    log.info('Wrapping {} because {} is in {}', delegate, path, basicPaths)
+                    filter = new UriExclusionFilter(delegate, path)
+                } else {
+                    log.info('Not wrapping {} because the management path {} isn\'t covered by the basic auth paths {}', delegate, path, basicPaths)
+                    filter = delegate
+                }
+            } else {
+                log.info('Not wrapping {} because the management path is not set', delegate)
+                filter = delegate
+            }
+        } else {
+            log.info('Not wrapping {} because either management security ({}) or spring security basic auth ({}) is not enabled', delegate, managementSecurityEnabled, springSecurityBasicEnabled)
+            filter = delegate
+        }
+        return filter
     }
 
 }

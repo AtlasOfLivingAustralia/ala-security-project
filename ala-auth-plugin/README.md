@@ -23,11 +23,11 @@ properties:
 security {
     cas {
         appServerName = 'http://devt.ala.org.au:8080' // or similar, up to the request path part
-        uriFilterPattern = ['/paths/*','/that','/require/*,'/auth/**'] // Java servlet filter style paths only
+        uriFilterPattern = ['/paths/*','/that','/require/*,'/auth/*'] // Java servlet filter style paths only
         authenticateOnlyIfCookieFilterPattern =  ['/optional-auth/*'] // Will force CAS auth if the Auth Cookie is defined
-        gatewayFilterPattern = ['/api/**'] // Use CAS gateway requests for these paths
-        gatewayIfCookieFilterPattern = ['/sso-only/**'] // Uses CAS gateway requests for these paths if the Auth Cookie is defined
-        uriExclusionFilterPattern = ['/paths/anonymous'] // Regex paths supported, only necessary to exclude a path from one / all of the above.
+        gatewayFilterPattern = ['/api/*'] // Use CAS gateway requests for these paths
+        gatewayIfCookieFilterPattern = ['/sso-only/*'] // Uses CAS gateway requests for these paths if the Auth Cookie is defined
+        uriExclusionFilterPattern = ['/paths/anonymous/.*', 'https?://.*/.*\?ignoreCas=true'] // Regex URLs supported, only necessary to exclude a path from one / all of the above.
     }
 }
 ```

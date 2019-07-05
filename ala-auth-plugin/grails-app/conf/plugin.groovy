@@ -17,7 +17,7 @@ security {
         renew = false
         encodeServiceUrl = true
         uriFilterPattern = ['/admin/*','/testAuth','/authTest/*']
-        uriExclusionFilterPattern = ['/assets/.*','/static/.*','/fonts/.*','/images/.*','/css/.*','/js/.*','/less/.*']
+        uriExclusionFilterPattern = []
         authenticateOnlyIfLoggedInPattern = []
         authenticateOnlyIfLoggedInFilterPattern = ['/']
         gatewayFilterPattern = []
