@@ -60,7 +60,7 @@ dependencies {
     compile "au.org.ala:userdetails-service-client:1.4.0"
     testCompile "com.squareup.retrofit2:retrofit-mock:2.4.0"
 
-    compile 'au.org.ala:ala-cas-client:2.4'
+    compile 'au.org.ala:ala-cas-client:2.5'
 }
 
 bootRun {

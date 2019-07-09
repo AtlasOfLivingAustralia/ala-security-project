@@ -22,6 +22,7 @@ security {
         ignoreCase = true
 //        encodeServiceUrl = 'true'
 //        contextPath = '/set-this-to-override-default'
+        authCookieName = 'ALA-Auth'
     }
 }
 
