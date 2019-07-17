@@ -5,6 +5,7 @@ import au.org.ala.cas.client.UriFilter
 import au.org.ala.web.config.AuthPluginConfig
 import grails.plugins.*
 import grails.util.Metadata
+import groovy.util.logging.Slf4j
 import org.jasig.cas.client.authentication.AuthenticationFilter
 import org.jasig.cas.client.session.SingleSignOutFilter
 import org.jasig.cas.client.session.SingleSignOutHttpSessionListener
@@ -16,6 +17,7 @@ import org.springframework.core.Ordered
 
 import javax.servlet.DispatcherType
 
+@Slf4j
 class AlaAuthGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
