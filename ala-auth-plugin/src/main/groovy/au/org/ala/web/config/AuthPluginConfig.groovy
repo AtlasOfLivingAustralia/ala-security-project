@@ -114,17 +114,28 @@ class AuthPluginConfig {
 
     @Bean
     FilterRegistrationBean casValidationFilter() {
+        def wrapFilter = grailsApplication.config.getProperty("security.cas.applyUriFiltersToTicketValidation", Boolean, true)
+
+        final Filter filter
+        final Map<String, String> initParams
+        if (wrapFilter) {
+            filter = new UriFilter()
+            initParams = [
+                    'filterClass': Cas30ProxyReceivingTicketValidationFilter.name,
+                    'disableCAS': grailsApplication.config.getProperty('security.cas.bypass', 'false')
+            ]
+        } else {
+            filter = new Cas30ProxyReceivingTicketValidationFilter()
+            initParams = [:]
+        }
         return new FilterRegistrationBean().with {
             name = 'CAS Validation Filter'
-            filter = new UriFilter()
+            filter = filter
             dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
             order = filterOrder() + 2
             urlPatterns = ['/*']
             asyncSupported = true
-            initParameters = [
-                    'filterClass': Cas30ProxyReceivingTicketValidationFilter.name,
-                    'disableCAS': grailsApplication.config.getProperty('security.cas.bypass', 'false')
-            ]
+            initParameters = initParams
             it
         }
 

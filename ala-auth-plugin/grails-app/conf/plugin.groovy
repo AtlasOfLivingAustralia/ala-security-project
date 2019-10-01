@@ -23,6 +23,7 @@ security {
 //        encodeServiceUrl = 'true'
 //        contextPath = '/set-this-to-override-default'
         authCookieName = 'ALA-Auth'
+        applyUriFiltersToTicketValidation = true // change to false to allow login from any URL to work properly
     }
 }
 
