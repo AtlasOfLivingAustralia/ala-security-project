@@ -88,7 +88,7 @@ class AuthService {
             if (response.successful) {
                 return response.body()
             } else {
-                log.warn("Failed to retrieve user details for userId: $userId, includeProps: $includeProps. Error was: ${response.message()}")
+                log.warn("Failed to retrieve user details for userId: $userId, includeProps: $includeProps. Error was: ${response.code()} ${response.message()}")
             }
         } catch (Exception ex) {
             log.error("Exception caught trying get find user details for $userId.", ex)
