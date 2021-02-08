@@ -11,7 +11,6 @@ class AuthTagLib {
     def grailServerURL = Holders.config.grails.serverURL ?: "http://bie.ala.org.au"
     // the next two can also be overridden by tag attributes
     def casLoginUrl = Holders.config.security.cas.loginUrl ?: "https://auth.ala.org.au/cas/login"
-    def casLogoutUrl = Holders.config.security.cas.logoutUrl ?: "https://auth.ala.org.au/cas/logout"
 
     static namespace = "auth"
     //static encodeAsForTags = [tagName: 'raw']
@@ -69,7 +68,6 @@ class AuthTagLib {
      * @attr logoutReturnToUrl where to go after logging out - defaults to current page
      * @attr loginReturnUrl where to go after login - defaults to current page
      * @attr casLoginUrl - defaults to {CH.config.security.cas.loginUrl}
-     * @attr casLogoutUrl - defaults to {CH.config.security.cas.logoutUrl}
      * @attr ignoreCookie - if true the helper cookie will not be used to determine login - defaults to false
      */
     def loginLogout = { attrs ->
@@ -85,7 +83,6 @@ class AuthTagLib {
         def requestUri = removeContext(grailServerURL) + request.forwardURI
         def logoutUrl = attrs.logoutUrl ?: grailServerURL + "/session/logout"
         def logoutReturnToUrl = attrs.logoutReturnToUrl ?: requestUri
-        def casLogoutUrl = attrs.casLogoutUrl ?: casLogoutUrl
 
         // TODO should this be attrs.logoutReturnToUrl?
         if (!attrs.loginReturnToUrl && request.queryString) {
@@ -95,13 +92,12 @@ class AuthTagLib {
         if ((attrs.ignoreCookie != "true" &&
                 AuthenticationCookieUtils.cookieExists(request, AuthenticationCookieUtils.ALA_AUTH_COOKIE)) ||
                 request.userPrincipal) {
-            return "<a href='${logoutUrl}" +
-                    "?casUrl=${casLogoutUrl}" +
-                    "&appUrl=${logoutReturnToUrl}' " +
-                    "class='${attrs.cssClass}'>Logout</a>"
+            return "<a href='${logoutUrl.encodeAsHTML()}" +
+                    "?appUrl=${logoutReturnToUrl.encodeAsHTML()}' " +
+                    "class='${attrs.cssClass.encodeAsHTML()}'>Logout</a>"
         } else {
             // currently logged out
-            return "<a href='${buildLoginLink(attrs)}' class='${attrs.cssClass}'><span>Log in</span></a>"
+            return "<a href='${buildLoginLink(attrs).encodeAsHTML()}' class='${attrs.cssClass.encodeAsHTML()}'><span>Log in</span></a>"
         }
     }
 
