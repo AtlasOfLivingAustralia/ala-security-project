@@ -81,8 +81,8 @@ class AuthTagLib {
      */
     String buildLoginoutLink(attrs) {
         def requestUri = removeContext(grailServerURL) + request.forwardURI
-        def logoutUrl = attrs.logoutUrl ?: grailServerURL + "/session/logout"
-        def logoutReturnToUrl = attrs.logoutUrl ?: g.createLink(controller: 'logout', action: 'logout')
+        def logoutUrl = attrs.logoutUrl ?: g.createLink(controller: 'logout', action: 'logout')
+        def logoutReturnToUrl = attrs.logoutReturnToUrl ?: requestUri
 
         // TODO should this be attrs.logoutReturnToUrl?
         if (!attrs.loginReturnToUrl && request.queryString) {
