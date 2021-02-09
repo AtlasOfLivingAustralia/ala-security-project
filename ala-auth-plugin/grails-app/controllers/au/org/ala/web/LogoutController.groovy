@@ -11,8 +11,8 @@ class LogoutController {
      */
     def logout() {
         session.invalidate()
-        def appUrl = URLEncoder.encode(params.appUrl, "UTF-8")
-        def casUrl = params.casUrl ?: grailsApplication.config.security.cas.logoutUrl
+        def appUrl = URLEncoder.encode(params.appUrl ?: g.createLink(uri: '/'), "UTF-8")
+        def casUrl = grailsApplication.config.security.cas.logoutUrl
         redirect(url:"${casUrl}?url=${appUrl}")
     }
 
