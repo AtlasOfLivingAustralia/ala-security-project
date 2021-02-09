@@ -21,7 +21,7 @@ apply plugin:"org.grails.grails-plugin-publish"
 apply plugin:"org.grails.grails-gsp"
 //apply plugin:"asset-pipeline"
 
-version "3.2.3-SNAPSHOT"
+version "3.2.3"
 group 'org.grails.plugins'
 
 repositories {
