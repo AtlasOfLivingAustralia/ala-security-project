@@ -109,6 +109,15 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 3.2.3** (10/02/2021):
+  - Updated `loginLogout`, supports Grails 3.2.x apps
+- **Version 3.1.3** (10/02/2021):
+  - Updated `loginLogout`, supports Grails 3.1.x apps
+- **Version 3.0.5** (10/02/2021):
+  - Updated `loginLogout`, supports Grails 3.0.x apps
+- **Version 2.1.6** (10/02/2021):
+  - Updated `loginLogout`, supports Grails 2.1.x apps
+  
 - **Version 3.2.0**:
   - Add support for using CAS gateway requests for certain paths
   - Convert paths to Java Servlet Filter paths
