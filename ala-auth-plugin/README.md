@@ -68,6 +68,8 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 2.2.1** (15/02/2021):
+  - Updated `loginLogout`, supports Grails 2.x apps
 - **Version 2.2** (13/06/2018):
   - Updates for ALA CAS 5
   - Update ALA CAS client

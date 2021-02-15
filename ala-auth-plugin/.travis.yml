@@ -1,12 +1,12 @@
 language: groovy
 jdk:
-  - openjdk7
+  - openjdk8
 sudo: false
 branches:
   only:
     - master
     - grails2
-    - 2.1.x
+    - 2.2.x
 cache:
   directories:
     - ~/.m2/repository

@@ -83,7 +83,7 @@ class AuthTagLib {
      */
     String buildLoginoutLink(attrs) {
         def requestUri = removeContext(grailServerURL) + request.forwardURI
-        def logoutUrl = attrs.logoutUrl ?: grailServerURL + "/session/logout"
+        def logoutUrl = attrs.logoutUrl ?: g.createLink(controller: 'logout', action: 'logout')
         def logoutReturnToUrl = attrs.logoutReturnToUrl ?: requestUri
         def casLogoutUrl = attrs.casLogoutUrl ?: casLogoutUrl
 
@@ -95,13 +95,12 @@ class AuthTagLib {
         if ((attrs.ignoreCookie != "true" &&
                 AuthenticationCookieUtils.cookieExists(request, AuthenticationCookieUtils.ALA_AUTH_COOKIE)) ||
                 request.userPrincipal) {
-            return "<a href='${logoutUrl}" +
-                    "?casUrl=${casLogoutUrl}" +
-                    "&appUrl=${logoutReturnToUrl}' " +
-                    "class='${attrs.cssClass}'>Logout</a>"
+            return "<a href='${logoutUrl.encodeAsHTML()}" +
+                    "?appUrl=${logoutReturnToUrl.encodeAsHTML()}' " +
+                    "class='${attrs.cssClass.encodeAsHTML()}'>Logout</a>"
         } else {
             // currently logged out
-            return "<a href='${buildLoginLink(attrs)}' class='${attrs.cssClass}'><span>Log in</span></a>"
+            return "<a href='${buildLoginLink(attrs).encodeAsHTML()}' class='${attrs.cssClass.encodeAsHTML()}'><span>Log in</span></a>"
         }
     }
 
