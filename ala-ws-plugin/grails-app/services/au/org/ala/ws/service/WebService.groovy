@@ -1,7 +1,6 @@
 package au.org.ala.ws.service
 
 import au.org.ala.web.AuthService
-import au.org.ala.web.UserDetails
 import grails.converters.JSON
 import groovyx.net.http.ContentType as GContentType
 import groovyx.net.http.HTTPBuilder
@@ -22,7 +21,7 @@ import org.apache.http.entity.mime.content.InputStreamBody
 import org.apache.http.entity.mime.content.StringBody
 import org.grails.web.json.JSONElement
 import org.springframework.web.context.request.RequestContextHolder
-import org.springframework.web.multipart.commons.CommonsMultipartFile
+import org.springframework.web.multipart.MultipartFile
 
 import javax.servlet.http.HttpServletResponse
 import java.nio.charset.Charset
@@ -395,7 +394,10 @@ class WebService {
         files.eachWithIndex { it, index ->
             if (it instanceof byte[]) {
                 entityBuilder.addPart("file${index}", new ByteArrayBody(it, "file${index}"))
-            } else if (it instanceof CommonsMultipartFile) {
+            }
+            // Grails 3.3 multipart file is instance of org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
+            // But StandardMultipartFile and CommonMultipartFile are both inherited from MultipartFile
+            else if (it instanceof MultipartFile) {
                 entityBuilder.addPart(it.originalFilename, new InputStreamBody(it.inputStream, it.contentType, it.originalFilename))
             } else if (it instanceof InputStream) {
                 entityBuilder.addPart("file${index}", new InputStreamBody(it, "file${index}"))
