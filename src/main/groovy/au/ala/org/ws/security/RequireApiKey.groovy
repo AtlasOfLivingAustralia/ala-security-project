@@ -12,10 +12,5 @@ import java.lang.annotation.Target
 @Target([ElementType.TYPE, ElementType.METHOD])
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface RequireApiKey {
-    String projectIdParam() default "id"
-
-    String redirectController() default "project"
-
-    String redirectAction() default "index"
+@interface RequireApiKey {
 }

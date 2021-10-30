@@ -6,11 +6,10 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-//        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.2"
     }
 }
 
-version "2.0.1"
+version "3.0.0-SNAPSHOT"
 group "org.grails.plugins"
 
 apply plugin:"eclipse"
@@ -18,7 +17,6 @@ apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-plugin-publish"
 apply plugin:"org.grails.grails-gsp"
-//apply plugin:"asset-pipeline"
 apply plugin:"maven-publish"
 
 sourceCompatibility = 1.8
@@ -41,14 +39,17 @@ dependencies {
     compile "org.grails.plugins:cache"
     compile "org.grails.plugins:scaffolding"
     console "org.grails:grails-console"
+    compile "com.auth0:java-jwt:3.18.2"
+    compile "com.auth0:jwks-rsa:0.20.0"
+
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
-//    runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.14.2"
     testCompile "org.grails:grails-plugin-testing"
     testCompile "org.grails.plugins:geb"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+
 }
 
 bootRun {
@@ -58,9 +59,6 @@ bootRun {
 // enable if you wish to package this plugin as a standalone application
 bootRepackage.enabled = false
 grailsPublish {
-    // TODO: Provide values here
-//    user = 'user'
-//    key = 'key'
     githubSlug = 'AtlasOfLivingAustralia/ala-ws-security-plugin'
     license {
         name = 'MPL-2.0'

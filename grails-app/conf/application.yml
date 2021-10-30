@@ -31,3 +31,6 @@ endpoints:
     enabled: false
     jmx:
         enabled: true
+
+jwk:
+    url: https://nectar-auth-dev.ala.org.au/cas/oidc/jwks

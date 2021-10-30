@@ -1,6 +1,6 @@
 package au.org.ala.ws.security
 
-import au.org.ala.ws.security.service.ApiKeyService
+import au.org.ala.ws.security.service.LegacyApiKeyService
 import au.org.ala.ws.security.service.WsService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -8,14 +8,14 @@ import org.springframework.http.HttpStatus
 import spock.lang.Specification
 import spock.lang.Unroll
 
-@TestFor(ApiKeyService)
+@TestFor(LegacyApiKeyService)
 @Unroll
 @Mock(WsService)
-class ApiKeyServiceSpec extends Specification {
+class LegacyApiKeyServiceSpec extends Specification {
 
     void "Should return valid = false when the API Key service returns a HTTP code other than 200"() {
         setup:
-        ApiKeyService service = new ApiKeyService()
+        LegacyApiKeyService service = new LegacyApiKeyService()
 
         service.grailsApplication = [config: [security: [apikey: [check: [serviceUrl: "bla"]]]]]
 
@@ -36,7 +36,7 @@ class ApiKeyServiceSpec extends Specification {
 
     void "Should return valid = true if the API Key service returns a HTTP 200 and a response JSON of '{valid: true}'"() {
         setup:
-        ApiKeyService service = new ApiKeyService()
+        LegacyApiKeyService service = new LegacyApiKeyService()
 
         service.grailsApplication = [config: [security: [apikey: [check: [serviceUrl: "bla"]]]]]
 
@@ -50,7 +50,7 @@ class ApiKeyServiceSpec extends Specification {
 
     void "Should return valid = false if the API Key service returns a HTTP 200 and a response JSON of '{valid: false}'"() {
         setup:
-        ApiKeyService service = new ApiKeyService()
+        LegacyApiKeyService service = new LegacyApiKeyService()
 
         service.grailsApplication = [config: [security: [apikey: [check: [serviceUrl: "bla"]]]]]
 

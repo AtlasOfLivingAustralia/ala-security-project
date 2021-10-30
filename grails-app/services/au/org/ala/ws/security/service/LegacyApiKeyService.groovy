@@ -2,15 +2,16 @@ package au.org.ala.ws.security.service
 
 import grails.converters.JSON
 
-class ApiKeyService {
+class LegacyApiKeyService {
+
     def grailsApplication
     WsService wsService
 
     static final int STATUS_OK = 200
 
     Map checkApiKey(String key) {
-        Map response
 
+        Map response
         try {
             def conn = wsService.get("${grailsApplication.config.security.apikey.check.serviceUrl}${key}")
 

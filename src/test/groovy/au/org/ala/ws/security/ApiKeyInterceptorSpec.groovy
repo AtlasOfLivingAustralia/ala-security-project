@@ -2,7 +2,7 @@ package au.org.ala.ws.security
 
 import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
-import au.org.ala.ws.security.service.ApiKeyService
+import au.org.ala.ws.security.service.LegacyApiKeyService
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
@@ -19,12 +19,12 @@ class ApiKeyInterceptorSpec extends Specification {
     static final int UNAUTHORISED = 403
     static final int OK = 200
 
-    ApiKeyService apiKeyService
+    LegacyApiKeyService apiKeyService
 
     void setup() {
         // grailsApplication is not isolated in unit tests, so clear the ip.whitelist property to avoid polluting independent tests
         grailsApplication.config.security.apikey.ip = [whitelist: ""]
-        apiKeyService = Stub(ApiKeyService)
+        apiKeyService = Stub(LegacyApiKeyService)
         apiKeyService.checkApiKey(_) >> { String key -> [valid: (key == "valid")] }
 
         interceptor.apiKeyService = apiKeyService
