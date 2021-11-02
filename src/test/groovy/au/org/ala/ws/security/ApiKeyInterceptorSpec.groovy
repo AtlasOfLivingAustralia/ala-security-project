@@ -24,6 +24,8 @@ class ApiKeyInterceptorSpec extends Specification {
     void setup() {
         // grailsApplication is not isolated in unit tests, so clear the ip.whitelist property to avoid polluting independent tests
         grailsApplication.config.security.apikey.ip = [whitelist: ""]
+        grailsApplication.config.api.whitelist.enabled = true
+        grailsApplication.config.api.legacy.enabled = true
         apiKeyService = Stub(LegacyApiKeyService)
         apiKeyService.checkApiKey(_) >> { String key -> [valid: (key == "valid")] }
 

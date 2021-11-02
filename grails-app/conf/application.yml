@@ -32,5 +32,13 @@ endpoints:
     jmx:
         enabled: true
 
+api:
+    whitelist:
+        enabled: false
+    legacy:
+        enabled: false
+    jwt:
+        enabled: true
+
 jwk:
     url: https://nectar-auth-dev.ala.org.au/cas/oidc/jwks
