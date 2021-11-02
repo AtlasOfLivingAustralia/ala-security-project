@@ -12,18 +12,25 @@ import org.springframework.beans.factory.annotation.Value
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
+/**
+ * API key interceptor.
+ * This implementation supports 3 modes of authentication:
+ * 1) JSON Web Token
+ * 2) White listed IPs (deprecated)
+ * 3) Legacy API keys generated using the deprecated apikey app (deprecated).
+ */
 @CompileStatic
 @Slf4j
 class ApiKeyInterceptor {
+
+    @Value('${api.whitelist.enabled:false}')
+    Boolean whitelistEnabled
 
     @Value('${api.legacy.enabled:false}')
     Boolean legacyApiKeysEnabled
 
     @Value('${api.jwt.enabled:true}')
     Boolean jwtApiKeysEnabled
-
-    @Value('${api.whitelist.enabled:false}')
-    Boolean whitelistEnabled
 
     JwtCheckService jwtCheckService
     LegacyApiKeyService legacyApiKeyService
@@ -39,7 +46,7 @@ class ApiKeyInterceptor {
     }
 
     /**
-     * Executed before a matched action
+     * Executed before a matched action.
      *
      * @return Whether the action should continue and execute
      */
@@ -53,36 +60,29 @@ class ApiKeyInterceptor {
         if ((controllerClass?.isAnnotationPresent(RequireApiKey) && !method?.isAnnotationPresent(SkipApiKeyCheck))
                 || method?.isAnnotationPresent(RequireApiKey)) {
 
-            boolean ok = false
-            boolean legacyKeyOk = false
-            boolean jwtOk = false
-
-            String clientIp = getClientIP(request)
-
-            if (whitelistEnabled) {
-                List<String> whiteList = buildWhiteList()
-                ok = checkClientIp(clientIp, whiteList)
-                if (ok){
-                    return true
-                }
-            }
-
-            if (!ok && legacyApiKeysEnabled){
-                String apiKey = request.getHeader(headerName)
-                if (apiKey) {
-                    legacyKeyOk = legacyApiKeyService.checkApiKey(apiKey).valid
-                    if (legacyKeyOk) {
-                        return true
-                    }
-                }
-            }
-
-            if (!ok && jwtApiKeysEnabled){
+            if (jwtApiKeysEnabled){
                 String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER_NAME)
                 AuthenticatedUser authenticatedUser = jwtCheckService.checkJWT(authorizationHeader)
                 request.setProperty("authenticatedUser", authenticatedUser)
                 if (authenticatedUser){
                     return true
+                }
+            }
+
+            if (whitelistEnabled) {
+                String clientIp = getClientIP(request)
+                List<String> whiteList = buildWhiteList()
+                if (checkClientIp(clientIp, whiteList)){
+                    return true
+                }
+            }
+
+            if (legacyApiKeysEnabled){
+                String apiKey = request.getHeader(headerName)
+                if (apiKey) {
+                    if (legacyApiKeyService.checkApiKey(apiKey).valid) {
+                        return true
+                    }
                 }
             }
 

@@ -6,7 +6,7 @@ Web service specific security code, e.g. API Key filters
 
 ## Usage
 ```
-compile "org.grails.plugins:ala-ws-security-plugin:2.0"
+compile "org.grails.plugins:ala-ws-security-plugin:3.0"
 ```
 
 From the client side, set the ```apiKey``` request _header_  on all secured service requests to a valid API Key (registered in the API Key service).
@@ -23,6 +23,8 @@ On the server side, annotate protected controllers (either the class or individu
 - ```security.apikey.header.override ``` - override the default request header name (apiKey) to use a different name.
 
 ## Changelog
+- **Version 3.0**
+  - JSON Web Token support
 - **Version 2.0**
   - Grails 3 version
 - **Version 1.0** (2/7/2015)
