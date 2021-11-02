@@ -77,7 +77,7 @@ class ApiKeyInterceptor {
                 }
             }
 
-            if (legacyApiKeysEnabled){
+            if (legacyApiKeysEnabled && legacyApiKeyService){
                 String apiKey = request.getHeader(headerName)
                 if (apiKey) {
                     if (legacyApiKeyService.checkApiKey(apiKey).valid) {

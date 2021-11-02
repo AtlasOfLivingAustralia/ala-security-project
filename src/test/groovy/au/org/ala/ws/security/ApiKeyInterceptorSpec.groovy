@@ -8,6 +8,7 @@ import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
 import grails.test.mixin.web.InterceptorUnitTestMixin
 import org.grails.web.util.GrailsApplicationAttributes
+import org.springframework.beans.factory.annotation.Value
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -19,17 +20,21 @@ class ApiKeyInterceptorSpec extends Specification {
     static final int UNAUTHORISED = 403
     static final int OK = 200
 
-    LegacyApiKeyService apiKeyService
+    LegacyApiKeyService legacyApiKeyService
 
     void setup() {
         // grailsApplication is not isolated in unit tests, so clear the ip.whitelist property to avoid polluting independent tests
         grailsApplication.config.security.apikey.ip = [whitelist: ""]
         grailsApplication.config.api.whitelist.enabled = true
         grailsApplication.config.api.legacy.enabled = true
-        apiKeyService = Stub(LegacyApiKeyService)
-        apiKeyService.checkApiKey(_) >> { String key -> [valid: (key == "valid")] }
+        grailsApplication.config.api.jwt.enabled = false
+        legacyApiKeyService = Stub(LegacyApiKeyService)
+        legacyApiKeyService.checkApiKey(_) >> { String key -> [valid: (key == "valid")] }
 
-        interceptor.apiKeyService = apiKeyService
+        interceptor.whitelistEnabled = true
+        interceptor.legacyApiKeysEnabled = true
+        interceptor.jwtApiKeysEnabled = false
+        interceptor.legacyApiKeyService = legacyApiKeyService
     }
 
     void "All methods of a controller annotated with RequireApiKey at the class level should be protected"() {
