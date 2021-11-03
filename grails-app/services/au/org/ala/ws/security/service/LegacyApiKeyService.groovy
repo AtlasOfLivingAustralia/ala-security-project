@@ -14,7 +14,6 @@ class LegacyApiKeyService {
         Map response
         try {
             def conn = wsService.get("${grailsApplication.config.security.apikey.check.serviceUrl}${key}")
-
             if (conn.responseCode == STATUS_OK) {
                 response = JSON.parse(conn.content.text as String)
                 if (!response.valid) {
@@ -29,6 +28,6 @@ class LegacyApiKeyService {
             response = [valid: false]
         }
 
-        return response
+        response
     }
 }

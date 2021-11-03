@@ -63,7 +63,47 @@ class ApiKeyInterceptor {
             if (jwtApiKeysEnabled){
                 String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER_NAME)
                 AuthenticatedUser authenticatedUser = jwtCheckService.checkJWT(authorizationHeader)
+
+                RequireApiKey classLevelRequireApiKey = controllerClass.getAnnotation(RequireApiKey.class)
+                RequireApiKey methodLevelRequireApiKey = method.getAnnotation(RequireApiKey.class)
+
+                if (classLevelRequireApiKey && classLevelRequireApiKey.roleProperty()){
+                    //resolve role property
+                    String[] requiredRoles = classLevelRequireApiKey.roleProperty().split(",")
+                    // check roles
+                    List roles = authenticatedUser.getRoles()
+
+                    requiredRoles.each { requiredRole ->
+                        if (!roles.contains(requiredRole)){
+                            return false
+                        }
+                    }
+                }
+
+                if (methodLevelRequireApiKey && methodLevelRequireApiKey.roleProperty()){
+
+                    //resolve role property
+                    String[] requiredRoles = methodLevelRequireApiKey.roleProperty().split(",")
+                    // check roles
+                    List roles = authenticatedUser.getRoles()
+
+                    requiredRoles.each { requiredRole ->
+                        if (!roles.contains(requiredRole)){
+                            return false
+                        }
+                    }
+                }
+
                 request.setProperty("authenticatedUser", authenticatedUser)
+
+//                log.debug("Loading security context....")
+//                def securityContext = SecurityContextHolder.getContext()
+//
+//                def principal = authenticatedUser
+//                def credentials = authenticatedUser
+//                List authorities = authenticatedUser.getRoles().collect { role -> new SimpleGrantedAuthority(role)}
+//                securityContext.setAuthentication(new PreAuthenticatedAuthenticationToken(principal, credentials, authorities))
+
                 if (authenticatedUser){
                     return true
                 }

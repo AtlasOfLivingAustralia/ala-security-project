@@ -12,5 +12,10 @@ import java.lang.annotation.Target
 @Target([ElementType.TYPE, ElementType.METHOD])
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@interface RequireApiKey {
+public @interface RequireApiKey {
+    /**
+     * Comma separated list of configuration properties that point to roles.
+     * @return
+     */
+    String roleProperty() default "";
 }
