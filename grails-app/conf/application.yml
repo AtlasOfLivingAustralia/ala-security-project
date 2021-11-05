@@ -43,3 +43,8 @@ api:
 jwk:
     url: https://nectar-auth-dev.ala.org.au/cas/oidc/jwks
 
+# As every authenticated request is associated with a user
+legacy_whitelist:
+    userId: '1'
+    roles:
+        - 'ROLE_ADMIN'

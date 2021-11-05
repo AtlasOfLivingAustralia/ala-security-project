@@ -8,6 +8,7 @@ import au.org.ala.ws.security.service.LegacyApiKeyService
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpHeaders
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -18,6 +19,11 @@ import javax.servlet.http.HttpServletResponse
  * 1) JSON Web Token
  * 2) White listed IPs (deprecated)
  * 3) Legacy API keys generated using the deprecated apikey app (deprecated).
+ *
+ * TODO
+ * 1) Check expiry / pnb
+ * 2)
+ *
  */
 @CompileStatic
 @Slf4j
@@ -33,10 +39,11 @@ class ApiKeyInterceptor {
     Boolean jwtApiKeysEnabled
 
     JwtCheckService jwtCheckService
+
     LegacyApiKeyService legacyApiKeyService
 
-    static final String API_KEY_HEADER_NAME = "apiKey"
-    static final String AUTHORIZATION_HEADER_NAME = "Authorization"
+    static final String LEGACY_API_KEY_HEADER_NAME = "apiKey"
+
     static final List<String> LOOPBACK_ADDRESSES = ["127.0.0.1",
                                                     "0:0:0:0:0:0:0:1", // IP v6
                                                     "::1"] // IP v6 short form
@@ -52,7 +59,7 @@ class ApiKeyInterceptor {
      */
     boolean before() {
 
-        String headerName = grailsApplication.config.navigate('security', 'apikey', 'header', 'override') ?: API_KEY_HEADER_NAME
+        String headerName = grailsApplication.config.navigate('security', 'apikey', 'header', 'override') ?: LEGACY_API_KEY_HEADER_NAME
         def controller = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
         Class controllerClass = controller?.clazz
         def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
@@ -61,14 +68,14 @@ class ApiKeyInterceptor {
                 || method?.isAnnotationPresent(RequireApiKey)) {
 
             if (jwtApiKeysEnabled){
-                String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER_NAME)
+                String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION)
                 AuthenticatedUser authenticatedUser = jwtCheckService.checkJWT(authorizationHeader)
 
                 RequireApiKey classLevelRequireApiKey = controllerClass.getAnnotation(RequireApiKey.class)
                 RequireApiKey methodLevelRequireApiKey = method.getAnnotation(RequireApiKey.class)
 
                 if (classLevelRequireApiKey && classLevelRequireApiKey.roleProperty()){
-                    //resolve role property
+                    // resolve role property
                     String[] requiredRoles = classLevelRequireApiKey.roleProperty().split(",")
                     // check roles
                     List roles = authenticatedUser.getRoles()
@@ -82,7 +89,7 @@ class ApiKeyInterceptor {
 
                 if (methodLevelRequireApiKey && methodLevelRequireApiKey.roleProperty()){
 
-                    //resolve role property
+                    // resolve role property
                     String[] requiredRoles = methodLevelRequireApiKey.roleProperty().split(",")
                     // check roles
                     List roles = authenticatedUser.getRoles()
@@ -112,13 +119,21 @@ class ApiKeyInterceptor {
             if (whitelistEnabled) {
                 String clientIp = getClientIP(request)
                 List<String> whiteList = buildWhiteList()
+
+                // add associated UserID
+                // add associated Roles...
+
                 if (checkClientIp(clientIp, whiteList)){
                     return true
                 }
             }
 
-            if (legacyApiKeysEnabled && legacyApiKeyService){
+            if (legacyApiKeysEnabled){
                 String apiKey = request.getHeader(headerName)
+
+                // add associated UserID
+                // add associated Roles...
+
                 if (apiKey) {
                     if (legacyApiKeyService.checkApiKey(apiKey).valid) {
                         return true
@@ -165,7 +180,7 @@ class ApiKeyInterceptor {
         whiteList
     }
 
-    def getClientIP(HttpServletRequest request) {
+    String getClientIP(HttpServletRequest request) {
         // External requests may be proxied by Apache, which uses X-Forwarded-For to identify the original IP.
         String ip = request.getHeader("X-Forwarded-For")
         if (!ip || LOOPBACK_ADDRESSES.contains(ip)) {
