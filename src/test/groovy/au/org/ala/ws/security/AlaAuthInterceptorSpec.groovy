@@ -2,20 +2,19 @@ package au.org.ala.ws.security
 
 import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
-import au.org.ala.ws.security.service.LegacyApiKeyService
+
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
 import grails.test.mixin.web.InterceptorUnitTestMixin
 import org.grails.web.util.GrailsApplicationAttributes
-import org.springframework.beans.factory.annotation.Value
 import spock.lang.Specification
 import spock.lang.Unroll
 
-@TestFor(ApiKeyInterceptor)
+@TestFor(AlaAuthInterceptor)
 @TestMixin([GrailsUnitTestMixin, InterceptorUnitTestMixin])
 @Unroll
-class ApiKeyInterceptorSpec extends Specification {
+class AlaAuthInterceptorSpec extends Specification {
 
     static final int UNAUTHORISED = 403
     static final int OK = 200

@@ -1,6 +1,6 @@
 class AlaWsSecurityGrailsPlugin {
     // the plugin version
-    def version = "2.0"
+    def version = "3.0.0-SNAPSHOT"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.3 > *"
     // resources that are excluded from plugin packaging
@@ -8,7 +8,7 @@ class AlaWsSecurityGrailsPlugin {
             "grails-app/views/error.gsp"
     ]
 
-    def title = "ALA Ws Security Plugin" // Headline display name of the plugin
+    def title = "ALA Web Service Security Plugin" // Headline display name of the plugin
     def author = "ALA"
     def authorEmail = ""
     def description = '''\

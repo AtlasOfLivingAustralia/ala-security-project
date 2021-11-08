@@ -14,8 +14,13 @@ import java.lang.annotation.Target
 @Documented
 public @interface RequireApiKey {
     /**
-     * Comma separated list of configuration properties that point to roles.
+     * Comma separated list of roles or configuration properties that point to roles.
+     *
+     * e.g. "ROLE_ADMIN,ROLE_USER"
+     *
+     * or "security.role.myrole" which resolves to security.role.myrole=MY_ROLE in application.yml or application.groovy
+     *
      * @return
      */
-    String roleProperty() default "";
+    String requiredRoles() default "";
 }

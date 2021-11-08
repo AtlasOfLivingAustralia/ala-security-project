@@ -1,7 +1,6 @@
 package au.org.ala.ws.security
 
-import au.org.ala.ws.security.service.LegacyApiKeyService
-import au.org.ala.ws.security.service.WsService
+
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.springframework.http.HttpStatus
