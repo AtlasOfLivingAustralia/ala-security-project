@@ -4,10 +4,38 @@ Web service specific security code, e.g. API Key filters
 ## Status
 [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-ws-security-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-ws-security-plugin)
 
+This plugin provides authentication and authorization for Atlas web services written in Grails.
+It support JSON Web Token authentication. 
+It also supports the deprecated apikeys used for internal-app to internal-app. These api keys are to be phased
+out in favour of JWTs which can be used for internal and external web service calls.
+
 ## Usage
+
+To use this plugin, you will need to include the following dependency in build.gradle
+
 ```
-compile "org.grails.plugins:ala-ws-security-plugin:3.0"
+compile "org.grails.plugins:ala-ws-security-plugin:3.0.0-SNAPSHOT"
 ```
+
+In addition, you will need to the following bean definition to `grails-app/conf/spring/resources.groovy`.
+
+```groovy
+package spring
+
+import au.ala.org.ws.security.AlaAuthFilter
+
+// Place your Spring DSL code here
+beans = {
+    authFilter(AlaAuthFilter)
+    securityConfig(SecurityConfig)
+}
+```
+
+
+
+
+
+
 
 From the client side, set the ```apiKey``` request _header_  on all secured service requests to a valid API Key (registered in the API Key service).
 

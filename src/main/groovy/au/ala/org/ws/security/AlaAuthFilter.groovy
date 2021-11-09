@@ -75,6 +75,10 @@ class AlaAuthFilter extends OncePerRequestFilter {
                                                     "0:0:0:0:0:0:0:1", // IP v6
                                                     "::1"] // IP v6 short form
 
+    String addAfterFilterName = "LogoutFilter"
+
+    int addAfterFilterIdx = 4
+
     def serviceMethod() {}
 
     public AlaAuthFilter(){}
@@ -85,7 +89,19 @@ class AlaAuthFilter extends OncePerRequestFilter {
         // add after....
         // TODO fix this to use a class name i.e. after AnonymousAuthenticationFilter.class
         // as per spring security plugin
-        filterChains.filters.add(4, this)
+
+        // get index of ""
+        int filterIdx = -1
+        filterChains.filters.eachWithIndex { filter, idx ->
+           if (filter.getClass().getSimpleName() == addAfterFilterName || filter.getClass().getCanonicalName() == addAfterFilterName){
+               filterIdx = idx
+           }
+        }
+        if (filterIdx > 0){
+            filterChains.filters.add(filterIdx + 1, this)
+        } else {
+            filterChains.filters.add(addAfterFilterIdx, this)
+        }
     }
 
     @Override
