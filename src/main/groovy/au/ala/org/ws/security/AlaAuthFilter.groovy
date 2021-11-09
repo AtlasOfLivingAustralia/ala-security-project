@@ -130,6 +130,18 @@ class AlaAuthFilter extends OncePerRequestFilter {
         PreAuthenticatedAuthenticationToken token = new PreAuthenticatedAuthenticationToken(
                 authenticatedUser, credentials, authorities)
         token.setAuthenticated(true)
+//
+//
+//        final List<GrantedAuthority> authorities = roles.stream()
+//                .map(r -> "ROLE_" + r)
+//                .map(r -> new SimpleGrantedAuthority(r)).collect(Collectors.toList());
+//        Map<String, Object> claims = jwt.getClaims();
+//        String userNameKey = clientRegistration.getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
+//        OidcIdToken oidcIdToken = new OidcIdToken(token.getTokenValue(), token.getIssuedAt(), token.getExpiresAt(), claims);
+//        DefaultOidcUser user = new DefaultOidcUser(authorities, oidcIdToken, userNameKey);
+//        return new OAuth2AuthenticationToken(user, authorities, clientRegistration.getRegistrationId());
+//
+
         securityContext.setAuthentication(token)
     }
 

@@ -4,14 +4,13 @@ import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-
+import org.springframework.security.authentication.AbstractAuthenticationToken
 import javax.servlet.http.HttpServletResponse
 import java.security.Principal
 
 /**
- * An authentication interceptor that checks a user is logged in and has certain permissions.
- *
- *
+ * An authentication interceptor that checks a user is logged in and has the required roles as specified
+ * using the @RequireApiKey
  */
 @CompileStatic
 @Slf4j
@@ -32,50 +31,66 @@ class AlaAuthInterceptor {
         Class controllerClass = controller?.clazz
         def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
 
-        if ((controllerClass?.isAnnotationPresent(RequireApiKey) && !method?.isAnnotationPresent(SkipApiKeyCheck))
-                || method?.isAnnotationPresent(RequireApiKey)) {
+        def classLevelAnnotation = controllerClass?.isAnnotationPresent(RequireApiKey)
+        def methodLevelSkipAnnotation = method?.isAnnotationPresent(SkipApiKeyCheck)
+        def methodLevelAnnotation = method?.isAnnotationPresent(RequireApiKey)
 
-            Principal userPrincipal = request.getUserPrincipal()
-            if (!userPrincipal){
-                return false
-            }
+        if ((classLevelAnnotation && !methodLevelSkipAnnotation) || methodLevelAnnotation) {
 
-            RequireApiKey classLevelRequireApiKey = controllerClass.getAnnotation(RequireApiKey.class)
-            RequireApiKey methodLevelRequireApiKey = method.getAnnotation(RequireApiKey.class)
+            def userPrincipal = request.getUserPrincipal()
 
-            if (classLevelRequireApiKey && classLevelRequireApiKey.requiredRoles()){
-                // resolve role property
-                String[] requiredRoles = classLevelRequireApiKey.requiredRoles().split(",")
-                // check roles
-                List roles = [] //userPrincipal.getRoles()
+            if (userPrincipal) {
 
-                requiredRoles.each { requiredRole ->
+                List roles = getUserRoles(userPrincipal)
+
+                RequireApiKey classLevelRequireApiKey = controllerClass.getAnnotation(RequireApiKey.class)
+                RequireApiKey methodLevelRequireApiKey = method.getAnnotation(RequireApiKey.class)
+
+                if (classLevelRequireApiKey && classLevelRequireApiKey.requiredRoles()) {
+                    // resolve role property
+                    String[] requiredRoles = classLevelRequireApiKey.requiredRoles().split(",")
+                    // check roles
+                    requiredRoles.each { requiredRole ->
+                        //TODO check grailsApplication.config.'requiredRole'
+                        if (!roles.contains(requiredRole)) {
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                            return false
+                        }
+                    }
+                }
+
+                if (methodLevelRequireApiKey && methodLevelRequireApiKey.requiredRoles()) {
+                    // resolve role property
+                    String[] requiredRoles = methodLevelRequireApiKey.requiredRoles().split(",")
+                    // check roles
                     //TODO check grailsApplication.config.'requiredRole'
-                    if (!roles.contains(requiredRole)){
-                        return false
+                    requiredRoles.each { requiredRole ->
+                        if (!roles.contains(requiredRole)) {
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                            return false
+                        }
                     }
                 }
+
+                true
+
+            } else {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                false
             }
-
-            if (methodLevelRequireApiKey && methodLevelRequireApiKey.requiredRoles()){
-
-                // resolve role property
-                String[] requiredRoles = methodLevelRequireApiKey.requiredRoles().split(",")
-                // check roles
-                List roles = [] //userPrincipal.getRoles()
-                //TODO check grailsApplication.config.'requiredRole'
-                requiredRoles.each { requiredRole ->
-                    if (!roles.contains(requiredRole)){
-                        return false
-                    }
-                }
-            }
-
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
-            false
         } else {
             true
         }
+    }
+
+    private List getUserRoles(Principal userPrincipal) {
+        List roles = []
+        if (userPrincipal instanceof AbstractAuthenticationToken) {
+            if (userPrincipal && userPrincipal?.authorities) {
+                roles << ((AbstractAuthenticationToken) userPrincipal).authorities
+            }
+        }
+        roles
     }
 
     /**
@@ -89,4 +104,18 @@ class AlaAuthInterceptor {
      * Executed after view rendering completes
      */
     void afterView() {}
+
+//    List getUserRoles(principal) {
+//        List roles = []
+//        if (principal && principal?.authorities){
+//            roles << authorities
+//        }
+//
+//        if (principal && principal?.principal?.attributes?.role){
+//           if (principal.principal.attributes.role){
+//               roles << roles
+//           }
+//        }
+//        roles
+//    }
 }
