@@ -5,37 +5,34 @@ Web service authentication and authorization.
 [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-ws-security-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-ws-security-plugin)
 
 This plugin provides authentication and authorization for Atlas web services written in Grails.
-It supports [JSON Web Tokens](https://datatracker.ietf.org/doc/html/rfc7519) based authentication and authorization.
 
-It also supports the deprecated `apiKey` for api keys sources from the [apikey](https://github.com/atlasoflivingaustralia/apikey) app. 
-used for internal-app to internal-app. These api keys are to be phased
-out in favour of JWTs which can be used for internal and external web service calls.
+For existing applications, it requires a switch from CAS based authentication to Spring Security with OAuth 2 support.
+
+It supports [JSON Web Tokens](https://datatracker.ietf.org/doc/html/rfc7519) based authentication and authorization for web services.
+
+It maintains support for the deprecated `apiKey` for api keys which are sourced from and validated by 
+the [apikey](https://github.com/atlasoflivingaustralia/apikey) application. These are currently only 
+used for internal-app to internal-app in the Atlas. These api keys are to be phased
+out in favour of JWTs which can be used for internal and external web service calls. JWTs are associated 
+with a user and a set roles.
 
 ## Usage
 
-To use this plugin, you will need to include the following dependency in `build.gradle`
+To use this plugin, you will need remove dependencies on `ala-auth` plugin and the related CAS configuration from
+`application.yml` and `application.groovy`. 
+
+The following dependency in `build.gradle` is required:
 
 ```
 compile "org.grails.plugins:ala-ws-security-plugin:3.0.0-SNAPSHOT"
 ```
 
-In addition, you will need to add the following bean definition to `grails-app/conf/spring/resources.groovy`.
+By default, all URLs will go through OAuth Spring Security Filters which is not desirable for public pages.
+Also, this is not desirable for web services as a call that fails authentication/authorization will be routed
+to a HTML login page.
 
-```groovy
-package spring
-
-import au.ala.org.ws.security.AlaWebServiceAuthFilter
-
-// Place your Spring DSL code here
-beans = {
-    authFilter(AlaAuthFilter)
-}
-```
-
-## Spring security
-
-When used in an application which is also using Spring Security, web service endpoints should be excluded using
-a bean that extends WebSecurityConfigurerAdapter.
+To override the default catch-all behaviour, applications will need to define
+a `SecurityConfig` bean that extends WebSecurityConfigurerAdapter in the `grails-app/init` directory. Here is an example"
 
 ```groovy
 @Configuration
@@ -68,30 +65,69 @@ class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and().csrf().disable();
     }
 }
-
 ```
 
-this bean also needs to be referenced in `grails-app/conf/spring/resources.groovy`.
+The following bean definitions are required in `grails-app/conf/spring/resources.groovy`.
 
 ```groovy
 package spring
-
 import au.ala.org.ws.security.AlaWebServiceAuthFilter
 
-// Place your Spring DSL code here
 beans = {
     authFilter(AlaAuthFilter)
     securityConfig(SecurityConfig)
 }
 ```
 
+### External configuration
+
+When upgrading to this plugin, existing CAS configuration can be removed.
+The following configuration is required.
+
+```yaml
+
+spring:
+    security:
+        oauth2:
+            client:
+                registration:
+                    ala:
+                        client-id:  <<< Add in external configuration, set by ansible >>>>
+                        client-secret:  <<< Add in external configuration, set by ansible >>>>
+                        scope: openid,profile,email,ala,roles
+                provider:
+                    ala:
+                        issuer-uri: https://auth-test.ala.org.au/cas/oidc
+
+```
+
+### External configuration for legacy API keys and whitelists
+
+```yaml
+security:
+  legacy:
+    whitelist:
+      #comma separated list of IP Addresses that are exempt from the API key security check.
+      ip: ''
+      enabled: false
+      userId: '1'
+      roles:
+        - 'ROLE_ADMIN'
+    apikey:
+      serviceUrl:
+      enabled: false
+      userId: '1'
+      roles:
+        - 'ROLE_ADMIN'
+```
+
 ### Demo application
 
-TBA.....
+A demo application that uses this plugin is here: <<< TO_BE_ADDED >>
 
 ## Calling services with JSON Web Tokens
 
-JWTs can be generated using the service....
+JWTs can be generated using the service:  <<< TO_BE_ADDED >>
 
 ## Calling services with Legacy API key
 
@@ -99,18 +135,11 @@ From the client side, set the ```apiKey``` request _header_  on all secured serv
 
 On the server side, annotate protected controllers (either the class or individual methods) with the ```@RequireApiKey``` annotation.
 
-## External configuration properties
-
-### Mandatory
-- ```security.apikey.check.serviceUrl``` - URL of the API Key service endpoint, up to and including the key parameter name. E.g. https://auth.ala.org.au/apikey/ws/check?apikey=
-
-### Optional
-- ```security.apikey.ip.whitelist``` - comma separated list of IP Addresses that are exempt from the API key security check.
-- ```security.apikey.header.override ``` - override the default request header name (apiKey) to use a different name.
 
 ## Changelog
 - **Version 3.0**
   - JSON Web Token support
+  - Spring Security
 - **Version 2.0**
   - Grails 3 version
 - **Version 1.0** (2/7/2015)
