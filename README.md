@@ -108,15 +108,15 @@ security:
   legacy:
     whitelist:
       #comma separated list of IP Addresses that are exempt from the API key security check.
-      ip: ''
+      ip: '127.0.0.1'
       enabled: false
-      userId: '1'
+      userId: '99999'
       roles:
         - 'ROLE_ADMIN'
     apikey:
-      serviceUrl:
+      serviceUrl: https://auth-test.ala.org.au/apikey/....
       enabled: false
-      userId: '1'
+      userId: '99998'  # this should correspond to an app that has been registered as a user for the Atlas
       roles:
         - 'ROLE_ADMIN'
 ```
