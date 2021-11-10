@@ -21,10 +21,11 @@ with a user and a set roles.
 To use this plugin, you will need remove dependencies on `ala-auth` plugin and the related CAS configuration from
 `application.yml` and `application.groovy`. 
 
-The following dependency in `build.gradle` is required:
+The following dependencies in `build.gradle` are required:
 
 ```
 compile "org.grails.plugins:ala-ws-security-plugin:3.0.0-SNAPSHOT"
+compile "org.springframework.boot:spring-boot-starter-oauth2-client"
 ```
 
 By default, all URLs will go through OAuth Spring Security Filters which is not desirable for public pages.
