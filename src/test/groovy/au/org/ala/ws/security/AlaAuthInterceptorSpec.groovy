@@ -1,7 +1,7 @@
 package au.org.ala.ws.security
 
-import au.ala.org.ws.security.RequireApiKey
-import au.ala.org.ws.security.SkipApiKeyCheck
+import au.ala.org.ws.security.RequireAuth
+import au.ala.org.ws.security.SkipAuthCheck
 
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
@@ -222,7 +222,7 @@ class AlaAuthInterceptorSpec extends Specification {
     }
 }
 
-@RequireApiKey
+@RequireAuth
 class AnnotatedClassController {
     def action1() {
 
@@ -232,7 +232,7 @@ class AnnotatedClassController {
 
     }
 
-    @SkipApiKeyCheck
+    @SkipAuthCheck
     def action3() {
 
     }
@@ -240,7 +240,7 @@ class AnnotatedClassController {
 
 
 class AnnotatedMethodController {
-    @RequireApiKey
+    @RequireAuth
     def securedAction() {
 
     }

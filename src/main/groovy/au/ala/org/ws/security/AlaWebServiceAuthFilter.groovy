@@ -36,7 +36,7 @@ import java.security.interfaces.RSAPublicKey
 @Component
 @DependsOn("springSecurityFilterChain")
 @Slf4j
-class AlaAuthFilter extends OncePerRequestFilter {
+class AlaWebServiceAuthFilter extends OncePerRequestFilter {
 
     @Autowired
     @Qualifier("springSecurityFilterChain")
@@ -75,22 +75,21 @@ class AlaAuthFilter extends OncePerRequestFilter {
                                                     "0:0:0:0:0:0:0:1", // IP v6
                                                     "::1"] // IP v6 short form
 
+    /** The name of the filter which this filter should be placed after in the spring security filter array. */
     String addAfterFilterName = "LogoutFilter"
 
+    /** The idx at which this filter should be placed after in the spring security filter array. */
     int addAfterFilterIdx = 4
 
     def serviceMethod() {}
 
-    public AlaAuthFilter(){}
+    public AlaWebServiceAuthFilter(){}
 
     @PostConstruct
     void init(){
         def filterChains = springSecurityFilterChain.filterChains[0]
-        // add after....
-        // TODO fix this to use a class name i.e. after AnonymousAuthenticationFilter.class
-        // as per spring security plugin
 
-        // get index of ""
+        // get index of configured "addAfterFilterName"
         int filterIdx = -1
         filterChains.filters.eachWithIndex { filter, idx ->
            if (filter.getClass().getSimpleName() == addAfterFilterName || filter.getClass().getCanonicalName() == addAfterFilterName){
@@ -146,8 +145,7 @@ class AlaAuthFilter extends OncePerRequestFilter {
         PreAuthenticatedAuthenticationToken token = new PreAuthenticatedAuthenticationToken(
                 authenticatedUser, credentials, authorities)
         token.setAuthenticated(true)
-//
-//
+
 //        final List<GrantedAuthority> authorities = roles.stream()
 //                .map(r -> "ROLE_" + r)
 //                .map(r -> new SimpleGrantedAuthority(r)).collect(Collectors.toList());

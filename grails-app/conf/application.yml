@@ -32,19 +32,30 @@ endpoints:
     jmx:
         enabled: true
 
-api:
-    whitelist:
-        enabled: false
-    legacy:
-        enabled: false
+
+#    ### Mandatory
+#    - ```security.apikey.check.serviceUrl``` - URL of the API Key service endpoint, up to and including the key parameter name. E.g. https://auth.ala.org.au/apikey/ws/check?apikey=
+#
+#    ### Optional
+#    - ```security.apikey.ip.whitelist``` - comma separated list of IP Addresses that are exempt from the API key security check.
+#    - ```security.apikey.header.override ``` - override the default request header name (apiKey) to use a different name.
+
+
+security:
     jwt:
+        jwkUrl: https://nectar-auth-dev.ala.org.au/cas/oidc/jwks
         enabled: true
-
-jwk:
-    url: https://nectar-auth-dev.ala.org.au/cas/oidc/jwks
-
-# As every authenticated request is associated with a user
-legacy_whitelist:
-    userId: '1'
-    roles:
-        - 'ROLE_ADMIN'
+    legacy:
+        whitelist:
+            #comma separated list of IP Addresses that are exempt from the API key security check.
+            ip: ''
+            enabled: false
+            userId: '1'
+            roles:
+                - 'ROLE_ADMIN'
+        apikey:
+            serviceUrl:
+            enabled: false
+            userId: '1'
+            roles:
+                - 'ROLE_ADMIN'

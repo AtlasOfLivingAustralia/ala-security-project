@@ -1,7 +1,7 @@
 package au.org.ala.ws.security
 
-import au.ala.org.ws.security.RequireApiKey
-import au.ala.org.ws.security.SkipApiKeyCheck
+import au.ala.org.ws.security.RequireAuth
+import au.ala.org.ws.security.SkipAuthCheck
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.springframework.security.authentication.AbstractAuthenticationToken
@@ -31,9 +31,9 @@ class AlaAuthInterceptor {
         Class controllerClass = controller?.clazz
         def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
 
-        def classLevelAnnotation = controllerClass?.isAnnotationPresent(RequireApiKey)
-        def methodLevelSkipAnnotation = method?.isAnnotationPresent(SkipApiKeyCheck)
-        def methodLevelAnnotation = method?.isAnnotationPresent(RequireApiKey)
+        def classLevelAnnotation = controllerClass?.isAnnotationPresent(RequireAuth)
+        def methodLevelSkipAnnotation = method?.isAnnotationPresent(SkipAuthCheck)
+        def methodLevelAnnotation = method?.isAnnotationPresent(RequireAuth)
 
         if ((classLevelAnnotation && !methodLevelSkipAnnotation) || methodLevelAnnotation) {
 
@@ -43,8 +43,8 @@ class AlaAuthInterceptor {
 
                 List roles = getUserRoles(userPrincipal)
 
-                RequireApiKey classLevelRequireApiKey = controllerClass.getAnnotation(RequireApiKey.class)
-                RequireApiKey methodLevelRequireApiKey = method.getAnnotation(RequireApiKey.class)
+                RequireAuth classLevelRequireApiKey = controllerClass.getAnnotation(RequireAuth.class)
+                RequireAuth methodLevelRequireApiKey = method.getAnnotation(RequireAuth.class)
 
                 if (classLevelRequireApiKey && classLevelRequireApiKey.requiredRoles()) {
                     // resolve role property
