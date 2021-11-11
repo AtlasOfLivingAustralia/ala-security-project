@@ -36,35 +36,48 @@ To override the default catch-all behaviour, applications will need to define
 a `SecurityConfig` bean that extends WebSecurityConfigurerAdapter in the `grails-app/init` directory. Here is an example"
 
 ```groovy
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+
 @Configuration
 @EnableWebSecurity
 @Order(1) // required to override the default Oauth2 spring configuration
 class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests()
-                .antMatchers(
-                        "/",
-                        "/css/**",
-                        "/assets/**",
-                        "/messages/**",
-                        "/i18n/**",
-                        "/static/**",
-                        "/images/**",
-                        "/js/**",
-                        "/ws/**"
-                ).permitAll()
-                .anyRequest()
-                .authenticated()
-                .and()
-                .oauth2Login()
-                .and()
-                .logout().invalidateHttpSession(true)
-                .clearAuthentication(true)
-                .deleteCookies("JSESSIONID").permitAll()
-                .and().csrf().disable();
-    }
+  @Autowired
+  protected AlaOAuth2UserService alaOAuth2UserService;
+
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http.authorizeRequests()
+            .antMatchers(
+                    "/",
+                    "/css/**",
+                    "/assets/**",
+                    "/messages/**",
+                    "/i18n/**",
+                    "/static/**",
+                    "/images/**",
+                    "/js/**",
+                    "/ws/**"
+            ).permitAll()
+            .anyRequest()
+            .authenticated()
+            .and()
+            .oauth2Login()
+            .userInfoEndpoint()
+            .oidcUserService(alaOAuth2UserService)
+            .and()
+            .and()
+            .logout().invalidateHttpSession(true)
+            .clearAuthentication(true)
+            .deleteCookies("JSESSIONID").permitAll()
+            .and().csrf().disable();
+  }
 }
 ```
 
