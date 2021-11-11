@@ -40,10 +40,6 @@ public class AlaOAuth2UserService extends OidcUserService {
     private final Set<String> userInfoScopes = new HashSet<>(
             Arrays.asList(OidcScopes.PROFILE, OidcScopes.EMAIL, OidcScopes.ADDRESS, OidcScopes.PHONE));
 
-    private static final String MISSING_USER_INFO_URI_ERROR_CODE = "missing_user_info_uri";
-
-    private static final String MISSING_USER_NAME_ATTRIBUTE_ERROR_CODE = "missing_user_name_attribute";
-
     private static final String INVALID_USER_INFO_RESPONSE_ERROR_CODE = "invalid_user_info_response";
 
     private Converter<OAuth2UserRequest, RequestEntity<?>> requestEntityConverter = new OAuth2UserRequestEntityConverter();
