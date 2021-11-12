@@ -36,13 +36,6 @@ To override the default catch-all behaviour, applications will need to define
 a `SecurityConfig` bean that extends WebSecurityConfigurerAdapter in the `grails-app/init` directory. Here is an example"
 
 ```groovy
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-
 @Configuration
 @EnableWebSecurity
 @Order(1) // required to override the default Oauth2 spring configuration
@@ -84,9 +77,6 @@ class SecurityConfig extends WebSecurityConfigurerAdapter {
 The following bean definitions are required in `grails-app/conf/spring/resources.groovy`.
 
 ```groovy
-package spring
-import au.ala.org.ws.security.AlaWebServiceAuthFilter
-
 beans = {
   alaOAuth2UserService(AlaOAuth2UserService)   // customized UserService - user roles added to OidcUser.authorities 
   alaWebServiceAuthFilter(AlaWebServiceAuthFilter) // filter that checks JWTs & Legacy API kesy
@@ -100,7 +90,6 @@ When upgrading to this plugin, existing CAS configuration can be removed.
 The following configuration is required.
 
 ```yaml
-
 spring:
     security:
         oauth2:
@@ -120,20 +109,21 @@ spring:
 
 ```yaml
 security:
-  legacy:
-    whitelist:
-      #comma separated list of IP Addresses that are exempt from the API key security check.
-      ip: '127.0.0.1'
-      enabled: false
-      userId: '99999'
-      roles:
-        - 'ROLE_ADMIN'
-    apikey:
-      serviceUrl: https://auth-test.ala.org.au/apikey/....
-      enabled: false
-      userId: '99998'  # this should correspond to an app that has been registered as a user for the Atlas
-      roles:
-        - 'ROLE_ADMIN'
+  spring:
+    legacy:
+      whitelist:
+        #comma separated list of IP Addresses that are exempt from the API key security check.
+        ip: '127.0.0.1'
+        enabled: false
+        userId: '99999'
+        roles:
+          - 'ROLE_ADMIN'
+      apikey:
+        serviceUrl: https://auth-test.ala.org.au/apikey/check?=
+        enabled: false
+        userId: '99998'  # this should correspond to an app that has been registered as a user for the Atlas
+        roles:
+          - 'ROLE_ADMIN'
 ```
 
 ### Demo application
@@ -149,11 +139,11 @@ JWTs can be generated using the service:  <<< TO_BE_ADDED >>
 From the client side, set the ```apiKey``` request _header_  on all secured service requests to a valid API Key (registered in the API Key service).
 
 ## Annotations
+
 Controllers for webservice and UI methods can be protected either the class or individual methods with the ```@RequireAuth``` annotation.
 A set of roles can be included.
 
 ```groovy
-
 @RequireAuth
 def saveEntity(){
 // do stuff
@@ -164,13 +154,13 @@ def deleteEntity(){
  // do stuff
 }
 
-
 ```
 
 ## Changelog
 - **Version 3.0**
   - JSON Web Token support
   - Spring Security
+  - Role based authentication for web service
 - **Version 2.0**
   - Grails 3 version
 - **Version 1.0** (2/7/2015)
