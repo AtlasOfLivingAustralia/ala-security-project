@@ -15,7 +15,6 @@ group "org.grails.plugins"
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-apply plugin:"org.grails.grails-plugin-publish"
 apply plugin:"org.grails.grails-gsp"
 apply plugin:"maven-publish"
 
@@ -43,14 +42,12 @@ dependencies {
     /** dependencies particular to this plugin **/
     compile "com.auth0:java-jwt:3.18.2"
     compile "com.auth0:jwks-rsa:0.20.0"
-    compile "org.springframework.security:spring-security-core:4.2.20.RELEASE"
-    compile "org.springframework.boot:spring-boot-starter-oauth2-client:2.5.6"
+    compile "org.springframework.boot:spring-boot-starter-oauth2-client"
     /** end of dependencies particular to this plugin **/
 
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
-    testCompile "org.grails:grails-plugin-testing"
     testCompile "org.grails.plugins:geb"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
@@ -58,19 +55,19 @@ dependencies {
 
 bootRun {
     jvmArgs('-Dspring.output.ansi.enabled=always')
-    addResources = true
+    sourceResources sourceSets.main
 }
 // enable if you wish to package this plugin as a standalone application
-bootRepackage.enabled = false
-grailsPublish {
-    githubSlug = 'AtlasOfLivingAustralia/ala-ws-security-plugin'
-    license {
-        name = 'MPL-2.0'
-    }
-    title = "ALA WS Security Plugin"
-    desc = "Plugin that implements ALA API Key support"
-    developers = [:]
-}
+//bootRepackage.enabled = false
+//grailsPublish {
+//    githubSlug = 'AtlasOfLivingAustralia/ala-ws-security-plugin'
+//    license {
+//        name = 'MPL-2.0'
+//    }
+//    title = "ALA WS Security Plugin"
+//    desc = "Plugin that implements ALA API Key support"
+//    developers = [:]
+//}
 
 publishing {
     repositories {

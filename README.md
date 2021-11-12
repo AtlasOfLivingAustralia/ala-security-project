@@ -88,8 +88,9 @@ package spring
 import au.ala.org.ws.security.AlaWebServiceAuthFilter
 
 beans = {
-    authFilter(AlaAuthFilter)
-    securityConfig(SecurityConfig)
+  alaOAuth2UserService(AlaOAuth2UserService)   // customized UserService - user roles added to OidcUser.authorities 
+  alaWebServiceAuthFilter(AlaWebServiceAuthFilter) // filter that checks JWTs & Legacy API kesy
+  securityConfig(SecurityConfig) // custom security config for your app
 }
 ```
 

@@ -20,6 +20,8 @@ info:
         version: '@info.app.version@'
         grailsVersion: '@info.app.grailsVersion@'
 spring:
+    jmx:
+        unique-names: true
     main:
         banner-mode: "off"
     groovy:
@@ -27,11 +29,9 @@ spring:
             check-template-location: false
 
 # Spring Actuator Endpoints are Disabled by Default
-endpoints:
-    enabled: false
-    jmx:
-        enabled: true
-
+management:
+    endpoints:
+        enabled-by-default: false
 
 #    ### Mandatory
 #    - ```security.apikey.check.serviceUrl``` - URL of the API Key service endpoint, up to and including the key parameter name. E.g. https://auth.ala.org.au/apikey/ws/check?apikey=
@@ -42,6 +42,8 @@ endpoints:
 
 
 security:
+    cas:
+        logout: https://nectar-auth-dev.ala.org.au/cas/logout
     jwt:
         jwkUrl: https://nectar-auth-dev.ala.org.au/cas/oidc/jwks
         enabled: true
