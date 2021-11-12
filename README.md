@@ -148,8 +148,24 @@ JWTs can be generated using the service:  <<< TO_BE_ADDED >>
 
 From the client side, set the ```apiKey``` request _header_  on all secured service requests to a valid API Key (registered in the API Key service).
 
-On the server side, annotate protected controllers (either the class or individual methods) with the ```@RequireApiKey``` annotation.
+## Annotations
+Controllers for webservice and UI methods can be protected either the class or individual methods with the ```@RequireAuth``` annotation.
+A set of roles can be included.
 
+```groovy
+
+@RequireAuth
+def saveEntity(){
+// do stuff
+}
+
+@RequireAuth(["ROLE_ADMIN"])
+def deleteEntity(){
+ // do stuff
+}
+
+
+```
 
 ## Changelog
 - **Version 3.0**
