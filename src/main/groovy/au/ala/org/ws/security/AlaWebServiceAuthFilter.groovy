@@ -18,6 +18,7 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.oauth2.core.oidc.OidcIdToken
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
@@ -42,32 +43,32 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     @Qualifier("springSecurityFilterChain")
     private Filter springSecurityFilterChain;
 
-    @Value('${security.apikey.ip.whitelist')
+    @Value('${spring.security.legacy.whitelist.ip')
     String whitelistOfips;
 
-    @Value('${api.whitelist.enabled:false}')
+    @Value('${spring.security.legacy.whitelist.enabled:false}')
     Boolean whitelistEnabled
 
-    @Value('${api.legacy.enabled:false}')
+    @Value('${spring.security.legacy.apikey.serviceUrl}')
+    String legacyApiKeyServiceUrl
+
+    @Value('${spring.security.legacy.apikey.enabled:false}')
     Boolean legacyApiKeysEnabled
 
-    @Value('${api.legacy.email}')
+    @Value('${spring.security.legacy.email}')
     String legacyApiKeysEmail
 
-    @Value('${api.legacy.userid}')
+    @Value('${spring.security.legacy.userid}')
     String legacyApiKeysUserId
 
-    @Value('${api.legacy.roles}')
+    @Value('${spring.security.legacy.roles}')
     String legacyApiKeysRoles
 
-    @Value('${api.jwt.enabled:true}')
+    @Value('${spring.security.jwt.enabled:true}')
     Boolean jwtApiKeysEnabled
 
-    @Value('${jwk.url}')
+    @Value('${spring.security.jwt.jwk.url}')
     String jwkUrl
-
-    @Value('${security.apikey.check.serviceUrl}')
-    String legacyApiKeyServiceUrl
 
     static final String LEGACY_API_KEY_HEADER_NAME = "apiKey"
 
@@ -119,7 +120,7 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
         }
 
         if (legacyApiKeysEnabled){
-            String apiKeyHeader = ((HttpServletRequest) request).getHeader(HttpHeaders.AUTHORIZATION)
+            String apiKeyHeader = ((HttpServletRequest) request).getHeader(LEGACY_API_KEY_HEADER_NAME)
             AuthenticatedUser authenticatedUser = checkLegacyApiKey(apiKeyHeader)
             if (authenticatedUser){
                 setAuthenticatedUserAsPrincipal(authenticatedUser)
@@ -193,7 +194,8 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
         new AuthenticatedUser(
                 email: legacyApiKeysEmail,
                 userId: legacyApiKeysUserId,
-                roles: legacyApiKeysRoles ? legacyApiKeysRoles.split(",").collect { it.trim() } : []
+                roles: legacyApiKeysRoles ? legacyApiKeysRoles.split(",").collect { it.trim() } : [],
+                attributes: [:]
         )
     }
 
@@ -208,7 +210,8 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
             return new AuthenticatedUser(
                     email: legacyApiKeysEmail,
                     userId: legacyApiKeysUserId,
-                    roles: legacyApiKeysRoles ? legacyApiKeysRoles.split(",").collect { it.trim() } : []
+                    roles: legacyApiKeysRoles ? legacyApiKeysRoles.split(",").collect { it.trim() } : [],
+                    attributes: [:]
             )
         }
         null
@@ -237,7 +240,7 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
             List roles = jwt.getClaims().get("role").asList(String.class)
             String email = jwt.getClaims().get("email")
             String userId = jwt.getClaims().get("userid")
-            new AuthenticatedUser(email:email, userId: userId, roles: roles)
+            new AuthenticatedUser(email:email, userId: userId, roles: roles, attributes: jwt.getClaims())
         } catch (SignatureVerificationException e){
             log.error("Verify of JWT failed")
             null

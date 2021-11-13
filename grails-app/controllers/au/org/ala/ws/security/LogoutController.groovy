@@ -6,6 +6,18 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 
 class LogoutController {
 
+    def index() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        authentication.setAuthenticated(false);
+        new SecurityContextLogoutHandler().logout(request,response,authentication);
+
+        SecurityContextHolder.clearContext();
+        request.logout()
+        session.invalidate()
+
+        redirect(url: "http://dev.ala.org.au:8080")
+    }
+
     /**
      * Do logouts through this app so we can invalidate the session.
      *

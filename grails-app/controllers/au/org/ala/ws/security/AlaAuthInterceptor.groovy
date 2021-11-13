@@ -4,9 +4,7 @@ import au.ala.org.ws.security.RequireAuth
 import au.ala.org.ws.security.SkipAuthCheck
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.springframework.security.authentication.AbstractAuthenticationToken
 import javax.servlet.http.HttpServletResponse
-import java.security.Principal
 
 /**
  * An authentication interceptor that checks a user is logged in and has the required roles as specified
@@ -41,34 +39,43 @@ class AlaAuthInterceptor {
 
             if (userPrincipal) {
 
-                List roles = getUserRoles(userPrincipal)
-
                 RequireAuth classLevelRequireApiKey = controllerClass.getAnnotation(RequireAuth.class)
                 RequireAuth methodLevelRequireApiKey = method.getAnnotation(RequireAuth.class)
 
                 if (classLevelRequireApiKey && classLevelRequireApiKey.requiredRoles()) {
                     // resolve role property
-                    String[] requiredRoles = classLevelRequireApiKey.requiredRoles().split(",")
+                    String[] requiredRoles = classLevelRequireApiKey.requiredRoles()
                     // check roles
+                    boolean hasRole = false
+
+                    // check user has at least one of the required roles
                     requiredRoles.each { requiredRole ->
-                        //TODO check grailsApplication.config.'requiredRole'
-                        if (!roles.contains(requiredRole)) {
-                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
-                            return false
+                        if (request.isUserInRole(requiredRole)){
+                            hasRole = true
                         }
+                    }
+
+                    if (!hasRole) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                        return false
                     }
                 }
 
                 if (methodLevelRequireApiKey && methodLevelRequireApiKey.requiredRoles()) {
                     // resolve role property
-                    String[] requiredRoles = methodLevelRequireApiKey.requiredRoles().split(",")
-                    // check roles
-                    //TODO check grailsApplication.config.'requiredRole'
+                    String[] requiredRoles = methodLevelRequireApiKey.requiredRoles()
+                    boolean hasRole = false
+
+                    // check user has at least one of the required roles
                     requiredRoles.each { requiredRole ->
-                        if (!roles.contains(requiredRole)) {
-                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
-                            return false
+                        if (request.isUserInRole(requiredRole)){
+                            hasRole = true
                         }
+                    }
+
+                    if (!hasRole) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                        return false
                     }
                 }
 
@@ -83,16 +90,6 @@ class AlaAuthInterceptor {
         }
     }
 
-    private List getUserRoles(Principal userPrincipal) {
-        List roles = []
-        if (userPrincipal instanceof AbstractAuthenticationToken) {
-            if (userPrincipal && userPrincipal?.authorities) {
-                roles << ((AbstractAuthenticationToken) userPrincipal).authorities
-            }
-        }
-        roles
-    }
-
     /**
      * Executed after the action executes but prior to view rendering
      *
@@ -104,18 +101,4 @@ class AlaAuthInterceptor {
      * Executed after view rendering completes
      */
     void afterView() {}
-
-//    List getUserRoles(principal) {
-//        List roles = []
-//        if (principal && principal?.authorities){
-//            roles << authorities
-//        }
-//
-//        if (principal && principal?.principal?.attributes?.role){
-//           if (principal.principal.attributes.role){
-//               roles << roles
-//           }
-//        }
-//        roles
-//    }
 }

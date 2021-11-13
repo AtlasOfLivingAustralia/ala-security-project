@@ -108,19 +108,21 @@ spring:
 ### External configuration for legacy API keys and whitelists
 
 ```yaml
-security:
-  spring:
+spring:
+  security:
     legacy:
       whitelist:
+        enabled: true        
         #comma separated list of IP Addresses that are exempt from the API key security check.
         ip: '127.0.0.1'
-        enabled: false
+        email: myapp@ala.org.au
         userId: '99999'
         roles:
           - 'ROLE_ADMIN'
       apikey:
-        serviceUrl: https://auth-test.ala.org.au/apikey/check?=
-        enabled: false
+        enabled: true        
+        serviceUrl: https://auth-test.ala.org.au/apikey/....
+        email: myapp@ala.org.au        
         userId: '99998'  # this should correspond to an app that has been registered as a user for the Atlas
         roles:
           - 'ROLE_ADMIN'
@@ -139,7 +141,6 @@ JWTs can be generated using the service:  <<< TO_BE_ADDED >>
 From the client side, set the ```apiKey``` request _header_  on all secured service requests to a valid API Key (registered in the API Key service).
 
 ## Annotations
-
 Controllers for webservice and UI methods can be protected either the class or individual methods with the ```@RequireAuth``` annotation.
 A set of roles can be included.
 

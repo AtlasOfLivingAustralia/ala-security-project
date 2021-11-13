@@ -22,5 +22,5 @@ import java.lang.annotation.Target
      *
      * @return
      */
-    String requiredRoles() default "";
+    String[] requiredRoles() default [];
 }
