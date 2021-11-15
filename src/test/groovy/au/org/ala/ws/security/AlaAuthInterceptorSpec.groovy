@@ -10,40 +10,44 @@ import au.ala.org.ws.security.SkipAuthCheck
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.web.util.GrailsApplicationAttributes
 import spock.lang.Specification
-import spock.lang.Unroll
+//import spock.lang.Unroll
 
 //@TestFor(AlaAuthInterceptor)
 //@TestMixin([GrailsUnitTestMixin, InterceptorUnitTestMixin])
-@Unroll
+//@Unroll
 class AlaAuthInterceptorSpec extends Specification implements InterceptorUnitTest<AlaAuthInterceptor> {
 
     static final int UNAUTHORISED = 403
     static final int OK = 200
 
+//    void "Test test interceptor matching"() {
+//        given:
+//        def controller = (DummyController) mockController(DummyController)
+//
+//        when:
+//        withInterceptors([controller: "dummy"]) {
+//            //controller.renderAttribute()
+//        }
+//
+//        then:
+//        response.text == "Foo is Bar"
+//
+//    }
+//}
     void setup() {
-        // grailsApplication is not isolated in unit tests, so clear the ip.whitelist property to avoid polluting independent tests
-        grailsApplication.config.security.apikey.ip = [whitelist: ""]
-        grailsApplication.config.api.whitelist.enabled = true
-        grailsApplication.config.api.legacy.enabled = true
-        grailsApplication.config.api.jwt.enabled = false
-
-        interceptor.whitelistEnabled = true
-        interceptor.legacyApiKeysEnabled = true
-        interceptor.jwtApiKeysEnabled = false
     }
 
     void "All methods of a controller annotated with RequireAuth at the class level should be protected"() {
         setup:
         // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
         // unless we manually add the dummy controller class used in this test
-//        grailsApplication.addArtefact("Controller", DummyController)
-
+        grailsApplication.addArtefact("Controller", DummyController)
         DummyController controller = new DummyController()
+//        grailsApplication.addArtefact("Controller", AnnotatedMethodController)
+//        AnnotatedMethodController controller = new AnnotatedMethodController()
 
         when:
-        request.addHeader("apiKey", "invalid")
-
-        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'dummy')
         request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
         withRequest(controller: controller, action: action)
         def result = interceptor.before()
