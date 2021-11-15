@@ -43,7 +43,7 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     @Qualifier("springSecurityFilterChain")
     private Filter springSecurityFilterChain;
 
-    @Value('${spring.security.legacy.whitelist.ip')
+    @Value('${spring.security.legacy.whitelist.ip:""}')
     String whitelistOfips;
 
     @Value('${spring.security.legacy.whitelist.enabled:false}')

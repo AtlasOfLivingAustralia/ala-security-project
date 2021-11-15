@@ -7,19 +7,16 @@ import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
 
 /**
- * Annotation to check that a valid api key has been provided.
+ * Annotation to check that a user is logged in, and optionally
+ * check a list of required roles.
  */
 @Target([ElementType.TYPE, ElementType.METHOD])
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @interface RequireAuth {
     /**
-     * Comma separated list of roles or configuration properties that point to roles.
-     *
+     * List of roles or configuration properties that point to roles.
      * e.g. "ROLE_ADMIN,ROLE_USER"
-     *
-     * or "security.role.myrole" which resolves to security.role.myrole=MY_ROLE in application.yml or application.groovy
-     *
      * @return
      */
     String[] requiredRoles() default [];

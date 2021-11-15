@@ -8,7 +8,10 @@ import javax.servlet.http.HttpServletResponse
 
 /**
  * An authentication interceptor that checks a user is logged in and has the required roles as specified
- * using the @RequireApiKey
+ * using the @RequireAuth annotations
+ *
+ * see @RequireAuth
+ * see @SkipAuthCheck
  */
 @CompileStatic
 @Slf4j
@@ -42,49 +45,45 @@ class AlaAuthInterceptor {
                 RequireAuth classLevelRequireApiKey = controllerClass.getAnnotation(RequireAuth.class)
                 RequireAuth methodLevelRequireApiKey = method.getAnnotation(RequireAuth.class)
 
+                // check class level roles
                 if (classLevelRequireApiKey && classLevelRequireApiKey.requiredRoles()) {
                     // resolve role property
-                    String[] requiredRoles = classLevelRequireApiKey.requiredRoles()
-                    // check roles
-                    boolean hasRole = false
-
-                    // check user has at least one of the required roles
-                    requiredRoles.each { requiredRole ->
-                        if (request.isUserInRole(requiredRole)){
-                            hasRole = true
-                        }
-                    }
-
-                    if (!hasRole) {
+                    if (!hasSufficientRoles(classLevelRequireApiKey)) {
                         response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
                         return false
                     }
                 }
 
+                // check method level roles
                 if (methodLevelRequireApiKey && methodLevelRequireApiKey.requiredRoles()) {
-                    // resolve role property
-                    String[] requiredRoles = methodLevelRequireApiKey.requiredRoles()
-                    boolean hasRole = false
-
-                    // check user has at least one of the required roles
-                    requiredRoles.each { requiredRole ->
-                        if (request.isUserInRole(requiredRole)){
-                            hasRole = true
-                        }
-                    }
-
-                    if (!hasRole) {
+                    if (!hasSufficientRoles(methodLevelRequireApiKey)) {
                         response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
                         return false
                     }
                 }
 
+                // we have check the roles
                 true
-
             } else {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
                 false
             }
+        } else {
+            true
+        }
+    }
+
+
+    private boolean hasSufficientRoles(RequireAuth requireApiKeyAnnotation) {
+        String[] requiredRoles = requireApiKeyAnnotation.requiredRoles()
+        if (requiredRoles) {
+            // check user has at least one of the required roles
+            requiredRoles.each { requiredRole ->
+                if (request.isUserInRole(requiredRole)) {
+                    return true
+                }
+            }
+            false
         } else {
             true
         }
