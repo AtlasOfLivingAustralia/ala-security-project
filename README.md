@@ -90,19 +90,18 @@ When upgrading to this plugin, existing CAS configuration can be removed.
 The following configuration is required.
 
 ```yaml
-spring:
-    security:
-        oauth2:
-            client:
-                registration:
-                    ala:
-                        client-id:  <<< Add in external configuration, set by ansible >>>>
-                        client-secret:  <<< Add in external configuration, set by ansible >>>>
-                        scope: openid,profile,email,ala,roles
-                provider:
-                    ala:
-                        issuer-uri: https://auth-test.ala.org.au/cas/oidc
-
+spring: 
+  security: 
+    oauth2: 
+      client: 
+        provider: 
+          ala: 
+            issuer-uri: "https://auth-test.ala.org.au/cas/oidc"
+        registration: 
+          ala: 
+            client-id: "<<< Add in external configuration, set by ansible >>>>"
+            client-secret: "<<< Add in external configuration, set by ansible >>>>"
+            scope: "openid,profile,email,ala,roles"
 ```
 
 ### External configuration for legacy API keys and whitelists
