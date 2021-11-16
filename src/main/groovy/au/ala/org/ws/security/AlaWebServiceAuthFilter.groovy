@@ -31,7 +31,10 @@ import javax.servlet.http.HttpServletResponse
 import java.security.interfaces.RSAPublicKey
 
 /**
- *
+ * Spring based Webservice Authentication Filter. This filter supports 3 modes of authentication:
+ * 1) JSON Web tokens
+ * 2) Legacy API keys using ALA's apikey app
+ * 3) Whitelist IP
  */
 @Component
 @DependsOn("springSecurityFilterChain")
