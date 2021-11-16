@@ -2,6 +2,7 @@ package au.org.ala.ws.security
 
 import au.ala.org.ws.security.RequireAuth
 import au.ala.org.ws.security.SkipAuthCheck
+import grails.converters.JSON
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import javax.servlet.http.HttpServletResponse
@@ -49,7 +50,7 @@ class AlaAuthInterceptor {
                 if (classLevelRequireApiKey && classLevelRequireApiKey.requiredRoles()) {
                     // resolve role property
                     if (!hasSufficientRoles(classLevelRequireApiKey)) {
-                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                        sendUnAuthorized(request)
                         return false
                     }
                 }
@@ -57,22 +58,34 @@ class AlaAuthInterceptor {
                 // check method level roles
                 if (methodLevelRequireApiKey && methodLevelRequireApiKey.requiredRoles()) {
                     if (!hasSufficientRoles(methodLevelRequireApiKey)) {
-                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                        sendUnAuthorized(request)
                         return false
                     }
                 }
 
-                // we have check the roles
+                // we have checked the roles
                 true
             } else {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                sendForbidden(request)
                 false
             }
         } else {
+            // no annotations, let the request through
             true
         }
     }
 
+    private void sendUnAuthorized(request) {
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED,
+                (["error":"Unauthorized", "statusCode": HttpServletResponse.SC_UNAUTHORIZED] as JSON).toString()
+        )
+    }
+
+    private void sendForbidden(request) {
+        response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                (["error":"Forbidden", "statusCode": HttpServletResponse.SC_FORBIDDEN] as JSON).toString()
+        )
+    }
 
     private boolean hasSufficientRoles(RequireAuth requireApiKeyAnnotation) {
         String[] requiredRoles = requireApiKeyAnnotation.requiredRoles()

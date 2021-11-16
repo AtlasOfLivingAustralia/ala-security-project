@@ -18,7 +18,6 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.oauth2.core.oidc.OidcIdToken
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
@@ -146,24 +145,13 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
         PreAuthenticatedAuthenticationToken token = new PreAuthenticatedAuthenticationToken(
                 authenticatedUser, credentials, authorities)
         token.setAuthenticated(true)
-
-//        final List<GrantedAuthority> authorities = roles.stream()
-//                .map(r -> "ROLE_" + r)
-//                .map(r -> new SimpleGrantedAuthority(r)).collect(Collectors.toList());
-//        Map<String, Object> claims = jwt.getClaims();
-//        String userNameKey = clientRegistration.getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
-//        OidcIdToken oidcIdToken = new OidcIdToken(token.getTokenValue(), token.getIssuedAt(), token.getExpiresAt(), claims);
-//        DefaultOidcUser user = new DefaultOidcUser(authorities, oidcIdToken, userNameKey);
-//        return new OAuth2AuthenticationToken(user, authorities, clientRegistration.getRegistrationId());
-//
-
         securityContext.setAuthentication(token)
     }
 
 
     /**
      * If successful, returns an AuthenticatedUser
-     * @param key
+     * @param ke    y
      * @return
      */
     AuthenticatedUser checkLegacyApiKey(String key) {
