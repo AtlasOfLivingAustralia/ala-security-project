@@ -5,6 +5,7 @@ import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.UrlJwkProvider
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.exceptions.JWTDecodeException
 import com.auth0.jwt.exceptions.SignatureVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import grails.converters.JSON
@@ -41,6 +42,7 @@ import java.security.interfaces.RSAPublicKey
 @Slf4j
 class AlaWebServiceAuthFilter extends OncePerRequestFilter {
 
+    public static final String BEARER = "Bearer"
     @Autowired
     @Qualifier("springSecurityFilterChain")
     private Filter springSecurityFilterChain;
@@ -72,7 +74,10 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     @Value('${spring.security.jwt.jwk.url}')
     String jwkUrl
 
-    static final String LEGACY_API_KEY_HEADER_NAME = "apiKey"
+    static final String LEGACY_API_KEY_HEADER_NAMES = [
+            "apiKey",
+            "Authorization"
+    ]
 
     static final List<String> LOOPBACK_ADDRESSES = ["127.0.0.1",
                                                     "0:0:0:0:0:0:0:1", // IP v6
@@ -114,18 +119,22 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
             String authorizationHeader = ((HttpServletRequest) request).getHeader(HttpHeaders.AUTHORIZATION)
             if (authorizationHeader != null) {
                 // parse JWT or check whitelist or Check API Key
-                AuthenticatedUser authenticatedUser = checkJWT(authorizationHeader)
-                if (authenticatedUser) {
-                    setAuthenticatedUserAsPrincipal(authenticatedUser)
+                if (authorizationHeader.startsWith(BEARER)) {
+                    AuthenticatedUser authenticatedUser = checkJWT(authorizationHeader)
+                    if (authenticatedUser) {
+                        setAuthenticatedUserAsPrincipal(authenticatedUser)
+                    }
                 }
             }
         }
 
         if (legacyApiKeysEnabled){
-            String apiKeyHeader = ((HttpServletRequest) request).getHeader(LEGACY_API_KEY_HEADER_NAME)
-            AuthenticatedUser authenticatedUser = checkLegacyApiKey(apiKeyHeader)
-            if (authenticatedUser){
-                setAuthenticatedUserAsPrincipal(authenticatedUser)
+            String apiKeyHeader = getLegacyApiKeyHeader((HttpServletRequest) request)
+            if (apiKeyHeader) {
+                AuthenticatedUser authenticatedUser = checkLegacyApiKey(apiKeyHeader)
+                if (authenticatedUser) {
+                    setAuthenticatedUserAsPrincipal(authenticatedUser)
+                }
             }
         }
 
@@ -138,6 +147,16 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String getLegacyApiKeyHeader(HttpServletRequest request){
+        LEGACY_API_KEY_HEADER_NAMES.each {
+            String hdr = request.getHeader(it)
+            if (hdr){
+                return hdr
+            }
+        }
+        null
     }
 
     private void setAuthenticatedUserAsPrincipal(AuthenticatedUser authenticatedUser) {
@@ -216,25 +235,31 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
      */
     AuthenticatedUser checkJWT(String authorizationHeader) {
 
-        // https://auth0.com/docs/security/tokens/json-web-tokens/validate-json-web-tokens
-        String token = authorizationHeader.substring(7)
-
-        // decode and verify
-        DecodedJWT jwt = JWT.decode(token);
-        JwkProvider provider = new UrlJwkProvider(new URL(jwkUrl));
-        String keyId = jwt.getKeyId();
-        Jwk jwk = provider.get(keyId);
-        Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
-
         try {
-            algorithm.verify(jwt);
-            List roles = jwt.getClaims().get("role").asList(String.class)
-            String email = jwt.getClaims().get("email")
-            String userId = jwt.getClaims().get("userid")
-            new AuthenticatedUser(email:email, userId: userId, roles: roles, attributes: jwt.getClaims())
-        } catch (SignatureVerificationException e){
-            log.error("Verify of JWT failed")
-            null
+            // https://auth0.com/docs/security/tokens/json-web-tokens/validate-json-web-tokens
+            String token = authorizationHeader.substring(7)
+
+            // decode and verify
+            DecodedJWT jwt = JWT.decode(token);
+            JwkProvider provider = new UrlJwkProvider(new URL(jwkUrl));
+            String keyId = jwt.getKeyId();
+            Jwk jwk = provider.get(keyId);
+            Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
+
+            try {
+                algorithm.verify(jwt);
+                List roles = jwt.getClaims().get("role").asList(String.class)
+                String email = jwt.getClaims().get("email")
+                String userId = jwt.getClaims().get("userid")
+                new AuthenticatedUser(email: email, userId: userId, roles: roles, attributes: jwt.getClaims())
+            } catch (SignatureVerificationException e) {
+                log.error("Verify of JWT failed")
+                null
+            }
+        } catch (JWTDecodeException e){
+            // this will happen for some legacy API keys which are past in the Authorization header
+            log.debug("Decode of JWT failed, supplied authorizationHeader is not a recognised JWT")
+            log.debug(e.getMessage(), e)
         }
     }
 
