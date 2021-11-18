@@ -28,9 +28,9 @@ compile "org.grails.plugins:ala-ws-security-plugin:3.0.0-SNAPSHOT"
 compile "org.springframework.boot:spring-boot-starter-oauth2-client"
 ```
 
-By default, all URLs will go through OAuth Spring Security Filters which is not desirable for public pages.
+By default, all URLs will go through OAuth Spring Security Filters which is not desirable for public HTML pages.
 Also, this is not desirable for web services as a call that fails authentication/authorization will be routed
-to a HTML login page.
+to a HTML OAuth login page.
 
 To override the default catch-all behaviour, applications will need to define
 a `SecurityConfig` bean that extends WebSecurityConfigurerAdapter in the `grails-app/init` directory. Here is an example"
@@ -98,7 +98,8 @@ The following configuration is required.
 
 ```yaml
 spring: 
-  security: 
+  security:
+    spring.security.logoutUrl: http://dev.ala.org.au:8080/logout
     oauth2: 
       client: 
         provider: 
@@ -106,8 +107,8 @@ spring:
             issuer-uri: "https://auth-test.ala.org.au/cas/oidc"
         registration: 
           ala: 
-            client-id: "<<< Add in external configuration, set by ansible >>>>"
-            client-secret: "<<< Add in external configuration, set by ansible >>>>"
+            client-id: "<<< Add in external configuration, set by ansible, sourced from CAS Management App >>>>"
+            client-secret: "<<< Add in external configuration, set by ansible, sourced from CAS Management App >>>>"
 ```
 
 ### External configuration for legacy API keys and whitelists
@@ -116,13 +117,12 @@ spring:
 spring:
   security:
     legacy:
-      email: myapp@ala.org.au
-      userId: '99999'
-      roles: 'ROLE_ADMIN'
+      roles: 'ROLE_ADMIN' #comma separated list
       whitelist:
+        email: myapp@ala.org.au
+        userId: '99999'      
         enabled: true        
-        #comma separated list of IP Addresses that are exempt from the API key security check.
-        ip: '127.0.0.1'
+        ip: '127.0.0.1,123.123.123.123' #comma separated list 
       apikey:
         enabled: true        
         serviceUrl: https://auth-test.ala.org.au/apikey/....
