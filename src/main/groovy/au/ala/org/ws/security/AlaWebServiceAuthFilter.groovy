@@ -59,10 +59,10 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     @Value('${spring.security.legacy.apikey.enabled:false}')
     Boolean legacyApiKeysEnabled
 
-    @Value('${spring.security.legacy.email:""}')
+    @Value('${spring.security.legacy.whitelist.email:""}')
     String legacyApiKeysEmail
 
-    @Value('${spring.security.legacy.userid:""}')
+    @Value('${spring.security.legacy.whitelist.userid:""}')
     String legacyApiKeysUserId
 
     @Value('${spring.security.legacy.roles:""}')
@@ -185,7 +185,12 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
             if (conn.responseCode == HttpServletResponse.SC_OK) {
                 response = JSON.parse(conn.content.text as String)
                 if (response.valid) {
-                    return createLegacyAuthenticatedUser()
+                    return new AuthenticatedUser(
+                        email: response.userEmail,
+                        userId: response.userId,
+                        roles: legacyApiKeysRoles ? legacyApiKeysRoles.split(",").collect { it.trim() } : [],
+                        attributes: [:]
+                    )
                 }
             } else {
                 log.info "Rejected - " + (key ? "using key ${key}" : "no key present")
