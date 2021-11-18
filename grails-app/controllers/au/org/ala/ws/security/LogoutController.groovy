@@ -6,18 +6,19 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 
 class LogoutController {
 
-
+    @org.springframework.beans.factory.annotation.Value('${spring.security.logoutUrl:"http://dev.ala.org.au:8080"}')
+    String logoutUrl
 
     def index() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         authentication.setAuthenticated(false);
-        new SecurityContextLogoutHandler().logout(request,response,authentication);
+        new SecurityContextLogoutHandler().logout(request, response, authentication);
 
         SecurityContextHolder.clearContext();
         request.logout()
         session.invalidate()
 
-        redirect(url: "http://dev.ala.org.au:8080")
+        redirect(url: logoutUrl)
     }
 
     /**
