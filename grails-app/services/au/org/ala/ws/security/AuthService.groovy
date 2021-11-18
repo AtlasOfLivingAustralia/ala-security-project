@@ -5,7 +5,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import javax.servlet.http.HttpServletRequest
 
 /**
- * TODO - Port these methods to OAuth - remove cookie logic
+ * Auth service providing convenience methods for accessing common auth properties.
  */
 class AuthService {
 

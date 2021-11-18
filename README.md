@@ -42,13 +42,17 @@ a `SecurityConfig` bean that extends WebSecurityConfigurerAdapter in the `grails
 class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Autowired
-  protected AlaOAuth2UserService alaOAuth2UserService;
+  AlaOAuth2UserService alaOAuth2UserService
+
+  @Value('${spring.security.logoutUrl:"http://dev.ala.org.au:8080"}')
+  String logoutUrl
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
     http.authorizeRequests()
             .antMatchers(
                     "/",
+                    "/public/**",
                     "/css/**",
                     "/assets/**",
                     "/messages/**",
@@ -62,14 +66,17 @@ class SecurityConfig extends WebSecurityConfigurerAdapter {
             .authenticated()
             .and()
             .oauth2Login()
+            .successHandler(new SavedRequestAwareAuthenticationSuccessHandler())
             .userInfoEndpoint()
             .oidcUserService(alaOAuth2UserService)
             .and()
             .and()
-            .logout().invalidateHttpSession(true)
+            .logout()
+            .logoutUrl(logoutUrl)
+            .invalidateHttpSession(true)
             .clearAuthentication(true)
             .deleteCookies("JSESSIONID").permitAll()
-            .and().csrf().disable();
+            .and().csrf().disable()
   }
 }
 ```
@@ -101,7 +108,6 @@ spring:
           ala: 
             client-id: "<<< Add in external configuration, set by ansible >>>>"
             client-secret: "<<< Add in external configuration, set by ansible >>>>"
-            scope: "openid,profile,email,ala,roles"
 ```
 
 ### External configuration for legacy API keys and whitelists
@@ -110,21 +116,16 @@ spring:
 spring:
   security:
     legacy:
+      email: myapp@ala.org.au
+      userId: '99999'
+      roles: 'ROLE_ADMIN'
       whitelist:
         enabled: true        
         #comma separated list of IP Addresses that are exempt from the API key security check.
         ip: '127.0.0.1'
-        email: myapp@ala.org.au
-        userId: '99999'
-        roles:
-          - 'ROLE_ADMIN'
       apikey:
         enabled: true        
         serviceUrl: https://auth-test.ala.org.au/apikey/....
-        email: myapp@ala.org.au        
-        userId: '99998'  # this should correspond to an app that has been registered as a user for the Atlas
-        roles:
-          - 'ROLE_ADMIN'
 ```
 
 ### Demo application

@@ -19,6 +19,12 @@ info:
         name: '@info.app.name@'
         version: '@info.app.version@'
         grailsVersion: '@info.app.grailsVersion@'
+
+# Spring Actuator Endpoints are Disabled by Default
+management:
+    endpoints:
+        enabled-by-default: false
+
 spring:
     jmx:
         unique-names: true
@@ -27,37 +33,29 @@ spring:
     groovy:
         template:
             check-template-location: false
+    security:
+        logoutUrl: http://dev.ala.org.au:8080
+        legacy:
+            email: user@ala.org.au
+            userid: 9999
+            roles: ROLE_ADMIN
+            apikey:
+                enabled: true
+                serviceUrl: https://auth-test.ala.org.au/apikey/ws/check?apikey=
+            whitelist:
+                ip: ''
+                enabled: false
+        oauth2:
+            client:
+                provider:
+                    ala:
+                        issuer-uri: https://auth-test.ala.org.au/cas/oidc
+                registration:
+                    ala:
+                        client-id: <<TO_BE_ADDED>>
+                        client-secret: <<TO_BE_ADDED>>
+jwk:
+    url: https://auth-test.ala.org.au/cas/oidc/jwks
 
-# Spring Actuator Endpoints are Disabled by Default
-management:
-    endpoints:
-        enabled-by-default: false
-
-#    ### Mandatory
-#    - ```security.apikey.check.serviceUrl``` - URL of the API Key service endpoint, up to and including the key parameter name. E.g. https://auth.ala.org.au/apikey/ws/check?apikey=
-#
-#    ### Optional
-#    - ```security.apikey.ip.whitelist``` - comma separated list of IP Addresses that are exempt from the API key security check.
-#    - ```security.apikey.header.override ``` - override the default request header name (apiKey) to use a different name.
-
-
-security:
-    cas:
-        logout: https://nectar-auth-dev.ala.org.au/cas/logout
-    jwt:
-        jwkUrl: https://nectar-auth-dev.ala.org.au/cas/oidc/jwks
-        enabled: true
-    legacy:
-        whitelist:
-            #comma separated list of IP Addresses that are exempt from the API key security check.
-            ip: ''
-            enabled: false
-            userId: '1'
-            roles:
-                - 'ROLE_ADMIN'
-        apikey:
-            serviceUrl:
-            enabled: false
-            userId: '1'
-            roles:
-                - 'ROLE_ADMIN'
+userDetails:
+    url: https://auth-test.ala.org.au/userdetails

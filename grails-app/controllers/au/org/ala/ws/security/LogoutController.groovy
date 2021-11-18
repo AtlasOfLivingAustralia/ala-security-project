@@ -6,6 +6,8 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 
 class LogoutController {
 
+
+
     def index() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         authentication.setAuthenticated(false);

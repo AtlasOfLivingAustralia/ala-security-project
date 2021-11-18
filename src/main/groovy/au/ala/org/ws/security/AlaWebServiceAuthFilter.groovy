@@ -59,13 +59,13 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     @Value('${spring.security.legacy.apikey.enabled:false}')
     Boolean legacyApiKeysEnabled
 
-    @Value('${spring.security.legacy.email}')
+    @Value('${spring.security.legacy.email:""}')
     String legacyApiKeysEmail
 
-    @Value('${spring.security.legacy.userid}')
+    @Value('${spring.security.legacy.userid:""}')
     String legacyApiKeysUserId
 
-    @Value('${spring.security.legacy.roles}')
+    @Value('${spring.security.legacy.roles:""}')
     String legacyApiKeysRoles
 
     @Value('${spring.security.jwt.enabled:true}')
@@ -74,8 +74,9 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     @Value('${spring.security.jwt.jwk.url}')
     String jwkUrl
 
-    static final String LEGACY_API_KEY_HEADER_NAMES = [
+    static final List LEGACY_API_KEY_HEADER_NAMES = [
             "apiKey",
+            "api_key",
             "Authorization"
     ]
 
@@ -150,13 +151,14 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     }
 
     private String getLegacyApiKeyHeader(HttpServletRequest request){
+        String apiKeyHeader = null
         LEGACY_API_KEY_HEADER_NAMES.each {
             String hdr = request.getHeader(it)
             if (hdr){
-                return hdr
+                apiKeyHeader = hdr
             }
         }
-        null
+        apiKeyHeader
     }
 
     private void setAuthenticatedUserAsPrincipal(AuthenticatedUser authenticatedUser) {
