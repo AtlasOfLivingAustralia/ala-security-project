@@ -86,7 +86,7 @@ The following bean definitions are required in `grails-app/conf/spring/resources
 ```groovy
 beans = {
   alaOAuth2UserService(AlaOAuth2UserService)   // customized UserService - user roles added to OidcUser.authorities 
-  alaWebServiceAuthFilter(AlaWebServiceAuthFilter) // filter that checks JWTs & Legacy API kesy
+  alaWebServiceAuthFilter(AlaWebServiceAuthFilter) // filter that checks JWTs & Legacy API keys
   securityConfig(SecurityConfig) // custom security config for your app
 }
 ```
