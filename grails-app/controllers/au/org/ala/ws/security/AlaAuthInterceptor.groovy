@@ -91,12 +91,9 @@ class AlaAuthInterceptor {
         String[] requiredRoles = requireApiKeyAnnotation.requiredRoles()
         if (requiredRoles) {
             // check user has at least one of the required roles
-            requiredRoles.each { requiredRole ->
-                if (request.isUserInRole(requiredRole)) {
-                    return true
-                }
+            requiredRoles.find { requiredRole ->
+                request.isUserInRole(requiredRole)
             }
-            false
         } else {
             true
         }
