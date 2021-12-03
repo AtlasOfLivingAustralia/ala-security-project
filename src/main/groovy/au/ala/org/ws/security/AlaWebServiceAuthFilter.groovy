@@ -255,6 +255,10 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
 
             try {
                 algorithm.verify(jwt);
+                // check the expiry....
+                if (jwt.getExpiresAt().before(new Date())){
+                    return null
+                }
                 List roles = jwt.getClaims().get("role").asList(String.class)
                 String email = jwt.getClaims().get("email")
                 String userId = jwt.getClaims().get("userid")
