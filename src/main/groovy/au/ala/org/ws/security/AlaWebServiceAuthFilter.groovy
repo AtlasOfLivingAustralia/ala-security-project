@@ -19,6 +19,8 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.DefaultSecurityFilterChain
+import org.springframework.security.web.FilterChainProxy
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
@@ -26,6 +28,8 @@ import org.springframework.web.filter.OncePerRequestFilter
 import javax.annotation.PostConstruct
 import javax.servlet.Filter
 import javax.servlet.FilterChain
+import javax.servlet.FilterConfig
+import javax.servlet.ServletContext
 import javax.servlet.ServletException
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -37,15 +41,10 @@ import java.security.interfaces.RSAPublicKey
  * 2) Legacy API keys using ALA's apikey app
  * 3) Whitelist IP
  */
-@Component
-@DependsOn("springSecurityFilterChain")
 @Slf4j
 class AlaWebServiceAuthFilter extends OncePerRequestFilter {
 
     public static final String BEARER = "Bearer"
-    @Autowired
-    @Qualifier("springSecurityFilterChain")
-    private Filter springSecurityFilterChain;
 
     @Value('${spring.security.legacy.whitelist.ip:""}')
     String whitelistOfips;
@@ -93,24 +92,6 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     def serviceMethod() {}
 
     public AlaWebServiceAuthFilter(){}
-
-    @PostConstruct
-    void init(){
-        def filterChains = springSecurityFilterChain.filterChains[0]
-
-        // get index of configured "addAfterFilterName"
-        int filterIdx = -1
-        filterChains.filters.eachWithIndex { filter, idx ->
-           if (filter.getClass().getSimpleName() == addAfterFilterName || filter.getClass().getCanonicalName() == addAfterFilterName){
-               filterIdx = idx
-           }
-        }
-        if (filterIdx > 0){
-            filterChains.filters.add(filterIdx + 1, this)
-        } else {
-            filterChains.filters.add(addAfterFilterIdx, this)
-        }
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
