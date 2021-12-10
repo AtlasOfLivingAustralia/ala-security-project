@@ -1,8 +1,5 @@
 package au.org.ala.ws.security
 
-import au.org.ala.ws.security.RequireAuth
-import au.org.ala.ws.security.SkipAuthCheck
-
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.web.util.GrailsApplicationAttributes
 import spock.lang.Specification
@@ -12,12 +9,9 @@ class AlaAuthInterceptorSpec extends Specification implements InterceptorUnitTes
     static final int UNAUTHORISED = 403
     static final int OK = 200
 
-    def setup() {
-    }
+    def setup() {}
 
-    def cleanup() {
-
-    }
+    def cleanup() {}
 
     void "All methods of a controller annotated with RequireAuth at the class level should be protected"() {
         setup:
