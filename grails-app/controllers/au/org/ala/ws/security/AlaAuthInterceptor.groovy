@@ -4,6 +4,7 @@ import grails.converters.JSON
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import javax.servlet.http.HttpServletResponse
+import au.org.ala.ws.security.*;
 
 /**
  * An authentication interceptor that checks a user is logged in and has the required roles as specified
