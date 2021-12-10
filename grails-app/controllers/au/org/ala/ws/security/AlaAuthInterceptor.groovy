@@ -1,7 +1,5 @@
 package au.org.ala.ws.security
 
-import au.ala.org.ws.security.RequireAuth
-import au.ala.org.ws.security.SkipAuthCheck
 import grails.converters.JSON
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -47,7 +45,7 @@ class AlaAuthInterceptor {
                 RequireAuth methodLevelRequireApiKey = method.getAnnotation(RequireAuth.class)
 
                 // check class level roles
-                if (classLevelRequireApiKey && classLevelRequireApiKey.requiredRoles()) {
+                if (classLevelRequireApiKey && classLevelRequireApiKey.value()) {
                     // resolve role property
                     if (!hasSufficientRoles(classLevelRequireApiKey)) {
                         sendUnAuthorized(request)
@@ -56,7 +54,7 @@ class AlaAuthInterceptor {
                 }
 
                 // check method level roles
-                if (methodLevelRequireApiKey && methodLevelRequireApiKey.requiredRoles()) {
+                if (methodLevelRequireApiKey && methodLevelRequireApiKey.value()) {
                     if (!hasSufficientRoles(methodLevelRequireApiKey)) {
                         sendUnAuthorized(request)
                         return false
@@ -76,19 +74,23 @@ class AlaAuthInterceptor {
     }
 
     private void sendUnAuthorized(request) {
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED,
-                (["error":"Unauthorized", "statusCode": HttpServletResponse.SC_UNAUTHORIZED] as JSON).toString()
-        )
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write((["error":"Unauthorized", "statusCode": HttpServletResponse.SC_UNAUTHORIZED] as JSON).toString());
+
     }
 
     private void sendForbidden(request) {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN,
-                (["error":"Forbidden", "statusCode": HttpServletResponse.SC_FORBIDDEN] as JSON).toString()
-        )
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write((["error":"Forbidden", "statusCode": HttpServletResponse.SC_FORBIDDEN] as JSON).toString());
+
     }
 
     private boolean hasSufficientRoles(RequireAuth requireApiKeyAnnotation) {
-        String[] requiredRoles = requireApiKeyAnnotation.requiredRoles()
+        String[] requiredRoles = requireApiKeyAnnotation.value()
         if (requiredRoles) {
             // check user has at least one of the required roles
             requiredRoles.find { requiredRole ->

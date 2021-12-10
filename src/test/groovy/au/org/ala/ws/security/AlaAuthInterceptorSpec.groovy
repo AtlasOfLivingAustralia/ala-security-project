@@ -1,7 +1,7 @@
 package au.org.ala.ws.security
 
-import au.ala.org.ws.security.RequireAuth
-import au.ala.org.ws.security.SkipAuthCheck
+import au.org.ala.ws.security.RequireAuth
+import au.org.ala.ws.security.SkipAuthCheck
 
 //import grails.test.mixin.TestFor
 //import grails.test.mixin.TestMixin

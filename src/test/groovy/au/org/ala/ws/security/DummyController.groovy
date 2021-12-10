@@ -1,6 +1,6 @@
 package au.org.ala.ws.security
 
-import au.ala.org.ws.security.RequireAuth
+import au.org.ala.ws.security.RequireAuth
 
 @RequireAuth
 class DummyController {

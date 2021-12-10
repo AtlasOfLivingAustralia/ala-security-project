@@ -25,6 +25,7 @@ management:
     endpoints:
         enabled-by-default: false
 
+
 spring:
     jmx:
         unique-names: true
@@ -34,11 +35,16 @@ spring:
         template:
             check-template-location: false
     security:
+        jwt:
+            enabled: true
+            jwk:
+                url: https://auth-test.ala.org.au/cas/oidc/jwks
         logoutUrl: http://dev.ala.org.au:8080
         legacy:
+            userdetails:
+                url: https://auth-test.ala.org.au/userdetails
             email: user@ala.org.au
             userid: 9999
-            roles: ROLE_ADMIN
             apikey:
                 enabled: true
                 serviceUrl: https://auth-test.ala.org.au/apikey/ws/check?apikey=
@@ -54,8 +60,4 @@ spring:
                     ala:
                         client-id: <<TO_BE_ADDED>>
                         client-secret: <<TO_BE_ADDED>>
-jwk:
-    url: https://auth-test.ala.org.au/cas/oidc/jwks
 
-userDetails:
-    url: https://auth-test.ala.org.au/userdetails
