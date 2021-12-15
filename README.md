@@ -38,17 +38,20 @@ a `SecurityConfig` bean that extends WebSecurityConfigurerAdapter in the `grails
 ```groovy
 @Configuration
 @EnableWebSecurity
-@Order(1) // required to override the default Oauth2 spring configuration
+@Import([OAuth2ClientRegistrationRepositoryConfiguration.class]) // Needed because we disabled the autoconfiguration
+@Order(1)
 class SecurityConfig extends WebSecurityConfigurerAdapter {
-
-  @Autowired
-  AlaOAuth2UserService alaOAuth2UserService
 
   @Value('${spring.security.logoutUrl:"http://dev.ala.org.au:8080"}')
   String logoutUrl
 
+  @Inject
+  AlaWebServiceAuthFilter alaWebServiceAuthFilter
+
   @Override
   protected void configure(HttpSecurity http) throws Exception {
+
+    http.addFilterBefore(alaWebServiceAuthFilter, LogoutFilter)
     http.authorizeRequests()
             .antMatchers(
                     "/",
@@ -85,9 +88,17 @@ The following bean definitions are required in `grails-app/conf/spring/resources
 
 ```groovy
 beans = {
-  alaOAuth2UserService(AlaOAuth2UserService)   // customized UserService - user roles added to OidcUser.authorities 
-  alaWebServiceAuthFilter(AlaWebServiceAuthFilter) // filter that checks JWTs & Legacy API keys
-  securityConfig(SecurityConfig) // custom security config for your app
+  restService(RestTemplate)
+  jwtService(JwtService)
+  legacyApiKeyService(LegacyApiKeyService)
+  alaWebServiceAuthFilter(AlaWebServiceAuthFilter)
+  alaRoleMapper(AlaRoleMapper)
+  alaSecurityConfig(SecurityConfig)
+
+  securityFilterChainRegistration(FilterRegistrationBean) {
+    filter = ref("springSecurityFilterChain")
+    order = OrderedFilter.REQUEST_WRAPPER_FILTER_MAX_ORDER + 25 // This needs to be before the GrailsWebRequestFilter which is +30
+  }
 }
 ```
 
