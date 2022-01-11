@@ -24,7 +24,7 @@ To use this plugin, you will need remove dependencies on `ala-auth` plugin and t
 The following dependencies in `build.gradle` are required:
 
 ```
-compile "org.grails.plugins:ala-ws-security-plugin:3.0.0-SNAPSHOT"
+compile "org.grails.plugins:ala-ws-security-plugin:3.0.2-SNAPSHOT"
 compile "org.springframework.boot:spring-boot-starter-oauth2-client"
 ```
 
@@ -145,7 +145,12 @@ A demo application that uses this plugin is here: <<< TO_BE_ADDED >>
 
 ## Calling services with JSON Web Tokens
 
-JWTs can be generated using the service:  <<< TO_BE_ADDED >>
+JWTs can be generated using the service
+```
+curl -L https://gateway-test.ala.org.au/a/token -H "Authorization: Basic << base64 encode username:password >>"
+```
+Where username is your Atlas email address, and password is the password for your Atlas account.
+Note this service is using auth-test environment.
 
 ## Calling services with Legacy API key
 
