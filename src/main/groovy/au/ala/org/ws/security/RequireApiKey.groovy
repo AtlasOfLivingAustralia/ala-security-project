@@ -18,4 +18,10 @@ public @interface RequireApiKey {
     String redirectController() default "project"
 
     String redirectAction() default "index"
+
+    /**
+     * Only taken into account for OIDC apps
+     * @return
+     */
+    String[] scopes() default []
 }

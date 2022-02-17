@@ -10,19 +10,18 @@ buildscript {
     }
 }
 
-version "2.0.1"
+version "3.0.0-SNAPSHOT"
 group "org.grails.plugins"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-apply plugin:"org.grails.grails-plugin-publish"
 apply plugin:"org.grails.grails-gsp"
 //apply plugin:"asset-pipeline"
 apply plugin:"maven-publish"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 1.11
+targetCompatibility = 1.11
 
 repositories {
     mavenLocal()
@@ -30,45 +29,71 @@ repositories {
     maven { url "https://repo.grails.org/grails/core" }
 }
 
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
 dependencies {
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
     compile "org.springframework.boot:spring-boot-starter-tomcat"
-    compile "org.grails:grails-dependencies"
     compile "org.grails:grails-web-boot"
+    compile "org.grails:grails-logging"
+    compile "org.grails:grails-plugin-rest"
+    compile "org.grails:grails-plugin-databinding"
+    compile "org.grails:grails-plugin-i18n"
+    compile "org.grails:grails-plugin-services"
+    compile "org.grails:grails-plugin-url-mappings"
+    compile "org.grails:grails-plugin-interceptors"
     compile "org.grails.plugins:cache"
+    compile "org.grails.plugins:async"
     compile "org.grails.plugins:scaffolding"
+    compile "org.grails.plugins:gsp"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     profile "org.grails.profiles:web-plugin"
-    provided "org.grails:grails-plugin-services"
-    provided "org.grails:grails-plugin-domain-class"
-//    runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.14.2"
-    testCompile "org.grails:grails-plugin-testing"
-    testCompile "org.grails.plugins:geb"
-    testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
-    testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+//    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.0.10"
+    testCompile "io.micronaut:micronaut-inject-groovy"
+    testCompile "org.grails:grails-gorm-testing-support"
+    testCompile "org.mockito:mockito-core"
+    testCompile "org.grails:grails-web-testing-support"
+
+    implementation 'org.pac4j:pac4j-jwt:5.3.1'
+    implementation 'org.pac4j:pac4j-oidc:5.3.1'
+    implementation 'org.pac4j:pac4j-jee:5.3.1'
 }
 
+compileGroovy {
+    groovyOptions.javaAnnotationProcessing = true
+}
+
+tasks.withType(GroovyCompile) {
+    configure(groovyOptions) {
+        forkOptions.jvmArgs = ['-Xmx1024m']
+    }
+}
+
+compileJava.dependsOn(processResources)
+
 bootRun {
-    jvmArgs('-Dspring.output.ansi.enabled=always')
-    addResources = true
+    ignoreExitValue true
+    jvmArgs(
+            '-Dspring.output.ansi.enabled=always',
+            '-noverify',
+            '-XX:TieredStopAtLevel=1',
+            '-Xmx1024m')
+    sourceResources sourceSets.main
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
 }
 // enable if you wish to package this plugin as a standalone application
-bootRepackage.enabled = false
-grailsPublish {
-    // TODO: Provide values here
-//    user = 'user'
-//    key = 'key'
-    githubSlug = 'AtlasOfLivingAustralia/ala-ws-security-plugin'
-    license {
-        name = 'MPL-2.0'
-    }
-    title = "ALA WS Security Plugin"
-    desc = "Plugin that implements ALA API Key support"
-    developers = [:]
-}
+bootJar.enabled = false
 
 publishing {
     repositories {
@@ -82,22 +107,29 @@ publishing {
         }
     }
     publications {
-        mavenJar(MavenPublication) {
-            pom.withXml {
-                def pomNode = asNode()
-                pomNode.dependencyManagement.replaceNode {}
+        maven(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
 
-                // simply remove dependencies without a version
-                // version-less dependencies are handled with dependencyManagement
-                // see https://github.com/spring-gradle-plugins/dependency-management-plugin/issues/8 for more complete solutions
-                pomNode.dependencies.dependency.findAll {
-                    it.version.text().isEmpty()
-                }.each {
-                    it.replaceNode {}
+            pom {
+                name = 'ALA WS Security Plugin'
+                description = 'Plugin for authenticating web service calls for ALA systems'
+                url = 'https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin'
+                licenses {
+                    license {
+                        name = 'MPL-1.1'
+                        url = 'https://www.mozilla.org/en-US/MPL/1.1/'
+                    }
+                }
+                developers {
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin.git'
+                    developerConnection = 'scm:git:ssh://github.com:AtlasOfLivingAustralia/ala-ws-security-plugin.git'
+                    url = 'https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin/tree/main'
                 }
             }
-            from components.java
-
         }
     }
 }
