@@ -10,7 +10,7 @@ buildscript {
     }
 }
 
-version "3.0.0-SNAPSHOT"
+version "4.0.0-SNAPSHOT"
 group "org.grails.plugins"
 
 apply plugin:"eclipse"
@@ -27,6 +27,11 @@ repositories {
     mavenLocal()
     maven { url "https://nexus.ala.org.au/content/groups/public/" }
     maven { url "https://repo.grails.org/grails/core" }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    resolutionStrategy.cacheDynamicVersionsFor 0, 'seconds'
 }
 
 configurations {
@@ -64,9 +69,12 @@ dependencies {
     testCompile "org.mockito:mockito-core"
     testCompile "org.grails:grails-web-testing-support"
 
-    implementation 'org.pac4j:pac4j-jwt:5.3.1'
-    implementation 'org.pac4j:pac4j-oidc:5.3.1'
-    implementation 'org.pac4j:pac4j-jee:5.3.1'
+    implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0-SNAPSHOT'
+
+    compile 'org.pac4j:pac4j-jwt:5.3.1'
+    compile 'org.pac4j:pac4j-oidc:5.3.1'
+    compile 'org.pac4j:pac4j-jee:5.3.1'
+//    compile 'org.pac4j:jee-pac4j:6.0.0'
 }
 
 compileGroovy {
