@@ -4,7 +4,6 @@ import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.grails.AnnotationMatcher
 import au.org.ala.ws.security.service.ApiKeyService
-import au.org.ala.ws.security.service.JwtAuthenticatorService
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -13,11 +12,15 @@ import org.pac4j.core.config.Config
 import org.pac4j.core.context.JEEContextFactory
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.credentials.Credentials
 import org.pac4j.core.credentials.extractor.BearerAuthExtractor
 import org.pac4j.core.profile.ProfileManager
+import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.FindBest
+import org.pac4j.http.client.direct.DirectBearerAuthClient
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.http.HttpStatus
 
 import javax.annotation.PostConstruct
 import javax.servlet.http.HttpServletRequest
@@ -27,7 +30,6 @@ import javax.servlet.http.HttpServletRequest
 @EnableConfigurationProperties(JwtProperties)
 class ApiKeyInterceptor {
     ApiKeyService apiKeyService
-    JwtAuthenticatorService jwtAuthenticatorService
 
     static final int STATUS_UNAUTHORISED = 403
     static final String API_KEY_HEADER_NAME = "apiKey"
@@ -38,7 +40,7 @@ class ApiKeyInterceptor {
     @Autowired
     JwtProperties jwtProperties
     @Autowired
-    JwtAuthenticator jwtAuthenticator
+    DirectBearerAuthClient bearerAuthClient // Could be any DirectClient?
     @Autowired
     Config config
     GrailsApplication grailsApplication
@@ -90,45 +92,58 @@ class ApiKeyInterceptor {
      * Validate a JWT Bearer token instead of the API key.
      * @param requireApiKey The RequireApiKey annotation
      * @param fallbackToLegacy Whether to fall back to legacy API keys if the JWT is not present.
-     * @return true
+     * @return true if the request is authorised
      */
     boolean jwtApiKeyInterceptor(RequireApiKey requireApiKey, boolean fallbackToLegacy) {
         def result = false
+
         def context = context()
-        def bearerAuthExtractor = new BearerAuthExtractor()
-        def credentials = bearerAuthExtractor.extract(context, config.sessionStore)
+        ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
+        profileManager.setConfig(config)
+
+        def credentials = bearerAuthClient.getCredentials(context, config.sessionStore)
         if (credentials.isPresent()) {
-            ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
-            profileManager.setConfig(config)
-            def creds = credentials.get()
-            try {
-                jwtAuthenticator.validate(creds, context, config.sessionStore)
+            def profile = bearerAuthClient.getUserProfile(credentials.get(), context, config.sessionStore)
+            if (profile.isPresent()) {
+                def userProfile = profile.get()
+                profileManager.save(
+                        bearerAuthClient.getSaveProfileInSession(context, userProfile),
+                        userProfile,
+                        bearerAuthClient.isMultiProfile(context, userProfile)
+                )
 
-                def userProfile = creds.userProfile
+                result = true
 
-                if (userProfile) {
-                    profileManager.save(false, creds.userProfile, false)
+                if (result && requireApiKey.roles()) {
+                    def roles = userProfile.roles
+                    result = requireApiKey.roles().every() {
+                        roles.contains(it)
+                    }
                 }
 
-                if (requireApiKey.scopes()) {
-                    def scope = userProfile.attributes['scope'] as List<String>
-                    result = requireApiKey.scopes().every {
+                def requiredScopes = requireApiKey.scopes() + jwtProperties.requiredScopes
+                if (result && requiredScopes) {
+                    def scope = userProfile.permissions //attributes['scope'] as List<String>
+                    result = requiredScopes.every {
                         scope.contains(it)
                     }
-                } else {
-                    result = true
                 }
 
-            } catch (e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Couldn't validate JWT", e)
-                } else {
-                    log.info("Couldn't validate JWT: {}", e.message)
-                }
+            } else {
+                log.info("Bearer token present but no user info found: {}", credentials)
                 result = false
+            }
+
+            if (!result) {
+                response.status = STATUS_UNAUTHORISED
+                response.sendError(STATUS_UNAUTHORISED, "Forbidden")
             }
         } else if (fallbackToLegacy) {
             result = legacyApiKeyInterceptor()
+        } else {
+            response.status = HttpStatus.UNAUTHORIZED.value()
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase())
+            result = false
         }
         return result
     }

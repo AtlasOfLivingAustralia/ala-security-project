@@ -9,11 +9,13 @@ import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jose.util.DefaultResourceRetriever
 import com.nimbusds.jose.util.ResourceRetriever
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
+import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.JEEContextFactory
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.JEESessionStore
 import org.pac4j.core.context.session.SessionStore
+import org.pac4j.http.client.direct.DirectBearerAuthClient
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -75,16 +77,30 @@ class AlaWsSecurityGrailsPluginConfiguration {
     @Bean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
     JwtAuthenticator jwtAuthenticator(OIDCProviderMetadata oidcProviderMetadata, JWKSource<SecurityContext> jwkSource) {
-        def ja = new JwtAuthenticator(oidcProviderMetadata.issuer.toString(), oidcProviderMetadata.IDTokenJWSAlgs.toSet(), jwkSource)
+        def ja = new JwtAuthenticator(oidcProviderMetadata.issuer.toString(), jwtProperties.requiredClaims, oidcProviderMetadata.IDTokenJWSAlgs.toSet(), jwkSource)
         ja.setJwtType(jwtProperties.jwtType)
         return ja
     }
 
     @Bean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
-    FilterRegistrationBean pac4jHttpRequestWrapper() {
+    DirectBearerAuthClient bearerClient(JwtAuthenticator jwtAuthenticator, Config config) {
+        def client = new DirectBearerAuthClient(jwtAuthenticator)
+        client.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes,jwtProperties.permissionAttributes))
+        client.name = 'JwtClient'
+
+        // This could be used with a pac4j SecurityFilter?
+
+        config.clients.clients.add(client)
+
+        client
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
+    FilterRegistrationBean pac4jHttpRequestWrapper(Config config) {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean()
-        filterRegistrationBean.filter = new Pac4jHttpRequestWrapperFilter()
+        filterRegistrationBean.filter = new Pac4jHttpRequestWrapperFilter(config)
         filterRegistrationBean.initParameters = [:]
         filterRegistrationBean.addUrlPatterns('/*')
         filterRegistrationBean

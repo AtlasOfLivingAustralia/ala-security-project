@@ -15,14 +15,14 @@ import java.util.Optional;
  * Use the Pac4j profile manager to get the request principal, so that a JWT can be inserted into a profile manager
  * and the resulting profile can feed into isUserInRole, getRemoteUser and so on.
  */
-public class GrailsPac4jHttpRequestWrapper extends HttpServletRequestWrapper {
+public class Pac4jProfileManagerHttpRequestWrapper extends HttpServletRequestWrapper {
 
     private final ProfileManager profileManager;
 
-    public GrailsPac4jHttpRequestWrapper(HttpServletRequest request, HttpServletResponse response, SessionStore sessionStore) {
+    public Pac4jProfileManagerHttpRequestWrapper(HttpServletRequest request, ProfileManager profileManager) {
         super(request);
 
-        this.profileManager = new ProfileManager(new JEEContext(this, response), sessionStore);
+        this.profileManager = profileManager;
     }
 
     @Override

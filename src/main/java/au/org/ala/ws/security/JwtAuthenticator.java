@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,7 +51,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.pac4j.core.util.CommonHelper.assertNotBlank;
-import static org.pac4j.core.util.CommonHelper.toNiceString;
 
 /**
  * Authenticator for JWT. Based on the Pac4j {@link org.pac4j.jwt.credentials.authenticator.JwtAuthenticator},
@@ -77,11 +77,13 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
     private Date expirationTime;
 
     private ValueGenerator identifierGenerator;
+    private Set<String> requiredClaims;
 
-    public JwtAuthenticator(String issuer, Set<JWSAlgorithm> expectedJWSAlgs, JWKSource<SecurityContext> keySource) {
+    public JwtAuthenticator(String issuer, Collection<String> requiredClaims, Set<JWSAlgorithm> expectedJWSAlgs, JWKSource<SecurityContext> keySource) {
         this.issuer = issuer;
         this.expectedJWSAlgs = expectedJWSAlgs;
         this.keySource = keySource;
+        this.requiredClaims = new HashSet<>(requiredClaims);
     }
 
     @Override
@@ -168,7 +170,7 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
         // TODO externalise the required claims
         jwtProcessor.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier(
                 new JWTClaimsSet.Builder().issuer(issuer).build(),
-                new HashSet<>(Arrays.asList("sub", "iat", "exp", "nbf", "scp", "cid", "jti"))));
+                requiredClaims));
 
     // Process the token
         SecurityContext ctx = null; // optional context parameter, not required here
@@ -305,12 +307,5 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
         sb.append('}');
         return sb.toString();
     }
-
-    //    @Override
-//    public String toString() {
-//        return toNiceString(this.getClass(),
-//                "realmName", this.realmName,
-//                "identifierGenerator", this.identifierGenerator);
-//    }
 
 }

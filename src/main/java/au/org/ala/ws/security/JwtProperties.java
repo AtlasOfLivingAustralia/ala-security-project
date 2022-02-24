@@ -3,6 +3,8 @@ package au.org.ala.ws.security;
 import org.pac4j.core.context.HttpConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.List;
+
 @ConfigurationProperties(value = "security.jwt")
 public class JwtProperties {
     private boolean enabled = true;
@@ -13,6 +15,10 @@ public class JwtProperties {
     private String jwtType = "jwt";
     private int connectTimeoutMs = HttpConstants.DEFAULT_CONNECT_TIMEOUT;;
     private int readTimeoutMs = HttpConstants.DEFAULT_READ_TIMEOUT;
+    private List<String> roleAttributes = List.of("role");
+    private List<String> permissionAttributes = List.of("scope","scp");
+    private List<String> requiredClaims = List.of("sub", "iat", "exp", "nbf", "cid", "jti");
+    private List<String> requiredScopes = List.of();
 
     public String getClientId() {
         return clientId;
@@ -76,5 +82,37 @@ public class JwtProperties {
 
     public void setJwtType(String jwtType) {
         this.jwtType = jwtType;
+    }
+
+    public List<String> getRoleAttributes() {
+        return roleAttributes;
+    }
+
+    public void setRoleAttributes(List<String> roleAttributes) {
+        this.roleAttributes = roleAttributes;
+    }
+
+    public List<String> getPermissionAttributes() {
+        return permissionAttributes;
+    }
+
+    public void setPermissionAttributes(List<String> permissionAttributes) {
+        this.permissionAttributes = permissionAttributes;
+    }
+
+    public List<String> getRequiredClaims() {
+        return requiredClaims;
+    }
+
+    public void setRequiredClaims(List<String> requiredClaims) {
+        this.requiredClaims = requiredClaims;
+    }
+
+    public List<String> getRequiredScopes() {
+        return requiredScopes;
+    }
+
+    public void setRequiredScopes(List<String> requiredScopes) {
+        this.requiredScopes = requiredScopes;
     }
 }

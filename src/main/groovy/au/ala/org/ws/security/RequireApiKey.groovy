@@ -20,7 +20,13 @@ public @interface RequireApiKey {
     String redirectAction() default "index"
 
     /**
-     * Only taken into account for OIDC apps
+     * Only taken into account for JWT authentications
+     * @return
+     */
+    String[] roles() default []
+
+    /**
+     * Only taken into account for JWT authentications.  Combined with security.jwt.scopes
      * @return
      */
     String[] scopes() default []
