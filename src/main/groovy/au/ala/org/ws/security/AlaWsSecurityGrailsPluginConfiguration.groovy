@@ -10,6 +10,7 @@ import com.nimbusds.jose.util.DefaultResourceRetriever
 import com.nimbusds.jose.util.ResourceRetriever
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
+import org.pac4j.core.client.Clients
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.JEEContextFactory
 import org.pac4j.core.context.WebContextFactory
@@ -47,7 +48,7 @@ class AlaWsSecurityGrailsPluginConfiguration {
     @Bean
     @ConditionalOnMissingBean
     Config pac4jConfig(SessionStore sessionStore, WebContextFactory webContextFactory) {
-        Config config = new Config()
+        Config config = new Config(new Clients([]))
 
         config.sessionStore = sessionStore
         config.webContextFactory = webContextFactory
@@ -90,7 +91,12 @@ class AlaWsSecurityGrailsPluginConfiguration {
         client.name = 'JwtClient'
 
         // This could be used with a pac4j SecurityFilter?
-
+        if (config.clients == null) {
+            config.clients = new Clients([])
+        }
+        if (config.clients.clients == null) {
+            config.clients.clients = []
+        }
         config.clients.clients.add(client)
 
         client

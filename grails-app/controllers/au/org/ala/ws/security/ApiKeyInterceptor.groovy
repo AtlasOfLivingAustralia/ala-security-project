@@ -39,9 +39,9 @@ class ApiKeyInterceptor {
 
     @Autowired
     JwtProperties jwtProperties
-    @Autowired
+    @Autowired(required = false)
     DirectBearerAuthClient bearerAuthClient // Could be any DirectClient?
-    @Autowired
+    @Autowired(required = false)
     Config config
     GrailsApplication grailsApplication
 
