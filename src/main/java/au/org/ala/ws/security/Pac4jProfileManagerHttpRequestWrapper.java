@@ -1,13 +1,10 @@
 package au.org.ala.ws.security;
 
-import org.pac4j.core.context.JEEContext;
-import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
 import java.security.Principal;
 import java.util.Optional;
 

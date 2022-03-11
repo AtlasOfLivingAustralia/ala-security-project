@@ -19,6 +19,7 @@ public class JwtProperties {
     private List<String> permissionAttributes = List.of("scope","scp");
     private List<String> requiredClaims = List.of("sub", "iat", "exp", "nbf", "cid", "jti");
     private List<String> requiredScopes = List.of();
+    private List<String> urlPatterns = List.of(); // hard coded paths to apply JWT authentication to
 
     public String getClientId() {
         return clientId;
@@ -114,5 +115,13 @@ public class JwtProperties {
 
     public void setRequiredScopes(List<String> requiredScopes) {
         this.requiredScopes = requiredScopes;
+    }
+
+    public List<String> getUrlPatterns() {
+        return urlPatterns;
+    }
+
+    public void setUrlPatterns(List<String> urlPatterns) {
+        this.urlPatterns = urlPatterns;
     }
 }

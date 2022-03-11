@@ -2,7 +2,6 @@ package au.org.ala.ws.security;
 
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.JEEContextFactory;
-import org.pac4j.core.context.WebContextFactory;
 import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.factory.ProfileManagerFactory;
@@ -20,19 +19,21 @@ import java.io.IOException;
 
 /**
  * HttpFilter that wraps the HttpServletRequest with a pac4j ProfileManager so that it
- * can get user principals, roles, etc from the profile manager.
+ * can get user principals, roles, etc from the profile manager.  This is useful if the
+ * user profile is created in a Grails interceptor, so request.userPrincipal, etc will work
+ * in controllers for JWTs
  */
-public class Pac4jHttpRequestWrapperFilter extends HttpFilter {
+public class Pac4jProfileManagerHttpRequestWrapperFilter extends HttpFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(Pac4jHttpRequestWrapperFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(Pac4jProfileManagerHttpRequestWrapperFilter.class);
     private Config config;
     private ProfileManager profileManager;
 
-    public Pac4jHttpRequestWrapperFilter(Config config) {
+    public Pac4jProfileManagerHttpRequestWrapperFilter(Config config) {
         this.config = config;
     }
 
-    public Pac4jHttpRequestWrapperFilter(Config config, ProfileManager profileManager) {
+    public Pac4jProfileManagerHttpRequestWrapperFilter(Config config, ProfileManager profileManager) {
         this.config = config;
         this.profileManager = profileManager;
     }
