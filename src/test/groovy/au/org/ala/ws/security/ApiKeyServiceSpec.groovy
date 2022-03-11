@@ -3,6 +3,7 @@ package au.org.ala.ws.security
 import au.org.ala.ws.security.service.ApiKeyService
 import au.org.ala.ws.security.service.WsService
 import grails.testing.services.ServiceUnitTest
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.springframework.http.HttpStatus
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -13,7 +14,7 @@ class ApiKeyServiceSpec extends Specification implements ServiceUnitTest<ApiKeyS
 
     def setup() {
         defineBeans {
-            wsService(MockWebService)
+            wsService(InstanceFactoryBean, new MockWebService(200))
         }
     }
 
