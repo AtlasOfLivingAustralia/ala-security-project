@@ -16,8 +16,8 @@ public class JwtProperties {
     private int connectTimeoutMs = HttpConstants.DEFAULT_CONNECT_TIMEOUT;;
     private int readTimeoutMs = HttpConstants.DEFAULT_READ_TIMEOUT;
     private List<String> roleAttributes = List.of("role");
-    private List<String> permissionAttributes = List.of("scope","scp");
-    private List<String> requiredClaims = List.of("sub", "iat", "exp", "nbf", "cid", "jti");
+    private List<String> permissionAttributes = List.of("scope","scp", "scopes");
+    private List<String> requiredClaims = List.of("sub", "iat", "exp", "client_id", "jti", "iss");
     private List<String> requiredScopes = List.of();
     private List<String> urlPatterns = List.of(); // hard coded paths to apply JWT authentication to
 
