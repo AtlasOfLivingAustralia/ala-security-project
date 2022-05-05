@@ -48,7 +48,7 @@ class JwtUtils {
                 .expirationTime(expiration)
                 .audience(audience)
                 .issueTime(issueTime)
-                .claim('cid', 'some-client-id')
+                .claim('client_id', 'some-client-id')
                 .claim('cit', 'client_id')
                 .claim('jti', 'asdfasdfgafgadfg')
                 .claim('scp', scopes)
