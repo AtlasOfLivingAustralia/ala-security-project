@@ -26,6 +26,8 @@ debug  "org.apache.http.wire",
 
 This is intended as a common replacement for all application-specific implementations of the WebService class. It supports the following functionality:
 
+Automatic injection of security tokens onto outoing requests.  Use the `webservice.jwt` property to enable reading the auth token from a user's profile.  This requires the OIDC support of the `ala-auth` plugin to be enabled to work.  Leaving `webservice.jwt` false will revert to using the legacy api key behaviour.
+
 See the groovydoc for API documentation.
 
 ```
@@ -105,7 +107,9 @@ In addition to the JavaEE 6 core constraints, this plugin provides a number of c
 * UUID - performs a regex pattern match to ensure the parameter is a valid UUID
 
 # External configuration properties
- 
+
+* ```webservice.jwt``` Set to true if using OIDC login and you want to use the access token as a bearer token instead of sending a legacy apikey
+* ```webservice.jwt-scopes``` Set to a space separated list of scopes to request when requesting a client credentials grant JWT from the OIDC provider.  This only applies to client credentials grants.  If there is already a user profile in the session, the scopes that apply to their access token will apply instead.
 * ```webservice.apiKey``` The ALA api key to be included in each request (in the ```apiKey``` header field) when ```includeApiKey = true```. API Keys are intended to be used with the [ALA WS Security Plugin](https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin).
 * ```webservice.apiKeyHeader``` Override the default name of the apiKey header. This applied to all service calls - if you need to change the name for a single service, then you'll need to pass in the api key in a custom header via the API.
 * ```webservice.connect.timeout``` The connect timeout setting for all web service requests (default is 5 minutes). 

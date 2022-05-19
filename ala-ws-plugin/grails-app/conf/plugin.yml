@@ -1,0 +1,3 @@
+webservice:
+  jwt: false
+  scopes: openid

@@ -1,6 +1,8 @@
 package au.org.ala.ws.service
 
 import au.org.ala.web.AuthService
+import au.org.ala.web.UserDetails
+import com.google.common.net.HttpHeaders
 import grails.converters.JSON
 import groovyx.net.http.ContentType as GContentType
 import groovyx.net.http.HTTPBuilder
@@ -26,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile
 import javax.servlet.http.HttpServletResponse
 import java.nio.charset.Charset
 
+import static grails.web.http.HttpHeaders.AUTHORIZATION
 import static grails.web.http.HttpHeaders.CONNECTION
 import static grails.web.http.HttpHeaders.CONTENT_DISPOSITION
 import static groovyx.net.http.Method.*
@@ -44,6 +47,7 @@ class WebService {
 
     def grailsApplication
     AuthService authService
+    JwtTokenService jwtTokenService
 
     /**
      * Sends an HTTP GET request to the specified URL. The URL must already be URL-encoded (if necessary).
@@ -359,22 +363,23 @@ class WebService {
     }
 
     private void configureRequestHeaders(Map headers, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
-        String apiKey = getApiKey()
-        if (apiKey && includeApiKey) {
-            headers[grailsApplication.config.webservice.apiKeyHeader ?: DEFAULT_API_KEY_HEADER] = apiKey
-        }
 
+        UserDetails user
         // We can only get the user id from the auth service if we are running in a http request.
         // The Sprint RequestContextHolder's requestAttributes will be null if there is no request.
         // The #currentRequestAttributes method, which is used by the authService, throws an IllegalStateException if
         // there is no request, so we need to check if requestAttributes exist before trying to get the user details.
         if (includeUser && RequestContextHolder.getRequestAttributes() != null) {
-            def user = authService.userDetails()
+            user = authService.userDetails()
+        }
 
-            if (user) {
-                headers.put(grailsApplication.config.app?.http?.header?.userId ?: DEFAULT_AUTH_HEADER, user.userId as String)
-                headers.put("Cookie", "ALA-Auth=${URLEncoder.encode(user.email, CHAR_ENCODING)}")
-            }
+        def userAgent = getUserAgent()
+        if (userAgent) {
+            headers.put(HttpHeaders.USER_AGENT, userAgent)
+        }
+
+        includeAuthTokensInternal(includeUser, includeApiKey, user) { key, value ->
+            headers.put(key, value)
         }
 
         if (customHeaders) {
@@ -415,20 +420,61 @@ class WebService {
 
         conn.setConnectTimeout((grailsApplication.config.webservice?.connect?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
         conn.setReadTimeout((grailsApplication.config.webservice?.read?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
+        def userAgent = getUserAgent()
+        if (userAgent) {
+            conn.setRequestProperty(HttpHeaders.USER_AGENT, userAgent)
+        }
         def user = authService.userDetails()
 
-        if (user && includeUser) {
-            conn.setRequestProperty(grailsApplication.config.app?.http?.header?.userId as String, user.userId as String)
-            conn.setRequestProperty("Cookie", "ALA-Auth=${URLEncoder.encode(user.userName ?: "", CHAR_ENCODING)}")
-            conn.setRequestProperty("ALA-Auth", "${URLEncoder.encode(user.userName ?: "", CHAR_ENCODING)}")
+        includeAuthTokens(includeUser, includeApiKey, user, conn)
+
+        conn
+    }
+
+    void includeAuthTokens(Boolean includeUser, Boolean includeApiKey, UserDetails user, URLConnection conn) {
+        includeAuthTokensInternal(includeUser, includeApiKey, user) { key, value ->
+            conn.setRequestProperty(key, value)
+        }
+    }
+
+    private void includeAuthTokensInternal(Boolean includeUser, Boolean includeApiKey, UserDetails user, Closure<Void> headerSetter) {
+        if (grailsApplication.config.getProperty('webservice.jwt', Boolean, false)) {
+            includeAuthTokensJwt(includeUser, includeApiKey, user, headerSetter)
+        } else {
+            includeAuthTokensLegacy(includeUser, includeApiKey, user, headerSetter)
+        }
+    }
+
+    void includeAuthTokensJwt(includeUser, includeApiKey, user, headerSetter) {
+        if ((user && includeUser) || (apiKey && includeApiKey)) {
+            def token = jwtTokenService.getAuthToken(false) // TODO use includeUser here?
+            if (token) {
+                headerSetter(AUTHORIZATION, token.toAuthorizationHeader())
+            }
+        }
+    }
+
+    void includeAuthTokensLegacy(includeUser, includeApiKey, user, headerSetter) {
+        if ((user && includeUser)) {
+            headerSetter((grailsApplication.config.app?.http?.header?.userId ?: DEFAULT_AUTH_HEADER) as String, user.userId as String)
+            headerSetter("Cookie", "ALA-Auth=${URLEncoder.encode(user.userName ?: "", CHAR_ENCODING)}")
+            headerSetter("ALA-Auth", "${URLEncoder.encode(user.userName ?: "", CHAR_ENCODING)}")
         }
 
         String apiKey = getApiKey()
         if (apiKey && includeApiKey) {
-            conn.setRequestProperty("apiKey", apiKey)
+            headerSetter("apiKey", apiKey)
         }
+    }
 
-        conn
+    private String getUserAgent() {
+        def name = grailsApplication.config.getProperty('info.app.name', String)
+        def version = grailsApplication.config.getProperty('info.app.version', String)
+        if (name && version) {
+            return "$name/$version"
+        } else {
+            return ''
+        }
     }
 
     /**
