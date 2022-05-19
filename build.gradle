@@ -69,7 +69,7 @@ dependencies {
     testCompile "org.mockito:mockito-core"
     testCompile "org.grails:grails-web-testing-support"
 
-    implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0-SNAPSHOT'
+    implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
     compileOnly "org.springframework.boot:spring-boot-configuration-processor"
