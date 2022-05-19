@@ -2,16 +2,21 @@ package au.org.ala.ws.security
 
 import au.org.ala.ws.security.service.ApiKeyService
 import au.org.ala.ws.security.service.WsService
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.springframework.http.HttpStatus
 import spock.lang.Specification
 import spock.lang.Unroll
 
-@TestFor(ApiKeyService)
 @Unroll
-@Mock(WsService)
-class ApiKeyServiceSpec extends Specification {
+class ApiKeyServiceSpec extends Specification implements ServiceUnitTest<ApiKeyService> {
+
+
+    def setup() {
+        defineBeans {
+            wsService(InstanceFactoryBean, new MockWebService(200))
+        }
+    }
 
     void "Should return valid = false when the API Key service returns a HTTP code other than 200"() {
         setup:

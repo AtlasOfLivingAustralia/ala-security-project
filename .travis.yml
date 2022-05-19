@@ -1,7 +1,7 @@
 language: groovy
 sudo: false
 jdk:
-- openjdk8
+- openjdk11
 branches:
   only:
   - master
@@ -20,5 +20,6 @@ after_success:
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && ./gradlew clean && travis_retry ./gradlew publish'
 env:
   global:
+  - JAVA_TOOL_OPTIONS=-Dhttps.protocols=TLSv1.2
   - secure: q/jEBUHRPYsdt0sq9IrIzK4PwmTgGr7NJ3f+ugXJTjBVDSesIOcTRpZYlvq7pIkBZzm1O+/V5YhqxhVGjIMGyzYYVefDwBn60Lws9JGHb5/lsHvEOrh65Wvk8Ozj4ICwMu54MUOiln5DtR/BOehERv4fmf+knMrDnD/DXkJuZI8lsbBt7c60yK9wUC+gMgnjHumHINtVBQfM/BrSjRRm8D6qDGb/Vkmi6/PdLVbAVA8b79fVP5JFvS4s5pRzxlVnkC4q3leEH3O/kzBSiG8Gkmz7BqYhCVDr/6KAWMk+Kz1ThvuediI0ysaDNdkNrBajoingtTXtiBR+R8oqsWL4BudWreJkQVef/LQXvHtbjoHZ51/jBPGjJvq5NgwsuZdTx7q0hlTIeljVbsAjDHVMF3b0V698qDdoH+w/aw2vcN+gmWZ8HLdNwS8Y3hbrdJIaTw61Wg9Jax7uj3jfpn08QNwNv7VABtIGoWjocxGD6yyNrWIT31Ii0YgTc8Kgb0jzTpUa7wMhpT1G81w0LZhJzn5+YiU18t8dIgaPo3hfQum+xdwmo21Evh4Ca2cQgPegmCt2uj1XAzRoPhSKMAT2Tu0XV8vYb4sn1Ds3XSVaAHvGCDexkXkrW4D39TtMz6naIGUjON6XGhkQhl84Iwp0cIynzKuDOJO28CJdwu8TKyQ=
   - secure: b07d8QROSFF7iM9beu7Kr15LMtltXvhWTBhyHFtYkFGzsjWIWjfngE2KooPyByJCVXFlYpfqLPAnFY1YRYx2xD9nfehGsMybDsyDA38g3Pee8CB71QWRqnaa3Y1dItsB2U8nj7SvoNFuVClEbs0zaGLfsVqk9PYAAIa00bcGIAlUY5t2UnNviKBJRKOnle06s62EaEavY1giG4cLL+tPphthO+OYAO4XG/p4WMXMIMbPPYn6rMVIZU7ze6ut/znEMCOW3SqRraaLeZ0DSX+GdamZ9CFk1D+i+vI3Zq5mVOaKX/cSvb6BSLen+XY8DMgihPiyugP3i7A66qbBc3MHNgHJFeS4l0bl0azriNogpyV5FopK52aKRcBUHmmdYtxkJyMO9I33z51FgRGYQvQZ2JXkTsSuxmSU1PqelyqOlKW/S5dm1Uoag4BqOC7YWzu84NnpGYEB+ZkHcHyVxTX9CVDxhE1VfsF3mx3dkkYaaQ4YIAnTURIzUVpTjo/tjXZeH/BOOtRwxPQ97pSAWMRg/OFKYdWCylDJdg5Pgldn8RCf/5q62fKPY1XjWRRYyKeBioAS6lJ7np4wAMLYV6dnpRY1y0ADjZyhRcNwk0sN9B9kpd22KHrRtl6dqzSDql5kwN7Cp1xwYJ5B5EK21ORa+hfkNTA3fseCQuBaR5kLg8w=
