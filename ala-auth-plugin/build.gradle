@@ -80,7 +80,7 @@ dependencies {
 
     compile 'au.org.ala:ala-cas-client:2.5'
 
-    implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0-SNAPSHOT'
+    implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
 
     compile 'org.pac4j:pac4j-oidc:5.3.1'
     compile 'org.pac4j:pac4j-jee:5.3.1'
