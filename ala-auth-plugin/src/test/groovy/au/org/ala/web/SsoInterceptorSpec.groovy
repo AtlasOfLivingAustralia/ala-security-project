@@ -1,22 +1,21 @@
 package au.org.ala.web
 
 
-import grails.test.mixin.TestFor
+import grails.testing.web.interceptor.InterceptorUnitTest
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.jasig.cas.client.authentication.DefaultGatewayResolverImpl
-import org.jasig.cas.client.authentication.GatewayResolver
-import org.jasig.cas.client.authentication.UrlPatternMatcherStrategy
-import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
  */
-@TestFor(SsoInterceptor)
-class SsoInterceptorSpec extends Specification {
+class SsoInterceptorSpec extends Specification implements InterceptorUnitTest<SsoInterceptor> {
+
+    SSOStrategy mockSsoStrategy = Mock(SSOStrategy)
 
     def setup() {
-        defineBeans(true) {
-            grailsApplication(grailsApplication)
+        defineBeans{
+            ssoStrategy(InstanceFactoryBean, mockSsoStrategy, SSOStrategy)
         }
     }
 
@@ -24,12 +23,12 @@ class SsoInterceptorSpec extends Specification {
 
     }
 
-    def doWithSpring = {
+    Closure doWithSpring() {{ ->
         ignoreUrlPatternMatcherStrategy(RegexListUrlPatternMatcherStrategy)
         userAgentFilterService(UserAgentFilterService, null, [])
         gatewayStorage(DefaultGatewayResolverImpl)
-        grailsApplication(grailsApplication)
-    }
+//        grailsApplication(grailsApplication)
+    }}
 
     void "Test sso interceptor matching"() {
         when:"A request matches the interceptor"

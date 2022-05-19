@@ -107,10 +107,8 @@ class AuthTagLib {
      * @return The login url
      */
     String buildLoginLink(attrs) {
-        def casLoginUrl = attrs.casLoginUrl ?: casLoginUrl
-        def loginReturnToUrl = attrs.loginReturnToUrl ?: (removeContext(grailServerURL) + request.forwardURI + (request.queryString ? "?" + URLEncoder.encode(request.queryString, "UTF-8") : ""))
-        String loginUrl = "${casLoginUrl}?service=${loginReturnToUrl}"
-        return loginUrl
+
+        return attrs.loginReturnToUrl ? authService.loginUrl(attrs.loginReturnToUrl) : authService.loginUrl(request)
     }
 
     /**

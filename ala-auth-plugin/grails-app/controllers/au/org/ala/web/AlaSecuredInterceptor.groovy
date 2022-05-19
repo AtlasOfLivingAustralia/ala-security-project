@@ -1,5 +1,6 @@
 package au.org.ala.web
 
+import au.org.ala.grails.AnnotationMatcher
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 

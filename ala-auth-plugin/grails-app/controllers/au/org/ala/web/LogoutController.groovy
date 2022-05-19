@@ -6,6 +6,8 @@ class LogoutController {
     /**
      * Do logouts through this app so we can invalidate the session.
      *
+     * Note this controller is only used for CAS logouts, OIDC logouts use the Pac4j LogoutFilter.
+     *
      * @param casUrl the url for logging out of cas
      * @param appUrl the url to redirect back to after the logout
      */

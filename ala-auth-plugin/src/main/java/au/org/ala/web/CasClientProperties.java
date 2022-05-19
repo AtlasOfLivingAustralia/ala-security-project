@@ -28,7 +28,9 @@ public class CasClientProperties {
     private String roleAttribute = "role";
     private boolean ignoreCase = true;
     private boolean encodeServiceUrl = true;
+    private boolean bypass = false;
     private String contextPath = null;
+    @Deprecated
     private String authCookieName = "ALA-Auth";
 
     public String getAppServerName() {
@@ -205,5 +207,13 @@ public class CasClientProperties {
 
     public void setGatewayFilterPattern(List<String> gatewayFilterPattern) {
         this.gatewayFilterPattern = gatewayFilterPattern;
+    }
+
+    public boolean isBypass() {
+        return bypass;
+    }
+
+    public void setBypass(boolean bypass) {
+        this.bypass = bypass;
     }
 }

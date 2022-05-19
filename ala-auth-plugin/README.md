@@ -1,14 +1,107 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-compile "org.grails.plugins:ala-auth:3.2.3"
+compile "org.grails.plugins:ala-auth:5.0.0-SNAPSHOT"
 ```
 
 ## Description
-ALA authentication/authorization Grails 3 plugin interface to CAS.  The Grails 2 version of this plugin can
-be found on the grails2 branch.
+ALA authentication/authorization Grails 4 plugin interface to CAS.  
+The Grails 3 version of this plugin can be found under the 3.x branches.  
+The Grails 2 version of this plugin can be found on the grails2 branch.
+
+### Upgrade notes
+
+Grails 4 version of the plugin now provides a OpenID Connect option for authenticating users.
+
+*NOTE*: This plugin currently requires JDK11 due to the use of PAC4j, which itself requires JDK11.  
+A JDK8 version using the last version of PAC4j that supports JDK8 may be possible if required.
+
+To enable it, you must disable CAS and enable OpenID Connect like so:
+
+```yaml
+security:
+  cas:
+    enabled: false
+  oidc:
+    enabled: true
+```
+
+To configure the OpenID Connect provider, you may set the following properties:
+
+```yaml
+security:
+  oidc:
+    discovery-uri: 'https://auth.ala.org.au/cas/oidc/.well-known'
+    client-id: 'ChangeMe'
+    secret: 'ChangeMe'
+    scope: 'openid profile email ala roles'
+```
+
+`discovery-uri` can use auth-test or auth-dev instead.
+
+The scopes available are:
+ - `openid` must be present for OpenID Connect
+ - `profile` contains the user's name
+ - `email` contains the user's email
+ - `ala` contains ALA extended attributes
+ - `roles` to get the user's roles.
 
 ## Usage
+
+Select one of CAS or OpenID Connect authentication and then follow the guide for that
+auth system.  Note that OIDC is preferred going forward.
+
+### Setup OpenID Connect Authentication for your app
+
+To configure the OpenID Connect provider, you may set the following properties:
+
+```yaml
+security:
+  cas:
+    enabled: false // default is true, undefined behaviour if this omitted
+  oidc:
+    enabled: true // default is false
+    discovery-uri: 'https://auth.ala.org.au/cas/oidc/.well-known'
+    client-id: 'ChangeMe'
+    secret: 'ChangeMe'
+    scope: 'openid profile email ala roles'
+```
+
+For ease of transition, the following old property names are accepted for configuring the OIDC authn:
+
+```yaml
+security:
+  cas:
+    uriFilterPattern: ['/paths/*','/that','/require/*,'/auth/*'] // Java servlet filter style paths only
+    authenticateOnlyIfCookieFilterPattern:  ['/optional-auth/*'] // Will force OIDC auth if the Auth Cookie is defined
+    gatewayFilterPattern: ['/api/*'] // Use OIDC prompt=none
+    gatewayIfCookieFilterPattern: ['/sso-only/*'] // Use OIDC prompt=none for these paths if the Auth Cookie is defined
+    uriExclusionFilterPattern: ['/paths/anonymous/.*', 'https?://.*/.*\?ignoreCas=true'] // Regex URLs supported, only necessary to exclude a path from one / all of the above.
+```
+
+TODO: OIDC prefix versions of these.
+
+For local development, dev and test deployments then `discovery-uri` should use auth-test or auth-dev instead.
+
+The scopes available are:
+- `openid` must be present for OpenID Connect
+- `profile` contains the user's name
+- `email` contains the user's email
+- `ala` contains ALA extended attributes
+- `roles` to get the user's roles.
+
+#### Register your OpenID Connect app
+
+Head to the CAS Management app and add an OpenID Connect Relying Party.  For local development, the dev and test environments
+may already have existing RPs that you can use.
+
+- Add the redirect URI, which is regex, so can be of the form `https?://app.ala.org.au/.*`
+- Ensure the JWKS is set to the correct path to the JWKS
+- Ensure that your RP is allowed to access the scopes it requires.
+- etc
+
+Take the client id and secret from the RP registration and add them to your app's external config under
+`security.oidc.client-id` and `security.oidc.secret`.
 
 ### Setup CAS Authentication for your app
 
@@ -109,6 +202,9 @@ userDetails.url = 'https://auth.ala.org.au/userdetails/'
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 5.0.0** (11/02/2021):
+  - Support Grails 4
+  - Support OIDC login
 - **Version 3.2.3** (10/02/2021):
   - Updated `loginLogout`, supports Grails 3.x apps
 - **Version 3.1.3** (10/02/2021):

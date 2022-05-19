@@ -1,102 +1,90 @@
 package au.org.ala.web
 
-import au.org.ala.cas.util.AuthenticationUtils
 import au.org.ala.userdetails.UserDetailsClient
 import au.org.ala.userdetails.UserDetailsFromIdListRequest
+import au.org.ala.userdetails.UserDetailsFromIdListResponse
 import grails.plugin.cache.Cacheable
-import org.springframework.web.context.request.RequestContextHolder
+import grails.web.mapping.LinkGenerator
+import org.springframework.beans.factory.annotation.Autowired
 
 import javax.servlet.http.HttpServletRequest
 
-class AuthService {
+class AuthService implements IAuthService {
 
     static transactional = false
 
     def grailsApplication
     def userListService
     UserDetailsClient userDetailsClient
+    // Delegate the auth service implementation to one for our auth config
 
-    def getEmail() {
-        return AuthenticationUtils.getEmailAddress(RequestContextHolder.currentRequestAttributes().getRequest())
+    IAuthService delegateService
+
+    @Autowired
+    LinkGenerator linkGenerator
+
+    String getEmail() {
+        delegateService.getEmail()
     }
 
-    def getUserId() {
-        def request = RequestContextHolder.currentRequestAttributes().getRequest() as HttpServletRequest
-        def userId = AuthenticationUtils.getUserId(request)
-        if (!userId) {
-            // try the email address, and working backwards from there
-            def emailAddress = AuthenticationUtils.getEmailAddress(request)
-            if (emailAddress) {
-                def user = getUserForEmailAddress(emailAddress)
-                if (user) {
-                    userId = user.userId
-                }
-            }
-        }
-        return userId
+    String getUserId() {
+        delegateService.getUserId()
     }
 
-    def getDisplayName() {
-        return AuthenticationUtils.getDisplayName(RequestContextHolder.currentRequestAttributes().getRequest())
+    String getDisplayName() {
+        delegateService.getDisplayName()
     }
 
-    def getFirstName() {
-        return AuthenticationUtils.getFirstName(RequestContextHolder.currentRequestAttributes().getRequest())
+    String getFirstName() {
+        delegateService.getFirstName()
     }
 
-    def getLastName() {
-        return AuthenticationUtils.getLastName(RequestContextHolder.currentRequestAttributes().getRequest())
+    String getLastName() {
+        delegateService.getLastName()
     }
 
-    boolean userInRole(role) {
-
-        def inRole = AuthenticationUtils.isUserInRole(RequestContextHolder.currentRequestAttributes().getRequest(), role)
-        def bypass = grailsApplication.config.security.cas.bypass
-        log.debug("userInRole(${role}) - ${inRole} (bypassing CAS - ${bypass})")
-        return bypass.toString().toBoolean() || inRole
+    boolean userInRole(String role) {
+        delegateService.userInRole(role)
     }
 
     UserDetails userDetails() {
-        def attr = RequestContextHolder.currentRequestAttributes()?.getUserPrincipal()?.attributes
-        def details = null
+        delegateService.userDetails()
+    }
 
-        if (attr) {
-            details = new UserDetails(
-                userId:attr?.userid?.toString(),
-                userName: attr?.email?.toString()?.toLowerCase(),
-                firstName: attr?.firstname?.toString() ?: "",
-                lastName: attr?.lastname?.toString() ?: "",
-                locked: attr?.locked?.toBoolean() ?: false,
-                organisation: attr?.organisation?.toString() ?: "",
-                city: attr?.country?.toString() ?: "",
-                state: attr?.state?.toString() ?: "",
-                country: attr?.country?.toString() ?: "",
-                roles: AuthenticationUtils.getUserRoles(RequestContextHolder.currentRequestAttributes().request)
-            )
-        }
+    String loginUrl(String path) {
+        delegateService.loginUrl(path)
+    }
 
-        details
+    String loginUrl(HttpServletRequest request) {
+
+        def requestPath = request.forwardURI ? ((request.forwardURI.startsWith('/') ? '' : '/') + request.forwardURI) : ''
+        def requestQuery = request.queryString ? (request.queryString.startsWith('?') ? '' : '?') + request.queryString : ''
+
+        loginUrl("${requestPath}${requestQuery}")
+    }
+
+    UserDetails getUserForUserId(String userId, boolean includeProps = true) {
+        return getUserForUserIdInternal(userId, includeProps).orElse(null)
     }
 
     @Cacheable("userDetailsCache")
-    UserDetails getUserForUserId(String userId, boolean includeProps = true) {
-        if (!userId) return null // this would have failed anyway
+    Optional<UserDetails> getUserForUserIdInternal(String userId, boolean includeProps = true) {
+        if (!userId) return Optional.empty() // this would have failed anyway
         def call = userDetailsClient.getUserDetails(userId, includeProps)
         try {
             def response = call.execute()
 
             if (response.successful) {
-                return response.body()
+                return Optional.of(response.body())
             } else {
                 log.warn("Failed to retrieve user details for userId: $userId, includeProps: $includeProps. Error was: ${response.message()}")
             }
         } catch (Exception ex) {
             log.error("Exception caught trying get find user details for $userId.", ex)
         }
-        return null
+        return Optional.empty()
     }
 
-    @Cacheable("userDetailsCache")
     UserDetails getUserForEmailAddress(String emailAddress, boolean includeProps = true) {
         // The user details service lookup service should accept either a numerical id or email address and respond appropriately
         return getUserForUserId(emailAddress, includeProps)
@@ -122,20 +110,24 @@ class AuthService {
      * @param userIds
      * @return
      */
-    @Cacheable("userDetailsByIdCache")
     def getUserDetailsById(List<String> userIds, boolean includeProps = true) {
+        return getUserDetailsByIdInternal(userIds, includeProps).orElse(null)
+    }
+
+    @Cacheable("userDetailsByIdCache")
+    Optional<UserDetailsFromIdListResponse> getUserDetailsByIdInternal(List<String> userIds, boolean includeProps = true) {
         def call = userDetailsClient.getUserDetailsFromIdList(new UserDetailsFromIdListRequest(userIds, includeProps))
         try {
             def response = call.execute()
             if (response.successful) {
-                return response.body()
+                return Optional.of(response.body())
             } else {
                 log.warn("Failed to retrieve user details. Error was: ${response.message()}")
             }
         } catch (Exception e) {
             log.error("Exception caught retrieving userdetails for ${userIds}", e)
         }
-        return null
+        return Optional.empty()
     }
 
     /**

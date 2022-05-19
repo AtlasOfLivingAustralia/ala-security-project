@@ -1,6 +1,7 @@
 language: groovy
+dist: focal
 jdk:
-- openjdk8
+- openjdk11
 sudo: false
 branches:
   only:
@@ -9,7 +10,7 @@ branches:
   - 3.0.x
   - 2.1.x
   - gateway-experiment
-  - feature/.*
+  - /^feature.*$/
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
@@ -19,10 +20,11 @@ cache:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
 before_install:
-  - JAVA_HOME=$(jdk_switcher home openjdk8) ./gradlew classes testClasses
+  - ./gradlew classes testClasses
 after_success:
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && travis_retry ./gradlew publish'
 env:
   global:
+  - JAVA_TOOL_OPTIONS=-Dhttps.protocols=TLSv1.2
   - secure: UHC6qsBSvqs6VQbP1WWCDUtt+PXssJLlK3s8/1VB7TmIJEHy/f6r7HSZoFPA9p9UrAPWpeS0w1uiETKjhhC+842b/hNCa/0e4aM8hE/S8WQ9ic72T7DSnxx7s2tSBVANr/Qd9o2drbyophRVCFL7In2meaFIzAApmBI2aZ/Wn2w=
   - secure: AZdwRjNv371AiUx1b7YdPhIjAY0aE74UQYS8arU46ony3FQObwGoiqii/qP7yKo+EynZvPR21azGC5FWAIInvy7rht6qiO1euQj9jK99H035nDd+OpWev54W1Fu7NlFgA44EQiPbCt1FtdI0BamgMs3OmyY4+wpj1pJBp7FwdPk=
