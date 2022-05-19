@@ -3,25 +3,51 @@ package au.org.ala.ws.security
 import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.ws.security.service.ApiKeyService
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
-import grails.test.mixin.web.InterceptorUnitTestMixin
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.jwk.JWKSet
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet
+import com.nimbusds.jose.proc.SecurityContext
+import grails.testing.web.interceptor.InterceptorUnitTest
+import groovy.time.TimeCategory
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.util.GrailsApplicationAttributes
+import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
+import org.pac4j.core.config.Config
+import org.pac4j.core.context.session.JEESessionStore
+import org.pac4j.http.client.direct.DirectBearerAuthClient
 import spock.lang.Specification
 import spock.lang.Unroll
 
-@TestFor(ApiKeyInterceptor)
-@TestMixin([GrailsUnitTestMixin, InterceptorUnitTestMixin])
+import static au.org.ala.ws.security.JwtUtils.*
+
 @Unroll
-class ApiKeyInterceptorSpec extends Specification {
+class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest<ApiKeyInterceptor> {
 
     static final int UNAUTHORISED = 403
     static final int OK = 200
 
     ApiKeyService apiKeyService
 
+    JWKSet jwkSet = jwkSet('test.jwks')
+    def jwtProperties = new JwtProperties()
+
     void setup() {
+
+        defineBeans {
+            config(InstanceFactoryBean, new Config().tap { sessionStore = JEESessionStore.INSTANCE })
+            directBearerAuthClient(InstanceFactoryBean,
+                    new DirectBearerAuthClient(
+                            new JwtAuthenticator(
+                                    'http://localhost',
+                                    jwtProperties.getRequiredClaims(),
+                                    [JWSAlgorithm.RS256].toSet(),
+                                    new ImmutableJWKSet<SecurityContext>(jwkSet))
+                    ).tap {
+                        it.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator(['role'],['scope', 'scp']))
+                    })
+            jwtProperties(InstanceFactoryBean, jwtProperties)
+        }
+
         // grailsApplication is not isolated in unit tests, so clear the ip.whitelist property to avoid polluting independent tests
         grailsApplication.config.security.apikey.ip = [whitelist: ""]
         apiKeyService = Stub(ApiKeyService)
@@ -214,9 +240,173 @@ class ApiKeyInterceptorSpec extends Specification {
         "0:0:0:0:0:0:0:1" | "action2" | UNAUTHORISED | false
         "1.2.3.4"         | "action2" | UNAUTHORISED | false
     }
+
+    void "Secured methods should be accessible when given a valid JWT"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClassController)
+
+        AnnotatedClassController controller = new AnnotatedClassController()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet)}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | OK           | true
+        "action2" | OK           | true
+    }
+
+    void "Secured methods should be inaccessible when given a valid JWT without the required scopes"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClassController)
+
+        AnnotatedClassController controller = new AnnotatedClassController()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet, ['openid'].toSet())}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | UNAUTHORISED | false
+        "action2" | UNAUTHORISED | false
+    }
+
+    void "Secured methods should be inaccessible when given a valid JWT without the required scopes from properties"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClassController)
+
+        AnnotatedClassController controller = new AnnotatedClassController()
+        interceptor.jwtProperties.requiredScopes += 'missing'
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet)}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | UNAUTHORISED | false
+        "action2" | UNAUTHORISED | false
+    }
+
+    void "Secured methods should be inaccessible when given a valid JWT signed with the wrong key"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClassController)
+
+        AnnotatedClassController controller = new AnnotatedClassController()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet('wrong-test.jwks'))}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | UNAUTHORISED | false
+        "action2" | UNAUTHORISED | false
+    }
+
+    void "Secured methods should be inaccessible with a JWT issued by the wrong issuer"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClassController)
+
+        AnnotatedClassController controller = new AnnotatedClassController()
+
+        def jwt = generateJwt(jwkSet, generateClaims(['read:userdetails'].toSet()).issuer('http://example.org').build())
+
+        when:
+        request.addHeader("Authorization", "Bearer ${jwt}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | UNAUTHORISED | false
+        "action2" | UNAUTHORISED | false
+    }
+
+    void "Secured methods should be inaccessible with an expired JWT"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClassController)
+
+        AnnotatedClassController controller = new AnnotatedClassController()
+
+        def jwt = generateJwt(jwkSet,
+                generateClaims(['read:userdetails'].toSet()).expirationTime(use(TimeCategory) { new Date() - 1.day }).build())
+
+        when:
+        request.addHeader("Authorization", "Bearer ${jwt}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | UNAUTHORISED | false
+        "action2" | UNAUTHORISED | false
+    }
+
+
 }
 
-@RequireApiKey
+@RequireApiKey(scopes=['read:userdetails'])
 class AnnotatedClassController {
     def action1() {
 
