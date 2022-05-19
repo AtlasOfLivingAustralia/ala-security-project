@@ -2,33 +2,40 @@ package au.org.ala.ws.service
 
 import au.org.ala.web.AuthService
 import au.org.ala.web.UserDetails
+import com.google.common.collect.ImmutableList
 import grails.converters.JSON
-import grails.test.mixin.integration.Integration
+import grails.testing.mixin.integration.Integration
+import grails.testing.services.ServiceUnitTest
 import grails.util.GrailsWebMockUtil
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
 import org.apache.http.entity.ContentType
-import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.context.request.RequestContextHolder
 import ratpack.exec.Promise
 import ratpack.form.Form
 import ratpack.groovy.test.embed.GroovyEmbeddedApp
+import ratpack.http.Status
 import ratpack.http.TypedData
 import ratpack.test.embed.EmbeddedApp
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
+import uk.org.lidalia.slf4jext.Level
+import uk.org.lidalia.slf4jtest.LoggingEvent
+import uk.org.lidalia.slf4jtest.TestLogger
+import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
 @Integration
-class WebServiceSpec extends Specification {
+class WebServiceSpec extends Specification implements ServiceUnitTest<WebService> {
 
-    @Autowired
-    WebService service
     @Shared
     EmbeddedApp server
+
     @Shared
     String url
+
     @Autowired
     WebApplicationContext ctx
 
@@ -75,18 +82,17 @@ class WebServiceSpec extends Specification {
     }
 
     def setup() {
-        service = new WebService()
+//        service = new WebService()
         service.authService = Mock(AuthService)
         service.authService.userDetails() >> new UserDetails(userId: '1234', email: 'fred@bla.com')
-        service.grailsApplication = [
-                config: [
-                        webservice: [
-                                timeout: 10,
-                                apiKey : "myApiKey"
-                        ],
-                        app       : []
-                ]
-        ]
+
+        service.grailsApplication.config.merge([
+                webservice: [
+                        timeout: 10,
+                        apiKey : "myApiKey"
+                ],
+                app       : []
+        ])
         GrailsWebMockUtil.bindMockWebRequest(ctx)
     }
 
@@ -100,15 +106,18 @@ class WebServiceSpec extends Specification {
 
     def "a request that results in a connection exception should return a statusCode == 500 and an error message, and log the error"() {
         setup:
-        service.log = Mock(Logger)
+        TestLogger logger = TestLoggerFactory.getTestLogger("au.org.ala.ws.service.WebService")
 
         when: "the call results in a 404 (i.e. there is no server running)"
         Map result = service.get("http://localhost:3123")
+        ImmutableList<LoggingEvent> loggingEvents = logger.getLoggingEvents()
 
         then:
         result.error != null
         result.statusCode == HttpStatus.SC_INTERNAL_SERVER_ERROR
-        1 * service.log.error(_, _)
+
+        loggingEvents.size() > 0
+        loggingEvents.any {it.level == Level.ERROR }
     }
 
     def "a successful request should return a map with statusCode == 200 and resp JSON object"() {
@@ -148,9 +157,14 @@ class WebServiceSpec extends Specification {
         result.resp.headers['apiKey'] == "myApiKey"
     }
 
+    @Ignore('no longer supported')
     def "a request should include the ALA API Key header with the overridden name if webservice.apiKeyHeader is set in the grails config"() {
         setup:
-        service.grailsApplication.config.webservice.apiKeyHeader = "customApiKeyHeader"
+        service.grailsApplication.config.merge([
+                webservice: [
+                        apiKeyHeader: "customApiKeyHeader"
+                ]
+        ])
 
         when:
         Map result = service.get("${url}/headers", [:], ContentType.APPLICATION_JSON, true, false)

@@ -2,19 +2,14 @@ package au.org.ala.ws.filter
 
 import au.org.ala.ws.WSInterceptor
 import au.org.ala.ws.validation.ValidatedParameter
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
-import grails.test.mixin.web.InterceptorUnitTestMixin
+import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.web.util.GrailsApplicationAttributes
 import spock.lang.Specification
 
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
 
-@TestFor(WSInterceptor)
-@TestMixin([GrailsUnitTestMixin, InterceptorUnitTestMixin])
-class WSFiltersSpec extends Specification {
+class WSFiltersSpec extends Specification implements InterceptorUnitTest<WSInterceptor> {
     def controller = new TestController()
 
     void "invalid parameters should result in a HTTP 400 (BAD_REQUEST)"() {
