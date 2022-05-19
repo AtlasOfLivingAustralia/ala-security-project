@@ -11,9 +11,26 @@ class LogoutController {
      */
     def logout() {
         session.invalidate()
-        def appUrl = URLEncoder.encode(params.appUrl ?: g.createLink(uri: '/'), "UTF-8")
+        def appUrl = URLEncoder.encode(validateAppUrl(params.appUrl), "UTF-8")
         def casUrl = grailsApplication.config.security.cas.logoutUrl
         redirect(url:"${casUrl}?url=${appUrl}")
+    }
+
+    /**
+     * Check that the appUrl for logout is a part of the current app
+     *
+     * @param appUrl the appUrl parameter value
+     * @return The appUrl if it's a valid URL for this app or this app's / URI
+     */
+    private String validateAppUrl(String appUrl) {
+        def baseUrl = g.createLink(absolute: true, uri: '/')
+        def retVal
+        if (appUrl?.startsWith(baseUrl)) {
+            retVal = appUrl
+        } else {
+            retVal = baseUrl
+        }
+        return retVal
     }
 
     /**
