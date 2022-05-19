@@ -1,18 +1,15 @@
 package au.org.ala.web
 
-import grails.test.mixin.TestFor
+import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
-@TestFor(LogoutController)
-class LogoutControllerSpec extends Specification {
+class LogoutControllerSpec extends Specification implements ControllerUnitTest<LogoutController> {
 
     static LOGOUT_URL = 'https://example.org/'
 
-    static doWithConfig(config) {
-//    Closure doWithConfig() {{ config ->
+    Closure doWithConfig() {{ config ->
         config.security.cas.logoutUrl = LOGOUT_URL
-//    }}
-    }
+    }}
 
     def testLogoutDefaultAppUrlIsAbsolute() {
         setup:
