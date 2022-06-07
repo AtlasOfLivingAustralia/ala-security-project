@@ -27,6 +27,10 @@ class AuthService implements IAuthService {
         delegateService.getEmail()
     }
 
+    String getUserName() {
+        delegateService.getUserName()
+    }
+
     String getUserId() {
         delegateService.getUserId()
     }

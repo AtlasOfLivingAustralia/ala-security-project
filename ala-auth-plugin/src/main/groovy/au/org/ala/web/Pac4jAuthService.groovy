@@ -1,11 +1,15 @@
 package au.org.ala.web
 
 import grails.web.mapping.LinkGenerator
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.FromString
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
 import org.springframework.beans.factory.annotation.Autowired
+
+import java.nio.file.Paths
 
 class Pac4jAuthService implements IAuthService {
 
@@ -73,20 +77,17 @@ class Pac4jAuthService implements IAuthService {
         return value
     }
 
-    String getAttribute(String attribute) {
+    String getAttribute(@ClosureParams(value = FromString, options = ["org.pac4j.core.profile.UserProfile"]) Closure<Object> attributeClosure) {
         def manager = profileManager
-
-        def value = null
         if (manager.authenticated) {
-            final Optional<UserProfile> profile = manager.getProfile()
-            if (profile.isPresent()) {
-                def userProfile = profile.get()
-                if (userProfile) {
-                    value = userProfile.getAttribute(attribute)
-                }
-            }
+            return manager.profile.map(attributeClosure).orElse(null)
+        } else {
+            return null
         }
-        return value
+    }
+
+    String getAttribute(String attribute) {
+        getAttribute { it.getAttribute(attribute) }
     }
 
     @Override
@@ -95,20 +96,13 @@ class Pac4jAuthService implements IAuthService {
     }
 
     @Override
+    String getUserName() {
+        getAttribute { it.username ?: it.getAttribute(ATTR_SUB) }
+    }
+
+    @Override
     String getUserId() {
-        def manager = profileManager
-        def value = null
-        if (manager.authenticated) {
-            final Optional<UserProfile> profile = manager.getProfile()
-            if (profile.isPresent()) {
-                def userProfile = profile.get()
-                if (userProfile) {
-                    // TODO try email before sub?
-                    value = userProfile.username ?: userProfile.getAttribute(ATTR_USERID) ?: userProfile.getAttribute(ATTR_SUB)
-                }
-            }
-        }
-        return value
+        getAttribute { it.getAttribute(ATTR_USERID) ?: userProfile.getAttribute(ATTR_SUB) }
     }
 
     @Override

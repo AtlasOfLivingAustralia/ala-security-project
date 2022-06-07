@@ -28,6 +28,12 @@ class CasAuthService implements IAuthService {
         return AuthenticationUtils.getEmailAddress(RequestContextHolder.currentRequestAttributes().getRequest())
     }
 
+    String getUserName() {
+        def request = RequestContextHolder.currentRequestAttributes().getRequest() as HttpServletRequest
+        def username = AuthenticationUtils.getPrincipalAttribute(request, "username") // check this
+        return username
+    }
+
     String getUserId() {
         def request = RequestContextHolder.currentRequestAttributes().getRequest() as HttpServletRequest
         def userId = AuthenticationUtils.getUserId(request)

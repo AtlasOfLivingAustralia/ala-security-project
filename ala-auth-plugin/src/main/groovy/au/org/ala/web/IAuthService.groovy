@@ -12,6 +12,12 @@ interface IAuthService {
     String getEmail()
 
     /**
+     * Get the current user's preferred username
+     * @return the current user's preferred username
+     */
+    String getUserName()
+
+    /**
      * Get the current user's id
      * @return the current user's id
      */
