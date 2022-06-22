@@ -223,6 +223,7 @@ class AuthPac4jPluginConfig {
         frb.name = name
         // TODO Add config property for Default URI?
         CallbackFilter callbackFilter = new CallbackFilter(pac4jConfig, linkGenerator.link(uri: '/'))
+        callbackFilter.defaultClient = DEFAULT_CLIENT
         frb.filter = callbackFilter
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = AuthPluginConfig.filterOrder()
