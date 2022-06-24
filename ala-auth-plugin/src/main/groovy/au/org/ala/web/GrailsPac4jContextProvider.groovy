@@ -2,10 +2,9 @@ package au.org.ala.web
 
 import org.grails.web.util.WebUtils
 import org.pac4j.core.config.Config
-import org.pac4j.core.context.JEEContextFactory
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.util.FindBest
-
+import org.pac4j.jee.context.JEEContextFactory
 /**
  * Pac4jContextProvider that uses static Grails methods to get at the request and response.
  */

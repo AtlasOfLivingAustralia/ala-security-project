@@ -14,7 +14,6 @@ import au.org.ala.web.Pac4jContextProvider
 import au.org.ala.web.Pac4jHttpServletRequestWrapperFilter
 import au.org.ala.web.Pac4jSSOStrategy
 import au.org.ala.web.SSOStrategy
-import au.org.ala.web.SpringSessionLogoutHandler
 import au.org.ala.web.UserAgentFilterService
 import grails.core.GrailsApplication
 import grails.web.mapping.LinkGenerator
@@ -26,29 +25,26 @@ import org.pac4j.core.client.Client
 import org.pac4j.core.client.Clients
 import org.pac4j.core.client.direct.AnonymousClient
 import org.pac4j.core.config.Config
-import org.pac4j.core.context.JEEContextFactory
 import org.pac4j.core.context.WebContextFactory
-import org.pac4j.core.context.session.JEESessionStore
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.http.url.DefaultUrlResolver
 import org.pac4j.core.logout.handler.LogoutHandler
-import org.pac4j.core.matching.matcher.HeaderMatcher
 import org.pac4j.core.matching.matcher.PathMatcher
 import org.pac4j.core.util.Pac4jConstants
+import org.pac4j.jee.context.JEEContextFactory
+import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.jee.filter.CallbackFilter
 import org.pac4j.jee.filter.LogoutFilter
 import org.pac4j.jee.filter.SecurityFilter
 import org.pac4j.oidc.client.OidcClient
 import org.pac4j.oidc.config.OidcConfiguration
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
-import org.springframework.session.SessionRepository
 
 import javax.servlet.DispatcherType
 

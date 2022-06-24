@@ -1,13 +1,13 @@
 package au.org.ala.web
 
-import org.pac4j.core.config.AbstractConfigFilter
 import org.pac4j.core.config.Config
-import org.pac4j.core.context.JEEContextFactory
 import org.pac4j.core.context.WebContextFactory
-import org.pac4j.core.context.session.JEESessionStore
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.profile.factory.ProfileManagerFactory
 import org.pac4j.core.util.FindBest
+import org.pac4j.jee.config.AbstractConfigFilter
+import org.pac4j.jee.context.JEEContextFactory
+import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.jee.util.Pac4JHttpServletRequestWrapper
 import org.springframework.web.util.WebUtils
 
