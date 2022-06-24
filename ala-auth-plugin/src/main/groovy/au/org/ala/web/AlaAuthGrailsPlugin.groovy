@@ -3,6 +3,7 @@ package au.org.ala.web
 import au.org.ala.web.config.AuthGenericPluginConfig
 import au.org.ala.web.config.AuthPac4jPluginConfig
 import au.org.ala.web.config.AuthPluginConfig
+import au.org.ala.web.config.SpringSessionPluginConfig
 import grails.plugins.*
 import groovy.util.logging.Slf4j
 
@@ -46,6 +47,7 @@ This plugin provides auth services for ALA.
             authGenericPluginConfiguration(AuthGenericPluginConfig)
             alaAuthPluginConfiguration(AuthPluginConfig)
             authOidcPluginConfiguration(AuthPac4jPluginConfig)
+            springSessionPluginConfiguration(SpringSessionPluginConfig)
 
             securityPrimitives(SecurityPrimitives) { beanDefinition ->
                 beanDefinition.constructorArgs = [ref('authService'), ref('grailsApplication')]

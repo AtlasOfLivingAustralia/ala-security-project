@@ -14,6 +14,7 @@ import au.org.ala.web.Pac4jContextProvider
 import au.org.ala.web.Pac4jHttpServletRequestWrapperFilter
 import au.org.ala.web.Pac4jSSOStrategy
 import au.org.ala.web.SSOStrategy
+import au.org.ala.web.SpringSessionLogoutHandler
 import au.org.ala.web.UserAgentFilterService
 import grails.core.GrailsApplication
 import grails.web.mapping.LinkGenerator
@@ -30,6 +31,7 @@ import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.JEESessionStore
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.http.url.DefaultUrlResolver
+import org.pac4j.core.logout.handler.LogoutHandler
 import org.pac4j.core.matching.matcher.HeaderMatcher
 import org.pac4j.core.matching.matcher.PathMatcher
 import org.pac4j.core.util.Pac4jConstants
@@ -39,12 +41,14 @@ import org.pac4j.jee.filter.SecurityFilter
 import org.pac4j.oidc.client.OidcClient
 import org.pac4j.oidc.config.OidcConfiguration
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
+import org.springframework.session.SessionRepository
 
 import javax.servlet.DispatcherType
 
@@ -82,6 +86,9 @@ class AuthPac4jPluginConfig {
     @Autowired
     GrailsApplication grailsApplication
 
+    @Autowired(required = false)
+    LogoutHandler oidcLogoutHandler
+
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     IAuthService delegateService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator) {
@@ -91,11 +98,11 @@ class AuthPac4jPluginConfig {
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     OidcConfiguration oidcConfiguration() {
-        OidcConfiguration config = generateBaseOidcClientConfiguration()
+        OidcConfiguration config = generateBaseOidcClientConfiguration(oidcLogoutHandler)
         return config
     }
 
-    private OidcConfiguration generateBaseOidcClientConfiguration() {
+    private OidcConfiguration generateBaseOidcClientConfiguration(LogoutHandler logoutHandler) {
         OidcConfiguration config = new OidcConfiguration()
         config.setClientId(oidcClientProperties.clientId)
         config.setSecret(oidcClientProperties.secret)
@@ -108,6 +115,9 @@ class AuthPac4jPluginConfig {
         }
         if (oidcClientProperties.allowUnsignedIdTokens) {
             config.allowUnsignedIdTokens = oidcClientProperties.allowUnsignedIdTokens
+        }
+        if (logoutHandler) {
+            config.logoutHandler = logoutHandler
         }
         // select display mode: page, popup, touch, and wap
 //        config.addCustomParam("display", "popup");
@@ -131,7 +141,7 @@ class AuthPac4jPluginConfig {
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     OidcClient oidcPromptNoneClient() {
-        def config = generateBaseOidcClientConfiguration()
+        def config = generateBaseOidcClientConfiguration(oidcLogoutHandler)
         // select prompt mode: none, consent, select_account
         config.addCustomParam("prompt", "none")
         def client = new OidcClient(config)
