@@ -1,0 +1,3 @@
+ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  au.org.ala.web.config.SpringSessionPluginConfig, \
+  au.org.ala.web.config.MongoSpringSessionPluginConfig

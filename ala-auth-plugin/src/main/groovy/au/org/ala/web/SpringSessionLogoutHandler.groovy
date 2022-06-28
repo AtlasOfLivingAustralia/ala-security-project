@@ -15,15 +15,24 @@ import org.springframework.session.Session
  * on a Pac4J Store as the DefaultLogoutHandler does.  The behaviour should be equivalent to that
  * of the DefaultLogoutHandler.
  *
- * It stores the OIDC Session ID (SID) in the Spring Session PRINCIPAL_NAME_INDEX_NAME attribute,
+ * It stores the OIDC Session ID (SID) in the Spring Session SID_FIELD_NAME attribute,
  * so that it can then lookup sessions based on the SID for Single Logout.
+ *
+ * {@link org.springframework.session.data.mongo.AbstractMongoSessionConverter}
+ * instances need to accept {@link #SID_INDEX_NAME} as the index name for looking up the
+ * {@link #SID_FIELD_NAME} value.  One such implementation is provided in this plugin:
+ * {@link au.org.ala.web.mongo.Pac4jJdkMongoSessionConverter}
  */
 class SpringSessionLogoutHandler extends ProfileManagerFactoryAware implements LogoutHandler {
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(getClass())
 
     private boolean destroySession;
     private FindByIndexNameSessionRepository<Session> repository
+
+    public static final String SID_INDEX_NAME = FindByIndexNameSessionRepository.class.getName()
+            .concat(".SID_INDEX_NAME")
+    public static final String SID_FIELD_NAME = "_sid"
 
     SpringSessionLogoutHandler(FindByIndexNameSessionRepository<Session> repository) {
         this.repository = repository
@@ -35,7 +44,8 @@ class SpringSessionLogoutHandler extends ProfileManagerFactoryAware implements L
         if (sessionStore == null) {
             logger.error("No session store available for this web context");
         } else {
-            sessionStore.set(context, FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, key)
+            // unnecessary? JDK Converter should extract into serialised session
+             sessionStore.set(context, SID_FIELD_NAME, key)
         }
     }
 
@@ -50,7 +60,7 @@ class SpringSessionLogoutHandler extends ProfileManagerFactoryAware implements L
                 sessions = [:]
             }
         } else {
-            sessions = repository.findByPrincipalName(key)
+            sessions = repository.findByIndexNameAndIndexValue(SID_INDEX_NAME, key)
         }
 
         sessions.keySet().each { id -> repository.deleteById(id) }
@@ -80,7 +90,7 @@ class SpringSessionLogoutHandler extends ProfileManagerFactoryAware implements L
         if (!key) {
             sessions = [:]
         } else {
-            sessions = repository.findByPrincipalName(key)
+            sessions = repository.findByIndexNameAndIndexValue(SID_INDEX_NAME, key)
         }
 
         sessions.keySet().each { id -> repository.deleteById(id) }
@@ -92,7 +102,7 @@ class SpringSessionLogoutHandler extends ProfileManagerFactoryAware implements L
     @Override
     void renewSession(final String oldSessionId, final WebContext context, final SessionStore sessionStore) {
         def oldSession = repository.findById(oldSessionId)
-        def key = oldSession?.getAttribute(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME)
+        def key = oldSession?.getAttribute(SID_FIELD_NAME)
         if (key) {
             repository.deleteById(oldSessionId)
             recordSession(context, sessionStore, key)

@@ -88,6 +88,8 @@ dependencies {
 
     // Not required but this plugin can react to the presence of Spring Session
     compileOnly 'org.springframework.session:spring-session-core'
+    compileOnly 'org.springframework.session:spring-session-data-mongodb'
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
     // Java 8
 //    compile 'org.pac4j:pac4j-oidc:4.5.4'
