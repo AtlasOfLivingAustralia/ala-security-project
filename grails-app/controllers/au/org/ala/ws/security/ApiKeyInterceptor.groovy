@@ -9,7 +9,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.grails.web.util.WebUtils
 import org.pac4j.core.config.Config
-import org.pac4j.core.context.JEEContextFactory
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.Credentials
@@ -18,6 +17,7 @@ import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.FindBest
 import org.pac4j.http.client.direct.DirectBearerAuthClient
+import org.pac4j.jee.context.JEEContextFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.http.HttpStatus

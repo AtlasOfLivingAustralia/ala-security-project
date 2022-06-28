@@ -1,11 +1,11 @@
 package au.org.ala.ws.security;
 
 import org.pac4j.core.config.Config;
-import org.pac4j.core.context.JEEContextFactory;
-import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.factory.ProfileManagerFactory;
 import org.pac4j.core.util.FindBest;
+import org.pac4j.jee.context.JEEContextFactory;
+import org.pac4j.jee.context.session.JEESessionStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
