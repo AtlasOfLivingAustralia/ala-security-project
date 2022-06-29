@@ -13,8 +13,8 @@ import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.util.GrailsApplicationAttributes
 import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
 import org.pac4j.core.config.Config
-import org.pac4j.core.context.session.JEESessionStore
 import org.pac4j.http.client.direct.DirectBearerAuthClient
+import org.pac4j.jee.context.session.JEESessionStore
 import spock.lang.Specification
 import spock.lang.Unroll
 

@@ -7,14 +7,9 @@ import au.org.ala.ws.security.service.ApiKeyService
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.grails.web.util.WebUtils
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContext
-import org.pac4j.core.context.session.SessionStore
-import org.pac4j.core.credentials.Credentials
-import org.pac4j.core.credentials.extractor.BearerAuthExtractor
 import org.pac4j.core.profile.ProfileManager
-import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.FindBest
 import org.pac4j.http.client.direct.DirectBearerAuthClient
 import org.pac4j.jee.context.JEEContextFactory
