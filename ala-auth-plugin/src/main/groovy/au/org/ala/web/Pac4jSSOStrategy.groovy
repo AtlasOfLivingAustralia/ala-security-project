@@ -58,11 +58,11 @@ class Pac4jSSOStrategy implements SSOStrategy {
 
         final WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
 
-        def result = true
+        def result = false
 
         bestLogic.perform(context, bestSessionStore, config, { ctx, session, profiles, parameters ->
             // if no profiles are loaded, pac4j is not concerned with this request
-            result = false
+            result = true
         }, bestAdapter, gateway ? gatewayClients : clients, gateway ? gatewayAuthorizers : authorizers, matchers);
         return result
     }

@@ -23,7 +23,7 @@ class LoginControllerSpec extends Specification implements ControllerUnitTest<Lo
         1 * mockSsoStrategy.authenticate(request,response,false,_) >> { request, response, gateway, pathArg ->
             response.setStatus(302)
             response.setHeader('Location', "http://localhost/oidc/authorize?clientid=test&secret=test&redirectUrl=$pathArg")
-            true
+            false
         }
 
         when:"login without authenticated user"
@@ -38,7 +38,7 @@ class LoginControllerSpec extends Specification implements ControllerUnitTest<Lo
     void "test already logged in action"() {
         given:
         def path = '/test'
-        1 * mockSsoStrategy.authenticate(request,response,false,_) >> false
+        1 * mockSsoStrategy.authenticate(request,response,false,_) >> true
 
         when:"login with authenticated user"
         params.path = path

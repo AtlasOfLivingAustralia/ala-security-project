@@ -32,7 +32,7 @@ class LoginController {
         }
         boolean auth = ssoStrategy.authenticate(request, response, false, absPath)
 
-        if (!auth) {
+        if (auth) {
             redirect(absolute: true, uri: path)
         }
     }
