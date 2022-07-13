@@ -97,12 +97,12 @@ class Pac4jAuthService implements IAuthService {
 
     @Override
     String getUserName() {
-        getAttribute { it.username ?: it.getAttribute(ATTR_SUB) }
+        getAttribute { it.username ?: it.id }
     }
 
     @Override
     String getUserId() {
-        getAttribute { it.getAttribute(ATTR_USERID) ?: userProfile.getAttribute(ATTR_SUB) }
+        getAttribute { it.getAttribute(ATTR_USERID) ?: it.id }
     }
 
     @Override
