@@ -1,14 +1,14 @@
 plugins {
-    id( 'java' )
+    id( 'java-library' )
     id( 'maven-publish' )
 }
 apply from: 'https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_gradle_java_publish.gradle'
 
 group 'au.org.ala'
-version '1.5.0'
+version '2.0.0-SNAPSHOT'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 
 sourceSets {
     integrationTest {
@@ -26,17 +26,18 @@ configurations {
 
 dependencies {
     compileOnly group: 'org.projectlombok', name:'lombok', version: '1.16.12'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
 
-    compile group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.4.0'
-    compile group: 'com.squareup.retrofit2', name: 'converter-moshi', version: '2.4.0'
-    compile group: 'com.squareup.moshi', name: 'moshi', version: '1.5.0'
-    compile group: 'com.squareup.moshi', name: 'moshi-adapters', version: '1.5.0'
+    api group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.9.0'
+    api group: 'com.squareup.retrofit2', name: 'converter-moshi', version: '2.9.0'
+    api group: 'com.squareup.moshi', name: 'moshi', version: '1.8.0'
+    api group: 'com.squareup.moshi', name: 'moshi-adapters', version: '1.8.0'
 
-    testCompile group: 'com.google.guava', name: 'guava', version: '20.0'
-    testCompile group: 'com.squareup.okhttp3', name: 'logging-interceptor', version: '3.10.0'
-    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.10.0'
-    testCompile group: 'junit', name: 'junit', version: '4.11'
-    testCompile group: 'org.assertj', name: 'assertj-core', version: '2.6.0'
+    testImplementation group: 'com.google.guava', name: 'guava', version: '20.0'
+    testImplementation group: 'com.squareup.okhttp3', name: 'logging-interceptor', version: '3.14.9'
+    testImplementation group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.14.9'
+    testImplementation group: 'junit', name: 'junit', version: '4.11'
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: '2.6.0'
 }
 
 task integrationTest(type: Test) {

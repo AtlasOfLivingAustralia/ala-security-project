@@ -12,41 +12,26 @@ public class UserDetailsTest {
         final String state = "state";
         final String country = "country";
         final String organisation = "organisation";
-        final String primaryUserType = "primaryUserType";
-        final String secondaryUserType = "secondaryUserType";
-        final String telephone = "telephone";
 
-        userDetails.setPrimaryUserType(primaryUserType);
-        userDetails.setSecondaryUserTypeProperty(secondaryUserType);
         userDetails.setOrganisation(organisation);
         userDetails.setCity(city);
         userDetails.setState(state);
         userDetails.setCountry(country);
-        userDetails.setTelephone(telephone);
 
-        assertTrue(userDetails.getPrimaryUserType().equals(primaryUserType));
-        assertTrue(userDetails.getSecondaryUserType().equals(secondaryUserType));
-        assertTrue(userDetails.getOrganisation().equals(organisation));
-        assertTrue(userDetails.getCity().equals(city));
-        assertTrue(userDetails.getState().equals(state));
-        assertTrue(userDetails.getCountry().equals(country));
-        assertTrue(userDetails.getTelephone().equals(telephone));
+        assertEquals(organisation, userDetails.getOrganisation());
+        assertEquals(city, userDetails.getCity());
+        assertEquals(state, userDetails.getState());
+        assertEquals(country, userDetails.getCountry());
 
-        userDetails.setTelephone(telephone);
         userDetails.setCountry(country);
         userDetails.setState(state);
         userDetails.setCity(city);
         userDetails.setOrganisation(organisation);
-        userDetails.setSecondaryUserTypeProperty(secondaryUserType);
-        userDetails.setPrimaryUserType(primaryUserType);
 
-        assertTrue(userDetails.getTelephone().equals(telephone));
-        assertTrue(userDetails.getCountry().equals(country));
-        assertTrue(userDetails.getState().equals(state));
-        assertTrue(userDetails.getCity().equals(city));
-        assertTrue(userDetails.getOrganisation().equals(organisation));
-        assertTrue(userDetails.getSecondaryUserType().equals(secondaryUserType));
-        assertTrue(userDetails.getPrimaryUserType().equals(primaryUserType));
+        assertEquals(country, userDetails.getCountry());
+        assertEquals(state, userDetails.getState());
+        assertEquals(city, userDetails.getCity());
+        assertEquals(organisation, userDetails.getOrganisation());
     }
 
 }
