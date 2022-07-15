@@ -2,6 +2,7 @@ package au.org.ala.ws.service
 
 import au.org.ala.web.AuthService
 import au.org.ala.web.UserDetails
+import au.org.ala.ws.tokens.TokenService
 import com.google.common.net.HttpHeaders
 import grails.converters.JSON
 import groovyx.net.http.ContentType as GContentType
@@ -22,6 +23,7 @@ import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.entity.mime.content.InputStreamBody
 import org.apache.http.entity.mime.content.StringBody
 import org.grails.web.json.JSONElement
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.multipart.MultipartFile
 
@@ -47,7 +49,8 @@ class WebService {
 
     def grailsApplication
     AuthService authService
-    JwtTokenService jwtTokenService
+    @Autowired
+    TokenService tokenService
 
     /**
      * Sends an HTTP GET request to the specified URL. The URL must already be URL-encoded (if necessary).
@@ -447,7 +450,7 @@ class WebService {
 
     void includeAuthTokensJwt(includeUser, includeApiKey, user, headerSetter) {
         if ((user && includeUser) || (includeApiKey)) {
-            def token = jwtTokenService.getAuthToken(user && includeUser) // TODO use includeUser here?
+            def token = tokenService.getAuthToken(user && includeUser) // TODO use includeUser here?
             if (token) {
                 headerSetter(AUTHORIZATION, token.toAuthorizationHeader())
             }

@@ -1,5 +1,7 @@
 package au.org.ala.ws
 
+import au.org.ala.ws.config.AlaWsPluginConfig
+
 class AlaWsPluginGrailsPlugin {
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "3.1.0 > *"
@@ -26,6 +28,7 @@ class AlaWsPluginGrailsPlugin {
     }
 
     def doWithSpring = {
+        alaWsPluginConfg(AlaWsPluginConfig)
     }
 
     def doWithDynamicMethods = { ctx ->

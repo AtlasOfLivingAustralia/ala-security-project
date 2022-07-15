@@ -2,6 +2,7 @@ package au.org.ala.ws.service
 
 import au.org.ala.web.AuthService
 import au.org.ala.web.UserDetails
+import au.org.ala.ws.tokens.TokenService
 import com.google.common.collect.ImmutableList
 import grails.converters.JSON
 import grails.testing.mixin.integration.Integration
@@ -10,6 +11,7 @@ import grails.util.GrailsWebMockUtil
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
 import org.apache.http.entity.ContentType
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.context.request.RequestContextHolder
@@ -83,6 +85,9 @@ class WebServiceSpec extends Specification implements ServiceUnitTest<WebService
 
     def setup() {
 //        service = new WebService()
+        defineBeans {
+            tokenService(InstanceFactoryBean, Stub(TokenService), TokenService)
+        }
         service.authService = Mock(AuthService)
         service.authService.userDetails() >> new UserDetails(userId: '1234', email: 'fred@bla.com')
 
