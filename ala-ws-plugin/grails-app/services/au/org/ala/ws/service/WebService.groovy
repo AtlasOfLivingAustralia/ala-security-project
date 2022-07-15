@@ -57,9 +57,9 @@ class WebService {
      *
      * @param url The url-encoded URL to send the request to
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
-     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
      * @param contentType the desired content type for the request. Defaults to application/json
-     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
+     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie.  If using JWTs sends the current user's access token, if false only sends a ClientCredentials grant token for this apps client id Default = true.
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
@@ -79,8 +79,8 @@ class WebService {
      * @param body Map containing the data to be sent as the post body
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
-     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
-     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
+     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie.  If using JWTs sends the current user's access token, if false only sends a ClientCredentials grant token for this apps client id Default = true.
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
@@ -100,8 +100,8 @@ class WebService {
      * @param body Map containing the data to be sent as the post body
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
-     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
-     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
+     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie.  If using JWTs sends the current user's access token, if false only sends a ClientCredentials grant token for this apps client id Default = true.
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
@@ -132,8 +132,8 @@ class WebService {
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param files List of 0 or more files to be included in the multipart request (note: if files is null, then the request will NOT be multipart)
      * @param partContentType the desired content type for the request PARTS (the request itself will always be sent as multipart/form-data). Defaults to application/json. All non-file parts will have the same content type.
-     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
-     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
+     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie.  If using JWTs sends the current user's access token, if false only sends a ClientCredentials grant token for this apps client id Default = true.
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
@@ -150,8 +150,8 @@ class WebService {
      * @param url The url-encoded url to send the request to
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
-     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
-     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
+     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie.  If using JWTs sends the current user's access token, if false only sends a ClientCredentials grant token for this apps client id Default = true.
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
@@ -166,8 +166,8 @@ class WebService {
      *
      * @param response The HttpServletResponse of the calling request: the response from the proxied request will be written to this object
      * @param url The URL of the service to proxy to
-     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
-     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
+     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie.  If using JWTs sends the current user's access token, if false only sends a ClientCredentials grant token for this apps client id Default = true.
      */
     void proxyGetRequest(HttpServletResponse response, String url, boolean includeApiKey = true, boolean includeUser = true) {
         log.debug("Proxying GET request to ${url}")
@@ -206,8 +206,8 @@ class WebService {
      * @param url The URL of the service to proxy to
      * @param postBody The POST data to send with the proxied request. If it is a Collection, then it will be converted to JSON, otherwise it will be sent as a String.
      * @param contentType the desired content type for the request. Defaults to application/json.
-     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey'). Default = true.
-     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie. Default = true.
+     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
+     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie.  If using JWTs sends the current user's access token, if false only sends a ClientCredentials grant token for this apps client id Default = true.
      */
     void proxyPostRequest(HttpServletResponse response, String url, postBody, ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = false, boolean includeUser = true, Map cookies = [:]) {
         log.debug("Proxying POST request to ${url}")
@@ -446,8 +446,8 @@ class WebService {
     }
 
     void includeAuthTokensJwt(includeUser, includeApiKey, user, headerSetter) {
-        if ((user && includeUser) || (apiKey && includeApiKey)) {
-            def token = jwtTokenService.getAuthToken(false) // TODO use includeUser here?
+        if ((user && includeUser) || (includeApiKey)) {
+            def token = jwtTokenService.getAuthToken(user && includeUser) // TODO use includeUser here?
             if (token) {
                 headerSetter(AUTHORIZATION, token.toAuthorizationHeader())
             }
