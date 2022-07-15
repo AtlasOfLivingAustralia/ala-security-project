@@ -155,8 +155,8 @@ Ratpack requires Java 1.8, so if you are modifying this plugin, be sure to use j
 
 1. Clone the repo
 1. Import the source into your IDE
-1. Use Grails version 3.2.11
-1. Use JDK 1.8
+1. Use Grails version 4.0.11
+1. Use JDK 1.11
 
 To test changes locally, set the plugin as a local plugin on a grails application:
 
