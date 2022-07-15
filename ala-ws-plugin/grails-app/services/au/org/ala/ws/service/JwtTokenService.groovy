@@ -52,30 +52,30 @@ class JwtTokenService {
      * @return The access token
      */
     AccessToken getAuthToken(boolean requireUser) {
-        def token = profileManager.getProfile(OidcProfile).map { it.accessToken }.orElse(null)
-        if (!token && !requireUser) {
-            Scope scope = new Scope()
-//            scope.add(OIDCScopeValue.OPENID)
-
+        def token
+        if (requireUser) {
+            token = profileManager.getProfile(OidcProfile).map { it.accessToken }.orElse(null)
+        } else {
             def oidcScopes = grailsApplication.config.getProperty('security.oidc.scopes', String, 'openid')
             def requestedScopes = grailsApplication.config.getProperty('webservice.jwt-scopes', String, 'openid')
-            def finalScopes = oidcScopes.tokenize(' ') + requestedScopes.tokenize(' ').findAll().toSet()
-            finalScopes.each {
-                scope.add(it)
-            }
+            List<String> finalScopes = (oidcScopes.tokenize(' ') + requestedScopes.tokenize(' ')).findAll().toSet().toList()
+            Scope scope = new Scope(*finalScopes)
 
-            if (config instanceof OidcConfiguration) {
+            if (oidcConfiguration) {
                 def tokenRequest = new TokenRequest(
-                        config.findProviderMetadata().getTokenEndpointURI(),
-                        new ClientID(config.clientId),
+                        oidcConfiguration.findProviderMetadata().getTokenEndpointURI(),
+                        new ClientID(oidcConfiguration.clientId),
                         new ClientCredentialsGrant(),
                         scope,
                         null,
                         null,
-                        [client_secret: [config.secret]]
+                        [client_secret: [oidcConfiguration.secret]]
                 )
                 def credentials = executeTokenRequest(tokenRequest)
                 token = credentials.accessToken
+            } else {
+                log.debug("Not generating token because OIDC is not configured")
+                token = null
             }
         }
         return token
