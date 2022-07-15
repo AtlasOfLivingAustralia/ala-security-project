@@ -5,6 +5,7 @@ sudo: false
 branches:
   only:
   - master
+  - develop
   - grails3
   - 1.5.x
   - /^feature.*$/
