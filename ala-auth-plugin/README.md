@@ -98,7 +98,7 @@ may already have existing RPs that you can use.
 - Add the redirect URI, which is regex, so can be of the form `https?://app.ala.org.au/.*`
 - Ensure the JWKS is set to the correct path to the JWKS
 - Ensure that your RP is allowed to access the scopes it requires.
-- etc
+- To partipate in Single Sign Out, add a logout handler URL of `<baseURL>/callback?logoutendpoit`
 
 Take the client id and secret from the RP registration and add them to your app's external config under
 `security.oidc.client-id` and `security.oidc.secret`.
@@ -196,6 +196,14 @@ You can change the base address of the UserDetails web services by overriding th
 ```groovy
 userDetails.url = 'https://auth.ala.org.au/userdetails/'
 ```
+
+### AuthService configuration
+
+The AuthService Grails service calls web services on the UserDetails application.  To ensure that these
+calls include a bearer access token you must provide a `jwtInterceptor` bean.  This bean should implement the
+okhttp interceptor interface and insert a Bearer token in the Authorization header containing a client
+credentials grant with the required scopes for the service (typically `users:read`).  If the `ala-ws-plugin`
+is also used, then this step is performed automatically.
 
 ### Migration from 1.x
 
