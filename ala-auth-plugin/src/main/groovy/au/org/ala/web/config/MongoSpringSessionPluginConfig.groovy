@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.session.SessionProperties
+import org.springframework.boot.autoconfigure.web.ServerProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -19,11 +20,14 @@ import org.springframework.session.data.mongo.MongoSession
 @ConditionalOnClass(MongoSession)
 @ConditionalOnProperty(prefix = 'spring.session', name = 'store-type', havingValue = "mongodb")
 @AutoConfigureAfter(SpringSessionPluginConfig.class)
-@EnableConfigurationProperties(SessionProperties)
+@EnableConfigurationProperties([SessionProperties, ServerProperties])
 class MongoSpringSessionPluginConfig {
 
     @Autowired
     SessionProperties sessionProperties
+
+    @Autowired
+    ServerProperties serverProperties
 
     @Bean
     @ConditionalOnMissingBean([
@@ -32,6 +36,6 @@ class MongoSpringSessionPluginConfig {
             JacksonMongoSessionConverter
     ])
     JdkMongoSessionConverter sessionConverter() {
-        new Pac4jJdkMongoSessionConverter(sessionProperties.getTimeout())
+        new Pac4jJdkMongoSessionConverter(sessionProperties.timeout ?: serverProperties.servlet.session.timeout)
     }
 }
