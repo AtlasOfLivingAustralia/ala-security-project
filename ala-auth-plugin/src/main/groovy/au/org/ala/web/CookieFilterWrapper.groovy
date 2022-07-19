@@ -34,7 +34,7 @@ class CookieFilterWrapper implements Filter {
     void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         if (request instanceof HttpServletRequest) {
-            if (request.cookies.any { Cookie cookie -> cookie.name == this.cookieName && cookie.value }) {
+            if (request.cookies?.any { Cookie cookie -> cookie.name == this.cookieName && cookie.value }) {
                 filter.doFilter(request, response, chain)
             } else {
                 chain.doFilter(request, response)
