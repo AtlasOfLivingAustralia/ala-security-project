@@ -345,7 +345,7 @@ class WebService {
     }
 
     private String getApiKey() {
-        grailsApplication.config.webservice.apiKey ?: null
+        grailsApplication.config.getProperty('webservice.apiKey') ?: null
     }
 
     static String enc(String str) {
@@ -353,9 +353,9 @@ class WebService {
     }
 
     private void configureRequestTimeouts(request) {
-        int connectTimeout = (grailsApplication.config.webservice?.connect?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int
-        int readTimeout = (grailsApplication.config.webservice?.read?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int
-        int socketTimeout = (grailsApplication.config.webservice?.socket?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int
+        int connectTimeout = (grailsApplication.config.getProperty('webservice.connect.timeout') ?: DEFAULT_TIMEOUT_MILLIS) as int
+        int readTimeout = (grailsApplication.config.getProperty('webservice.read.timeout') ?: DEFAULT_TIMEOUT_MILLIS) as int
+        int socketTimeout = (grailsApplication.config.getProperty('webservice.socket.timeout') ?: DEFAULT_TIMEOUT_MILLIS) as int
 
         RequestConfig.Builder config = RequestConfig.custom()
         config.setConnectTimeout(connectTimeout)
@@ -421,8 +421,8 @@ class WebService {
     private URLConnection configureConnection(String url, boolean includeApiKey = true, boolean includeUser = true) {
         URLConnection conn = new URL(url).openConnection()
 
-        conn.setConnectTimeout((grailsApplication.config.webservice?.connect?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
-        conn.setReadTimeout((grailsApplication.config.webservice?.read?.timeout ?: DEFAULT_TIMEOUT_MILLIS) as int)
+        conn.setConnectTimeout((grailsApplication.config.getProperty('webservice.connect.timeout') ?: DEFAULT_TIMEOUT_MILLIS) as int)
+        conn.setReadTimeout((grailsApplication.config.getProperty('webservice.read.timeout') ?: DEFAULT_TIMEOUT_MILLIS) as int)
         def userAgent = getUserAgent()
         if (userAgent) {
             conn.setRequestProperty(HttpHeaders.USER_AGENT, userAgent)
@@ -459,7 +459,7 @@ class WebService {
 
     void includeAuthTokensLegacy(includeUser, includeApiKey, user, headerSetter) {
         if ((user && includeUser)) {
-            headerSetter((grailsApplication.config.app?.http?.header?.userId ?: DEFAULT_AUTH_HEADER) as String, user.userId as String)
+            headerSetter((grailsApplication.config.getProperty('app.http.header.userId') ?: DEFAULT_AUTH_HEADER) as String, user.userId as String)
             headerSetter("Cookie", "ALA-Auth=${URLEncoder.encode(user.userName ?: "", CHAR_ENCODING)}")
             headerSetter("ALA-Auth", "${URLEncoder.encode(user.userName ?: "", CHAR_ENCODING)}")
         }
