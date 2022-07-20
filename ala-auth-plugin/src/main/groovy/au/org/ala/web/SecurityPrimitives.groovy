@@ -49,7 +49,7 @@ class SecurityPrimitives {
     }
 
     boolean bypassCas() {
-        def bypass = grailsApplication.config.security.cas.bypass
+        def bypass = grailsApplication.config.getProperty('security.cas.bypass')
         return bypass?.toString()?.toBoolean() ?: false
     }
 
@@ -122,7 +122,7 @@ class SecurityPrimitives {
      * @return The roles with ROLE_ADMIN replaced
      */
     private Iterable<String> fixAlaAdminRole(Iterable<String> roles) {
-        def adminRole = grailsApplication.config.security.cas.adminRole ?: ''
+        def adminRole = grailsApplication.config.getProperty('security.cas.adminRole') ?: ''
         adminRole && roles?.contains(CASRoles.ROLE_ADMIN) ? roles + adminRole : roles
     }
 }

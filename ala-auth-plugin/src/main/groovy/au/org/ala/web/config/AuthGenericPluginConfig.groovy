@@ -5,7 +5,6 @@ import au.org.ala.web.CasClientProperties
 import au.org.ala.web.UserAgentFilterService
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Rfc3339DateJsonAdapter
-import grails.core.GrailsApplication
 import groovy.json.JsonSlurper
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -13,12 +12,10 @@ import groovy.util.logging.Slf4j
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import org.pac4j.core.client.Client
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -33,21 +30,47 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 @Slf4j
 class AuthGenericPluginConfig {
 
-    @Autowired
-    GrailsApplication grailsApplication
+    @Value('${info.app.name:Unknown-App}')
+    String name
+
+    @Value('${info.app.version:1}')
+    String version
+
+    @Value('${userDetails.readTimeout:10000}')
+    Long userDetailsReadTimeout
+
+    @Value('${userDetails.url}')
+    String userDetailsUrl
+
+    @Bean('userAgentInterceptor')
+    @ConditionalOnMissingBean(name = 'userAgentInterceptor')
+    Interceptor userAgentInterceptor() {
+        def userAgent = "$name/$version"
+        new Interceptor() {
+            @Override
+            Response intercept(Interceptor.Chain chain) throws IOException {
+                chain.proceed(
+                        chain.request().newBuilder()
+                                .header('User-Agent', userAgent)
+                        .build()
+                )
+            }
+        }
+    }
 
     @Bean
-    @ConditionalOnMissingBean
-    List<Interceptor> userDetailsInterceptors(@Autowired(required = false) @Qualifier("jwtInterceptor") Interceptor jwtInterceptor) {
-        [jwtInterceptor].findAll()
+    @ConditionalOnMissingBean(name = 'userDetailsInterceptors')
+    List<Interceptor> userDetailsInterceptors(
+            @Autowired(required = false) @Qualifier("jwtInterceptor") Interceptor jwtInterceptor,
+            @Qualifier('userAgentInterceptor') Interceptor userAgentInterceptor) {
+        [userAgentInterceptor, jwtInterceptor].findAll()
     }
 
     @ConditionalOnMissingBean(name = "userDetailsHttpClient")
     @Bean(name = ["defaultUserDetailsHttpClient", "userDetailsHttpClient"])
     OkHttpClient userDetailsHttpClient(@Qualifier("userDetailsInterceptors") List<Interceptor> userDetailsInterceptors) {
-        Integer readTimeout = grailsApplication.config['userDetails']['readTimeout'] as Integer
         new OkHttpClient.Builder().tap {builder ->
-            builder.readTimeout(readTimeout, MILLISECONDS)
+            builder.readTimeout(userDetailsReadTimeout, MILLISECONDS)
             userDetailsInterceptors.each(builder.&addInterceptor)
         }.build()
     }
@@ -62,7 +85,7 @@ class AuthGenericPluginConfig {
     @Bean("userDetailsClient")
     UserDetailsClient userDetailsClient(@Qualifier("userDetailsHttpClient") OkHttpClient userDetailsHttpClient,
                                         @Qualifier('userDetailsMoshi') Moshi moshi) {
-        String baseUrl = grailsApplication.config["userDetails"]["url"]
+        String baseUrl = userDetailsUrl
         new UserDetailsClient.Builder(userDetailsHttpClient, baseUrl).moshi(moshi).build()
     }
 

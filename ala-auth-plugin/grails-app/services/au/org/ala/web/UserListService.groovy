@@ -33,7 +33,7 @@ class UserListService {
     }
 
     private void checkConfig() {
-        if (!grailsApplication.config.userDetails.url) {
+        if (!grailsApplication.config.getProperty('userDetails.url')) {
             log.error "Required config not found: userDetails.url - please add to Config.groovy"
         }
     }

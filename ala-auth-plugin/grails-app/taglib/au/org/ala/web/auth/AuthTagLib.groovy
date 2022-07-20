@@ -8,9 +8,9 @@ class AuthTagLib {
     def authService
     def securityPrimitives // gets injected in AlaWebThemeGrailsPlugin 'doWithSpring' section
 
-    def grailServerURL = Holders.config.grails.serverURL ?: "http://bie.ala.org.au"
+    def grailServerURL = Holders.config.getProperty('grails.serverURL') ?: "http://bie.ala.org.au"
     // the next two can also be overridden by tag attributes
-    def casLoginUrl = Holders.config.security.cas.loginUrl ?: "https://auth.ala.org.au/cas/login"
+    def casLoginUrl = Holders.config.getProperty('security.cas.loginUrl') ?: "https://auth.ala.org.au/cas/login"
 
     static namespace = "auth"
     //static encodeAsForTags = [tagName: 'raw']
