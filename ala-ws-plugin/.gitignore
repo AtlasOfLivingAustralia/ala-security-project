@@ -4,6 +4,7 @@
 .project
 coverage/
 target/
+out/
 .DS_Store
 
 *.zip
