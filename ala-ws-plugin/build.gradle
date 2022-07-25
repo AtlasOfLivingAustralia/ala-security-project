@@ -75,7 +75,7 @@ dependencies {
         exclude module: "commons-logging"
         exclude module: "groovy"
     }
-    compile "org.grails.plugins:ala-auth:5.1.0-SNAPSHOT"
+    compile "org.grails.plugins:ala-auth:5.1.0"
 
     // Regular JAR dependencies
     compile "org.apache.httpcomponents:httpmime:4.5.3"
