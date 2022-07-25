@@ -115,7 +115,7 @@ class AlaWsSecurityGrailsPluginConfiguration {
         securityFilter.setSecurityLogic(new DefaultSecurityLogic().tap { loadProfilesFromSession = false })
         frb.filter = securityFilter
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
-        frb.order = filterOrder() + 10
+        frb.order = filterOrder() + 1
         frb.urlPatterns = jwtProperties.urlPatterns
         frb.enabled = !frb.urlPatterns.empty
         frb.asyncSupported = true
@@ -127,7 +127,7 @@ class AlaWsSecurityGrailsPluginConfiguration {
     FilterRegistrationBean pac4jHttpRequestWrapper(Config config) {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean()
         filterRegistrationBean.filter = new Pac4jProfileManagerHttpRequestWrapperFilter(config)
-        filterRegistrationBean.order = filterOrder() + 11
+        filterRegistrationBean.order = filterOrder() + 2
         filterRegistrationBean.initParameters = [:]
         filterRegistrationBean.addUrlPatterns('/*')
         filterRegistrationBean
