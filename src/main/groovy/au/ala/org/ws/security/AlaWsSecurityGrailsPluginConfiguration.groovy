@@ -127,7 +127,7 @@ class AlaWsSecurityGrailsPluginConfiguration {
     FilterRegistrationBean pac4jHttpRequestWrapper(Config config) {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean()
         filterRegistrationBean.filter = new Pac4jProfileManagerHttpRequestWrapperFilter(config)
-        filterRegistrationBean.order = filterOrder() + 2
+        filterRegistrationBean.order = filterOrder() + 6 // This is to place this filter after the request wrapper filter in the ala-auth-plugin
         filterRegistrationBean.initParameters = [:]
         filterRegistrationBean.addUrlPatterns('/*')
         filterRegistrationBean
