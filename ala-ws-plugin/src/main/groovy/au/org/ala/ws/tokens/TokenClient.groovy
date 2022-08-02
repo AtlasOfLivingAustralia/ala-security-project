@@ -21,7 +21,7 @@ class TokenClient {
 
 
     OidcCredentials executeTokenRequest(TokenRequest request) throws IOException, ParseException {
-        var tokenHttpRequest = request.toHTTPRequest()
+        def tokenHttpRequest = request.toHTTPRequest()
         if (oidcConfiguration) {
             oidcConfiguration.configureHttpRequest(tokenHttpRequest)
         }
