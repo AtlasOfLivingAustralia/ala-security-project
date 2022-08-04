@@ -17,8 +17,11 @@ import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.engine.DefaultSecurityLogic
 import org.pac4j.http.client.direct.DirectBearerAuthClient
+import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.jee.filter.SecurityFilter
+import org.pac4j.oidc.config.OidcConfiguration
+import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -93,9 +96,39 @@ class AlaWsSecurityGrailsPluginConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
+    OidcConfiguration oidcConfiguration() {
+
+        OidcConfiguration oidcConfig = new OidcConfiguration()
+        oidcConfig.discoveryURI = jwtProperties.discoveryUri
+        oidcConfig.clientId = jwtProperties.clientId
+
+        return oidcConfig
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
+    UserInfoOidcAuthenticator userInfoOidcAuthenticator(OidcConfiguration oidcConfiguration) {
+        def oidcAuth = new UserInfoOidcAuthenticator(oidcConfiguration)
+        return oidcAuth
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
     DirectBearerAuthClient bearerClient(JwtAuthenticator jwtAuthenticator) {
         def client = new DirectBearerAuthClient(jwtAuthenticator)
         client.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes,jwtProperties.permissionAttributes))
+//        client.addAuthorizationGenerator(new DefaultRolesPermissionsAuthorizationGenerator(['ROLE_USER'] , [])) // client credentials probably doesn't get ROLE_USER?
+        client.name = JWT_CLIENT
+
+        client
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
+    DirectBearerAuthClient bearerOidcClient(UserInfoOidcAuthenticator userInfoOidcAuthenticator) {
+
+        def client = new DirectBearerAuthClient(userInfoOidcAuthenticator)
+        client.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes, jwtProperties.permissionAttributes))
 //        client.addAuthorizationGenerator(new DefaultRolesPermissionsAuthorizationGenerator(['ROLE_USER'] , [])) // client credentials probably doesn't get ROLE_USER?
         client.name = JWT_CLIENT
 

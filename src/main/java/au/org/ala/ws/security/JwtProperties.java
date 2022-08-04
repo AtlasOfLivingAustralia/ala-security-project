@@ -9,6 +9,7 @@ import java.util.List;
 public class JwtProperties {
     private boolean enabled = true;
     private boolean fallbackToLegacyBehaviour = true; // Whether to check API keys if no JWT token is present on the request.
+    private boolean userProfileFromAccessToken = false;
     private String clientId; // TODO Not used
     private String secret; // TODO Not used
     private String discoveryUri;
@@ -75,6 +76,14 @@ public class JwtProperties {
 
     public void setFallbackToLegacyBehaviour(boolean fallbackToLegacyBehaviour) {
         this.fallbackToLegacyBehaviour = fallbackToLegacyBehaviour;
+    }
+
+    public boolean isUserProfileFromAccessToken() {
+        return userProfileFromAccessToken;
+    }
+
+    public void setUserProfileFromAccessToken(boolean userProfileFromAccessToken) {
+        this.userProfileFromAccessToken = userProfileFromAccessToken;
     }
 
     public String getJwtType() {
