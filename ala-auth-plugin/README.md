@@ -81,7 +81,7 @@ security:
 
 TODO: OIDC prefix versions of these.
 
-For local development, dev and test deployments then `discovery-uri` should use auth-test or auth-dev instead.
+For local development, dev and test deployments `discovery-uri` should be set to auth-test or auth-dev instead.
 
 The scopes available are:
 - `openid` must be present for OpenID Connect
@@ -97,8 +97,8 @@ may already have existing RPs that you can use.
 
 - Add the redirect URI, which is regex, so can be of the form `https?://app.ala.org.au/.*`
 - Ensure the JWKS is set to the correct path to the JWKS
-- Ensure that your RP is allowed to access the scopes it requires.
-- To partipate in Single Sign Out, add a logout handler URL of `<baseURL>/callback?logoutendpoit`
+- Ensure that the scopes list all the scopes required by your application
+- To participate in Single Sign Out, add a logout handler URL of `<baseURL>/callback?logoutendpoint`
 
 Take the client id and secret from the RP registration and add them to your app's external config under
 `security.oidc.client-id` and `security.oidc.secret`.
@@ -210,7 +210,13 @@ is also used, then this step is performed automatically.
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
-- **Version 5.0.0** (11/02/2021):
+- **Version 5.1.0**(25/07/2022):
+  - Better Grails 5 experience
+  - Update pac4j
+  - Add OIDC SLO support for spring session
+  - Better support for custom ALA userid attribute
+  - Minor fixes and improvements
+- **Version 5.0.0** (11/02/2022):
   - Support Grails 4
   - Support OIDC login
 - **Version 3.2.3** (10/02/2021):
