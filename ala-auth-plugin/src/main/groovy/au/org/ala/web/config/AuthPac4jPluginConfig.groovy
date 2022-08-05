@@ -9,6 +9,7 @@ import au.org.ala.web.GrailsPac4jContextProvider
 import au.org.ala.web.IAuthService
 import au.org.ala.web.NotBotMatcher
 import au.org.ala.web.OidcClientProperties
+import au.org.ala.web.OverrideSavedRequestHandler
 import au.org.ala.web.Pac4jAuthService
 import au.org.ala.web.Pac4jContextProvider
 import au.org.ala.web.Pac4jHttpServletRequestWrapperFilter
@@ -27,6 +28,9 @@ import org.pac4j.core.client.direct.AnonymousClient
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.engine.DefaultSecurityLogic
+import org.pac4j.core.engine.SecurityLogic
+import org.pac4j.core.engine.savedrequest.SavedRequestHandler
 import org.pac4j.core.http.url.DefaultUrlResolver
 import org.pac4j.core.logout.handler.LogoutHandler
 import org.pac4j.core.matching.matcher.PathMatcher
@@ -39,6 +43,7 @@ import org.pac4j.jee.filter.SecurityFilter
 import org.pac4j.oidc.client.OidcClient
 import org.pac4j.oidc.config.OidcConfiguration
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
@@ -173,13 +178,30 @@ class AuthPac4jPluginConfig {
     }
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
+    @ConditionalOnMissingBean
     @Bean
-    Config pac4jConfig(List<Client> clientBeans, SessionStore sessionStore, WebContextFactory webContextFactory, UserAgentFilterService userAgentFilterService) {
+    SavedRequestHandler savedRequestHandler() {
+        new OverrideSavedRequestHandler()
+    }
+
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
+    @ConditionalOnMissingBean
+    @Bean
+    SecurityLogic securityLogic(SavedRequestHandler savedRequestHandler) {
+        new DefaultSecurityLogic().tap {
+            it.savedRequestHandler = savedRequestHandler
+        }
+    }
+
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
+    @Bean
+    Config pac4jConfig(List<Client> clientBeans, SessionStore sessionStore, WebContextFactory webContextFactory, UserAgentFilterService userAgentFilterService, SecurityLogic securityLogic) {
         Clients clients = new Clients(linkGenerator.link(absolute: true, uri: CALLBACK_URI), clientBeans)
 
         Config config = new Config(clients)
         config.sessionStore = sessionStore
         config.webContextFactory = webContextFactory
+        config.securityLogic = securityLogic
         config.addAuthorizer(IS_AUTHENTICATED, isAuthenticated())
         config.addAuthorizer(ALLOW_ALL, or(isAuthenticated(), isAnonymous()))
         config.addMatcher(ALA_COOKIE_MATCHER, new CookieMatcher(coreAuthProperties.authCookieName ?: casClientProperties.authCookieName,".*"))

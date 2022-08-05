@@ -5,7 +5,6 @@ import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.engine.DefaultSecurityLogic
 import org.pac4j.core.engine.SecurityLogic
-import org.pac4j.core.engine.savedrequest.DefaultSavedRequestHandler
 import org.pac4j.core.http.adapter.HttpActionAdapter
 import org.pac4j.core.util.FindBest
 import org.pac4j.jee.context.JEEContextFactory
@@ -52,8 +51,8 @@ class Pac4jSSOStrategy implements SSOStrategy {
         final HttpActionAdapter bestAdapter = FindBest.httpActionAdapter(null, config, JEEHttpActionAdapter.INSTANCE)
         final SecurityLogic bestLogic = FindBest.securityLogic(securityLogic, config, DefaultSecurityLogic.INSTANCE)
 
-        if (bestLogic instanceof DefaultSecurityLogic) {
-            bestLogic.savedRequestHandler = new OverrideSavedRequestHandler(redirectUri: redirectUri)
+        if (bestLogic instanceof DefaultSecurityLogic && bestLogic.savedRequestHandler instanceof OverrideSavedRequestHandler) {
+            request.setAttribute(OverrideSavedRequestHandler.OVERRIDE_REQUESTED_URL_ATTRIBUTE, redirectUri)
         }
 
         final WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
@@ -67,12 +66,4 @@ class Pac4jSSOStrategy implements SSOStrategy {
         return result
     }
 
-    static class OverrideSavedRequestHandler extends DefaultSavedRequestHandler {
-
-        String redirectUri
-
-        protected String getRequestedUrl(final WebContext context, final SessionStore sessionStore) {
-            return redirectUri ?: context.getFullRequestURL()
-        }
-    }
 }
