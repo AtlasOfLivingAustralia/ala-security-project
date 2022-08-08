@@ -1,7 +1,7 @@
 # ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
 ## Usage
 ```
-compile "org.grails.plugins:ala-auth:5.0.0-SNAPSHOT"
+compile "org.grails.plugins:ala-auth:5.1.1"
 ```
 
 ## Description
@@ -210,6 +210,8 @@ is also used, then this step is performed automatically.
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 5.1.1**(5/08/2022):
+  - Fix login controller storing redirect URL
 - **Version 5.1.0**(25/07/2022):
   - Better Grails 5 experience
   - Update pac4j
