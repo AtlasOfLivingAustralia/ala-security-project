@@ -154,7 +154,7 @@ class ApiKeyInterceptor {
         boolean ipOk = checkClientIp(clientIp, whiteList)
         def result = true
         if (!ipOk) {
-            String headerName = grailsApplication.config.navigate('security', 'apikey', 'header', 'override') ?: API_KEY_HEADER_NAME
+            String headerName = grailsApplication.config.getProperty('security.apikey.header.override') ?: API_KEY_HEADER_NAME
             boolean keyOk = apiKeyService.checkApiKey(request.getHeader(headerName)).valid
             log.debug "IP ${clientIp} ${ipOk ? 'is' : 'is not'} ok. Key ${keyOk ? 'is' : 'is not'} ok."
 
@@ -183,7 +183,7 @@ class ApiKeyInterceptor {
     List<String> buildWhiteList() {
         List<String> whiteList = []
         whiteList.addAll(LOOPBACK_ADDRESSES) // allow calls from localhost to make testing easier
-        String config = grailsApplication.config.navigate('security', 'apikey', 'ip', 'whitelist')
+        String config = grailsApplication.config.getProperty('security.apikey.ip.whitelist')
         if (config) {
             whiteList.addAll(config.split(',').collect({ String s -> s.trim() }))
         }

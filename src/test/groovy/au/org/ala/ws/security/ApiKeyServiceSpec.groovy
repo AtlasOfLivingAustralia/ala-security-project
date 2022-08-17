@@ -20,9 +20,7 @@ class ApiKeyServiceSpec extends Specification implements ServiceUnitTest<ApiKeyS
 
     void "Should return valid = false when the API Key service returns a HTTP code other than 200"() {
         setup:
-        ApiKeyService service = new ApiKeyService()
-
-        service.grailsApplication = [config: [security: [apikey: [check: [serviceUrl: "bla"]]]]]
+        service.grailsApplication.config.put('security.apikey.check.serviceUrl', 'bla')
 
         when:
         service.wsService = new MockWebService(status)
@@ -41,9 +39,7 @@ class ApiKeyServiceSpec extends Specification implements ServiceUnitTest<ApiKeyS
 
     void "Should return valid = true if the API Key service returns a HTTP 200 and a response JSON of '{valid: true}'"() {
         setup:
-        ApiKeyService service = new ApiKeyService()
-
-        service.grailsApplication = [config: [security: [apikey: [check: [serviceUrl: "bla"]]]]]
+        service.grailsApplication.config.put('security.apikey.check.serviceUrl', 'bla')
 
         when:
         service.wsService = new MockWebService(HttpStatus.OK.value(), "{valid: true}")
@@ -55,9 +51,7 @@ class ApiKeyServiceSpec extends Specification implements ServiceUnitTest<ApiKeyS
 
     void "Should return valid = false if the API Key service returns a HTTP 200 and a response JSON of '{valid: false}'"() {
         setup:
-        ApiKeyService service = new ApiKeyService()
-
-        service.grailsApplication = [config: [security: [apikey: [check: [serviceUrl: "bla"]]]]]
+        service.grailsApplication.config.put('security.apikey.check.serviceUrl', 'bla')
 
         when:
         service.wsService = new MockWebService(HttpStatus.OK.value(), "{valid: false}")
