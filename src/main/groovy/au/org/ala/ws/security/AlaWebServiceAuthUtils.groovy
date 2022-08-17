@@ -2,15 +2,17 @@ package au.org.ala.ws.security
 
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
+import org.pac4j.core.authorization.generator.AuthorizationGenerator
+import org.pac4j.core.client.DirectClient
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.credentials.Credentials
+import org.pac4j.core.credentials.TokenCredentials
+import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.FindBest
-import org.pac4j.http.client.direct.DirectBearerAuthClient
 import org.pac4j.jee.context.JEEContextFactory
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -45,67 +47,98 @@ class AlaWebServiceAuthUtils {
     JwtProperties jwtProperties
 
     @Autowired(required = false)
-    DirectBearerAuthClient bearerClient // Could be any DirectClient?
+    DirectClient directClient // Could be any DirectClient?
 
-    @Autowired(required = false)
-    DirectBearerAuthClient bearerOidcClient // Could be any DirectClient?
+    @Autowired
+    JwtAuthenticator jwtAuthenticator
+
+    @Autowired
+    AuthorizationGenerator attributeAuthorizationGenerator
 
     @Autowired(required = false)
     Config config
 
     AlaWebServiceAuthUtils() {}
 
+    Optional<AlaUser> getAuthenticatedUser(HttpServletRequest request, HttpServletResponse response) {
+
+        Optional<UserProfile> userProfile = oidcInterceptor(request, response)
+
+        if (!userProfile.isPresent() && jwtProperties.fallbackToLegacyBehaviour) {
+
+            userProfile = legacyApiKeyInterceptor(request, response)
+        }
+
+
+    }
+
     /**
      * Validate a JWT Bearer token.
      *
      * @return UserProfile if the request is authorised
      */
-    Optional<UserProfile> jwtApiKeyInterceptor(HttpServletRequest request, HttpServletResponse response) {
+    Optional<UserProfile> oidcInterceptor(HttpServletRequest request, HttpServletResponse response) {
 
         WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
 
         ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
         profileManager.setConfig(config)
 
-        Optional<Credentials> accessCredentials = bearerClient.getCredentials(context, config.sessionStore)
-        if (accessCredentials.present) {
+        Optional<Credentials> optCredentials = directClient.getCredentials(context, config.sessionStore)
+        if (optCredentials.present) {
 
-            Optional<UserProfile> accessProfile = bearerClient.getUserProfile(accessCredentials.get(), context, config.sessionStore)
-            if (accessProfile.present) {
+            TokenCredentials credentials = optCredentials.get()
 
-                UserProfile userProfile = accessProfile.get()
+            // we will need to validate the access_token if we are checking for required scopes (scope claims of the access_token)
+            if (jwtProperties.requiredScopes) {
 
-                if (jwtProperties.requiredScopes.every {userProfile.permissions.contains(it) }) {
+                TokenCredentials accessCredentials = new TokenCredentials(credentials.token)
+                jwtAuthenticator.validate(accessCredentials, context, config.sessionStore)
 
-                    if (!jwtProperties.userProfileFromAccessToken) {
+                Optional<UserProfile> optAccessProfile = Optional.of(accessCredentials.userProfile)
 
-                        Optional<Credentials> idCredentials = bearerOidcClient.getCredentials(context, config.sessionStore)
-                        if (idCredentials.present) {
+                if (accessCredentials.userProfile && attributeAuthorizationGenerator) {
 
-                            Optional<UserProfile> idProfile = bearerOidcClient.getUserProfile(idCredentials.get(), context, config.sessionStore)
-                            if (idProfile.present) {
+                    // retrieve authorisation properties from the attributes (claims)
+                    // this will populate the UserProfile::permissions using the JwtProperties::permissionAttributes from the claims
+                    optAccessProfile = attributeAuthorizationGenerator.generate(context, config.sessionStore, accessCredentials.userProfile)
+                }
 
-                                userProfile = idProfile.get()
+                if (optAccessProfile.present) {
 
-                                profileManager.save(
-                                        bearerOidcClient.getSaveProfileInSession(context, userProfile),
-                                        userProfile,
-                                        bearerOidcClient.isMultiProfile(context, userProfile)
-                                )
-                            }
-                        }
+                    Set<String> scopes = optAccessProfile.get().permissions
+
+                    // checked that the profile permissions contains all required scopes
+                    if (!jwtProperties.requiredScopes.every {requiredScope -> scopes.any { scope -> scope.split(/\s+/).contains(requiredScope) } }) {
+
+                        log.info "access_token scopes '${scopes}' is missing required scopes ${jwtProperties.requiredScopes}"
+                        throw new CredentialsException("access_token scopes '${scopes}' is missing required scopes ${jwtProperties.requiredScopes}")
                     }
-
-                    return Optional.of(userProfile)
 
                 } else {
 
-                    log.info "access_token scopes '${userProfile.permissions}' is missing required scopes ${jwtProperties.requiredScopes}"
+                    log.info "Bearer access token present but no user info found: ${credentials}"
+                    throw new CredentialsException("Bearer access token present but no user info found: ${credentials}")
                 }
+            }
+
+            Optional<UserProfile> optUserProfile = directClient.getUserProfile(credentials, context, config.sessionStore)
+            if (optUserProfile.isPresent()) {
+
+                UserProfile userProfile = optUserProfile.get()
+
+                profileManager.save(
+                        directClient.getSaveProfileInSession(context, userProfile),
+                        userProfile,
+                        directClient.isMultiProfile(context, userProfile)
+                )
+
+                return Optional.of(userProfile)
 
             } else {
 
-                log.info "Bearer access token present but no user info found: ${accessCredentials}"
+                log.info "Bearer access token present but no user info found"
+                throw new CredentialsException("Bearer access token present but no user info found: ${credentials}")
             }
         }
 

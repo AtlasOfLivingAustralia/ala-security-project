@@ -9,13 +9,13 @@ import java.util.List;
 public class JwtProperties {
     private boolean enabled = true;
     private boolean fallbackToLegacyBehaviour = true; // Whether to check API keys if no JWT token is present on the request.
-    private boolean userProfileFromAccessToken = false;
     private String clientId; // TODO Not used
     private String secret; // TODO Not used
     private String discoveryUri;
     private String jwtType = "jwt";
     private int connectTimeoutMs = HttpConstants.DEFAULT_CONNECT_TIMEOUT;;
     private int readTimeoutMs = HttpConstants.DEFAULT_READ_TIMEOUT;
+    private boolean requireUserInfo = true;
     private List<String> roleAttributes = List.of("role");
     private List<String> permissionAttributes = List.of("scope","scp", "scopes");
     private List<String> requiredClaims = List.of("sub", "iat", "exp", "client_id", "jti", "iss");
@@ -78,20 +78,20 @@ public class JwtProperties {
         this.fallbackToLegacyBehaviour = fallbackToLegacyBehaviour;
     }
 
-    public boolean isUserProfileFromAccessToken() {
-        return userProfileFromAccessToken;
-    }
-
-    public void setUserProfileFromAccessToken(boolean userProfileFromAccessToken) {
-        this.userProfileFromAccessToken = userProfileFromAccessToken;
-    }
-
     public String getJwtType() {
         return jwtType;
     }
 
     public void setJwtType(String jwtType) {
         this.jwtType = jwtType;
+    }
+
+    public boolean isRequireUserInfo() {
+        return requireUserInfo;
+    }
+
+    public void setRequireUserInfo(boolean requireUserInfo) {
+        this.requireUserInfo = requireUserInfo;
     }
 
     public List<String> getRoleAttributes() {

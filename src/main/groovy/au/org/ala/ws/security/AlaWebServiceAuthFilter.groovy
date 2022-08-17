@@ -43,7 +43,7 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
         Optional<UserProfile> userProfile = Optional.empty()
 
         if (jwtProperties.enabled) {
-            userProfile = alaWebServiceAuthUtils.jwtApiKeyInterceptor(request, response)
+            userProfile = alaWebServiceAuthUtils.oidcInterceptor(request, response)
         }
 
         if (!userProfile.isPresent() && jwtProperties.fallbackToLegacyBehaviour) {

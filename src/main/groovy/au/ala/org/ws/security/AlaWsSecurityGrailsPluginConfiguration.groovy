@@ -1,8 +1,12 @@
 package au.ala.org.ws.security
 
+import au.org.ala.ws.security.AlaAuthClient
+import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator
+import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator
 import au.org.ala.ws.security.JwtAuthenticator
 import au.org.ala.ws.security.JwtProperties
 import au.org.ala.ws.security.Pac4jProfileManagerHttpRequestWrapperFilter
+import au.org.ala.ws.security.authenticator.AlaAuthenticator
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
@@ -10,17 +14,19 @@ import com.nimbusds.jose.util.DefaultResourceRetriever
 import com.nimbusds.jose.util.ResourceRetriever
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import grails.util.Metadata
+
+import org.pac4j.core.authorization.generator.AuthorizationGenerator
 import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
 import org.pac4j.core.client.Client
+import org.pac4j.core.client.DirectClient
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
-import org.pac4j.core.engine.DefaultSecurityLogic
 import org.pac4j.http.client.direct.DirectBearerAuthClient
 import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.jee.context.session.JEESessionStore
-import org.pac4j.jee.filter.SecurityFilter
 import org.pac4j.oidc.config.OidcConfiguration
+
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -28,10 +34,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
-
-import javax.servlet.DispatcherType
 
 @Configuration
 @EnableConfigurationProperties(JwtProperties)
@@ -64,14 +69,29 @@ class AlaWsSecurityGrailsPluginConfiguration {
         config.webContextFactory = webContextFactory
         config
     }
-
+/*
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
     ResourceRetriever resourceRetriever() {
         new DefaultResourceRetriever(jwtProperties.connectTimeoutMs, jwtProperties.readTimeoutMs);
     }
+*/
 
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
+    OidcConfiguration oidcConfiguration() {
+
+        OidcConfiguration oidcConfig = new OidcConfiguration()
+        oidcConfig.discoveryURI = jwtProperties.discoveryUri
+        oidcConfig.clientId = jwtProperties.clientId
+        oidcConfig.connectTimeout = jwtProperties.connectTimeoutMs
+        oidcConfig.readTimeout = jwtProperties.readTimeoutMs
+
+        return oidcConfig
+    }
+/*
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
@@ -89,52 +109,79 @@ class AlaWsSecurityGrailsPluginConfiguration {
     @Bean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
     JwtAuthenticator jwtAuthenticator(OIDCProviderMetadata oidcProviderMetadata, JWKSource<SecurityContext> jwkSource) {
-        def ja = new JwtAuthenticator(oidcProviderMetadata.issuer.toString(), jwtProperties.requiredClaims, oidcProviderMetadata.IDTokenJWSAlgs.toSet(), jwkSource)
-        ja.setJwtType(jwtProperties.jwtType)
+
+        JwtAuthenticator ja = new JwtAuthenticator(oidcProviderMetadata.issuer.toString(), jwtProperties.requiredClaims, oidcProviderMetadata.IDTokenJWSAlgs.toSet(), jwkSource)
+        ja.jwtType = jwtProperties.jwtType
+
         return ja
     }
 
     @Bean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
-    OidcConfiguration oidcConfiguration() {
+    AlaOidcAuthenticator alaOidcAuthenticator(OidcConfiguration oidcConfiguration) {
 
-        OidcConfiguration oidcConfig = new OidcConfiguration()
-        oidcConfig.discoveryURI = jwtProperties.discoveryUri
-        oidcConfig.clientId = jwtProperties.clientId
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
 
-        return oidcConfig
+//        alaOidcAuthenticator.jwtType = jwtProperties.jwtType
+        alaOidcAuthenticator.requiredClaims = jwtProperties.requiredClaims
+        alaOidcAuthenticator.requiredScopes = jwtProperties.requiredScopes
+
+        return alaOidcAuthenticator
     }
+
+    @Bean
+    @ConditionalOnProperty('security.apikey')
+    AlaApiKeyAuthenticator alaApiKeyAuthenticator() {
+
+        new AlaApiKeyAuthenticator()
+    }
+
 
     @Bean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
     UserInfoOidcAuthenticator userInfoOidcAuthenticator(OidcConfiguration oidcConfiguration) {
-        def oidcAuth = new UserInfoOidcAuthenticator(oidcConfiguration)
+        UserInfoOidcAuthenticator oidcAuth = new UserInfoOidcAuthenticator(oidcConfiguration)
         return oidcAuth
     }
 
+//    @Bean
+//    @ConditionalOnMissingBean
+//    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
+//    Authenticator authenticator(UserInfoOidcAuthenticator userInfoOidcAuthenticator, JwtAuthenticator jwtAuthenticator) {
+//        jwtProperties.requireUserInfo ? userInfoOidcAuthenticator : jwtAuthenticator
+//    }
+
     @Bean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
-    DirectBearerAuthClient bearerClient(JwtAuthenticator jwtAuthenticator) {
-        def client = new DirectBearerAuthClient(jwtAuthenticator)
-        client.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes,jwtProperties.permissionAttributes))
+    AuthorizationGenerator attributeAuthorizationGenerator() {
+        return new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes, jwtProperties.permissionAttributes)
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
+    DirectClient directClient(UserInfoOidcAuthenticator userInfoOidcAuthenticator, JwtAuthenticator jwtAuthenticator, AuthorizationGenerator attributeAuthorizationGenerator) {
+
+        def client = new DirectBearerAuthClient(jwtProperties.requireUserInfo ? userInfoOidcAuthenticator : jwtAuthenticator)
+
+        client.addAuthorizationGenerator(attributeAuthorizationGenerator)
 //        client.addAuthorizationGenerator(new DefaultRolesPermissionsAuthorizationGenerator(['ROLE_USER'] , [])) // client credentials probably doesn't get ROLE_USER?
         client.name = JWT_CLIENT
 
         client
     }
-
+*/
     @Bean
-    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
-    DirectBearerAuthClient bearerOidcClient(UserInfoOidcAuthenticator userInfoOidcAuthenticator) {
+    DirectClient directClient(AlaAuthenticator alaAuthenticator) {
 
-        def client = new DirectBearerAuthClient(userInfoOidcAuthenticator)
-        client.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes, jwtProperties.permissionAttributes))
-//        client.addAuthorizationGenerator(new DefaultRolesPermissionsAuthorizationGenerator(['ROLE_USER'] , [])) // client credentials probably doesn't get ROLE_USER?
-        client.name = JWT_CLIENT
+        DirectClient directClient = new AlaAuthClient(alaAuthenticator)
 
-        client
+        AuthorizationGenerator authorizationGenerator = new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes, jwtProperties.permissionAttributes)
+        directClient.addAuthorizationGenerator(authorizationGenerator)
+        directClient.name = 'AlaAuthClient'
+
+        return directClient
     }
-
+/*
     @ConditionalOnProperty(prefix= 'security.jwt', name='enabled')
     @Bean
     FilterRegistrationBean pac4jJwtFilter(Config pac4jConfig) {
@@ -154,7 +201,7 @@ class AlaWsSecurityGrailsPluginConfiguration {
         frb.asyncSupported = true
         return frb
     }
-
+*/
     @Bean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
     FilterRegistrationBean pac4jHttpRequestWrapper(Config config) {
