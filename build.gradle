@@ -5,7 +5,7 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
 //        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.2"
     }
 }
@@ -15,10 +15,11 @@ group "org.grails.plugins"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
+apply plugin:'java-library'
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-gsp"
 //apply plugin:"asset-pipeline"
-apply plugin:"maven"
+//apply plugin:"maven"
 apply plugin:"maven-publish"
 
 sourceCompatibility = 1.11
@@ -44,35 +45,35 @@ configurations {
 
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    compile "org.springframework.boot:spring-boot-starter-logging"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile "org.grails:grails-core"
-    compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
-    compile "org.grails:grails-web-boot"
-    compile "org.grails:grails-logging"
-    compile "org.grails:grails-plugin-rest"
-    compile "org.grails:grails-plugin-databinding"
-    compile "org.grails:grails-plugin-i18n"
-    compile "org.grails:grails-plugin-services"
-    compile "org.grails:grails-plugin-url-mappings"
-    compile "org.grails:grails-plugin-interceptors"
-    compile "org.grails.plugins:cache"
-    compile "org.grails.plugins:async"
-    compile "org.grails.plugins:scaffolding"
-    compile "org.grails.plugins:gsp"
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "org.grails:grails-core"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat"
+    implementation "org.grails:grails-web-boot"
+    implementation "org.grails:grails-logging"
+    implementation "org.grails:grails-plugin-rest"
+    implementation "org.grails:grails-plugin-databinding"
+    implementation "org.grails:grails-plugin-i18n"
+    implementation "org.grails:grails-plugin-services"
+    implementation "org.grails:grails-plugin-url-mappings"
+    implementation "org.grails:grails-plugin-interceptors"
+    implementation "org.grails.plugins:cache"
+    implementation "org.grails.plugins:async"
+    implementation "org.grails.plugins:scaffolding"
+    implementation "org.grails.plugins:gsp"
     compileOnly "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     profile "org.grails.profiles:web-plugin"
 //    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.0.10"
-    testCompile "io.micronaut:micronaut-inject-groovy"
-    testCompile "org.grails:grails-gorm-testing-support"
-    testCompile "org.mockito:mockito-core:4.6.1"
-    testCompile "org.grails:grails-web-testing-support"
-    testCompile 'com.github.tomakehurst:wiremock-jre8:2.33.2'
-//    testCompile 'cglib:cglib-nodep:3.3.0'
-//    testCompile 'org.objenesis:objenesis:3.3'
-//    testCompile 'org.modelmapper:modelmapper:3.1.0'
+    testImplementation "io.micronaut:micronaut-inject-groovy"
+    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.mockito:mockito-core:4.6.1"
+    testImplementation "org.grails:grails-web-testing-support"
+    testImplementation 'com.github.tomakehurst:wiremock-jre8:2.33.2'
+//    testImplementation 'cglib:cglib-nodep:3.3.0'
+//    testImplementation 'org.objenesis:objenesis:3.3'
+//    testImplementation 'org.modelmapper:modelmapper:3.1.0'
 
     implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
 //    testImplementation 'io.github.joke:spock-mockable:1.5.5'
@@ -81,11 +82,11 @@ dependencies {
     compileOnly "org.springframework.boot:spring-boot-configuration-processor"
     compileOnly 'org.springframework.boot:spring-boot-starter-security'
 
-    compile 'org.pac4j:pac4j-oidc:5.4.3'
-    compile 'org.pac4j:pac4j-jwt:5.4.3'
-    compile 'org.pac4j:pac4j-http:5.4.3'
-    compile 'org.pac4j:pac4j-javaee:5.4.3'
-    compile 'org.pac4j:javaee-pac4j:7.0.0'
+    api 'org.pac4j:pac4j-oidc:5.4.3'
+    api 'org.pac4j:pac4j-jwt:5.4.3'
+    api 'org.pac4j:pac4j-http:5.4.3'
+    api 'org.pac4j:pac4j-javaee:5.4.3'
+    api 'org.pac4j:javaee-pac4j:7.0.0'
 }
 
 compileGroovy {
@@ -98,8 +99,14 @@ tasks.withType(GroovyCompile) {
     }
 }
 
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
 compileJava.dependsOn(processResources)
 
+bootRun.enabled = false
+/*
 bootRun {
     ignoreExitValue true
     jvmArgs(
@@ -111,6 +118,7 @@ bootRun {
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
 }
+ */
 // enable if you wish to package this plugin as a standalone application
 bootJar.enabled = false
 

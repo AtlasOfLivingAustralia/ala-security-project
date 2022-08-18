@@ -1,26 +1,41 @@
 package au.org.ala.ws.security
 
+import au.org.ala.ws.security.authenticator.AlaAuthenticator
+import au.org.ala.ws.security.credentials.AlaCredentialsExtractor
 import org.pac4j.core.client.DirectClient
 import org.pac4j.core.context.HttpConstants
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.Credentials
-import org.pac4j.core.credentials.extractor.BearerAuthExtractor
 import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.util.Pac4jConstants
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 
 import static org.pac4j.core.util.CommonHelper.assertNotBlank
 
+@Component
 class AlaAuthClient extends DirectClient {
 
     private String realmName = Pac4jConstants.DEFAULT_REALM_NAME
+
+    @Autowired
+    void setAuthenticator(final AlaAuthenticator authenticator) {
+        super.setAuthenticator(authenticator)
+    }
+
+    @Autowired
+    void setCredentialsExtractor(final AlaCredentialsExtractor credentialsExtractor) {
+        super.setCredentialsExtractor(credentialsExtractor);
+    }
+
 
     @Override
     protected void internalInit(boolean forceReinit) {
 
         assertNotBlank("realmName", this.realmName)
 
-        defaultCredentialsExtractor(new BearerAuthExtractor())
+        defaultCredentialsExtractor(new AlaCredentialsExtractor())
     }
 
     @Override

@@ -29,6 +29,8 @@ import org.pac4j.core.exception.CredentialsException
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 
 import java.text.ParseException
 
@@ -39,11 +41,12 @@ import java.text.ParseException
  * The credentials.userProfile is set to an instance of {@link AlaOidcUserProfile} a wrapped {@link org.pac4j.oidc.profile.OidcProfile} from the OIDC UserInfo endpoint.
  */
 @Slf4j
+@Component
 class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
-    final String issuer
-    final List<JWSAlgorithm> expectedJWSAlgs
-    final JWKSource<SecurityContext> keySource
+    private String issuer
+    private List<JWSAlgorithm> expectedJWSAlgs
+    private JWKSource<SecurityContext> keySource
 
     Set<String> requiredClaims
     Set<String> requiredScopes
@@ -51,10 +54,18 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
     AlaOidcAuthenticator(final OidcConfiguration configuration) {
 
         super(configuration)
+    }
 
-        this.issuer = configuration.findProviderMetadata().issuer
-        this.expectedJWSAlgs = configuration.findProviderMetadata().userInfoJWSAlgs
-        this.keySource = new RemoteJWKSet(configuration.findProviderMetadata().JWKSetURI.toURL(), configuration.findResourceRetriever())
+    @Override
+    protected void internalInit(boolean forceReinit) {
+
+        super.internalInit(forceReinit)
+
+        if (forceReinit || this.issuer == null) {
+            this.issuer = configuration.findProviderMetadata().issuer
+            this.expectedJWSAlgs = configuration.findProviderMetadata().userInfoJWSAlgs
+            this.keySource = new RemoteJWKSet(configuration.findProviderMetadata().JWKSetURI.toURL(), configuration.findResourceRetriever())
+        }
     }
 
     @Override
@@ -102,7 +113,7 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null)
 
-            Scope scope = Scope.parse(claimsSet.getStringClaim('scope'))
+            Scope scope = Scope.parse(claimsSet.getStringListClaim('scope'))
             credentials.accessToken = new BearerAccessToken(accessToken, 0L, scope)
 
         } catch (BadJOSEException e) {

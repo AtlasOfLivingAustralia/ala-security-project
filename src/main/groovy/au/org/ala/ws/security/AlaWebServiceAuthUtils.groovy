@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletResponse
  * 2) Legacy API keys using ALA's apikey app
  * 3) Whitelist IP
  */
-@Component
+//@Component
 @Slf4j
 class AlaWebServiceAuthUtils {
 

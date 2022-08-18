@@ -7,6 +7,7 @@ import au.org.ala.ws.security.JwtAuthenticator
 import au.org.ala.ws.security.JwtProperties
 import au.org.ala.ws.security.Pac4jProfileManagerHttpRequestWrapperFilter
 import au.org.ala.ws.security.authenticator.AlaAuthenticator
+import au.org.ala.ws.security.credentials.AlaCredentialsExtractor
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
@@ -34,12 +35,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 
 @Configuration
 @EnableConfigurationProperties(JwtProperties)
+@ComponentScan('au.org.ala.ws.security')
 class AlaWsSecurityGrailsPluginConfiguration {
 
     static final String JWT_CLIENT = 'JwtClient'
@@ -171,15 +174,19 @@ class AlaWsSecurityGrailsPluginConfiguration {
     }
 */
     @Bean
-    DirectClient directClient(AlaAuthenticator alaAuthenticator) {
+    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
+    AlaAuthClient alaAuthClient(AlaCredentialsExtractor alaCredentialsExtractor, AlaAuthenticator alaAuthenticator) {
 
-        DirectClient directClient = new AlaAuthClient(alaAuthenticator)
+        AlaAuthClient alaAuthClient = new AlaAuthClient()
+
+        alaAuthClient.credentialsExtractor = alaCredentialsExtractor
+        alaAuthClient.authenticator = alaAuthenticator
 
         AuthorizationGenerator authorizationGenerator = new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes, jwtProperties.permissionAttributes)
-        directClient.addAuthorizationGenerator(authorizationGenerator)
-        directClient.name = 'AlaAuthClient'
+        alaAuthClient.addAuthorizationGenerator(authorizationGenerator)
+        alaAuthClient.name = 'AlaAuthClient'
 
-        return directClient
+        return alaAuthClient
     }
 /*
     @ConditionalOnProperty(prefix= 'security.jwt', name='enabled')

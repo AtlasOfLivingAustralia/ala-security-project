@@ -9,7 +9,10 @@ import org.pac4j.core.credentials.extractor.BearerAuthExtractor
 import org.pac4j.core.credentials.extractor.CredentialsExtractor
 import org.pac4j.core.credentials.extractor.HeaderExtractor
 import org.pac4j.oidc.credentials.OidcCredentials
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
 
+@Component
 class AlaCredentialsExtractor implements CredentialsExtractor {
 
     BearerAuthExtractor bearerAuthExtractor
@@ -21,6 +24,12 @@ class AlaCredentialsExtractor implements CredentialsExtractor {
 
     AlaCredentialsExtractor(String apiKeyHeaderName) {
         bearerAuthExtractor = new BearerAuthExtractor()
+        apiKeyHeaderExtractor = new HeaderExtractor(apiKeyHeaderName, '')
+    }
+
+    @Value('${security.apikey.header.override:apiKey}')
+    void setApiKeyHeaderName(String apiKeyHeaderName) {
+
         apiKeyHeaderExtractor = new HeaderExtractor(apiKeyHeaderName, '')
     }
 

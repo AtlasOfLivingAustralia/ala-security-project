@@ -24,7 +24,6 @@ import javax.servlet.http.HttpServletResponse
  * 2) Legacy API keys using ALA's apikey app
  * 3) Whitelist IP
  */
-@Component
 class AlaWebServiceAuthFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -33,7 +32,7 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     @Autowired(required = false)
     Config config
 
-    @Inject
+//    @Inject
     AlaWebServiceAuthUtils alaWebServiceAuthUtils
 
     @Override
