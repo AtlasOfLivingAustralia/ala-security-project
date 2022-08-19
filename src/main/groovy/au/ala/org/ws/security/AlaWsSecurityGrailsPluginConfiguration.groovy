@@ -1,34 +1,21 @@
 package au.ala.org.ws.security
 
 import au.org.ala.ws.security.AlaAuthClient
-import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator
-import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator
-import au.org.ala.ws.security.JwtAuthenticator
 import au.org.ala.ws.security.JwtProperties
 import au.org.ala.ws.security.Pac4jProfileManagerHttpRequestWrapperFilter
 import au.org.ala.ws.security.authenticator.AlaAuthenticator
 import au.org.ala.ws.security.credentials.AlaCredentialsExtractor
-import com.nimbusds.jose.jwk.source.JWKSource
-import com.nimbusds.jose.jwk.source.RemoteJWKSet
-import com.nimbusds.jose.proc.SecurityContext
-import com.nimbusds.jose.util.DefaultResourceRetriever
-import com.nimbusds.jose.util.ResourceRetriever
-import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import grails.util.Metadata
 
 import org.pac4j.core.authorization.generator.AuthorizationGenerator
 import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
 import org.pac4j.core.client.Client
-import org.pac4j.core.client.DirectClient
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
-import org.pac4j.http.client.direct.DirectBearerAuthClient
 import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.oidc.config.OidcConfiguration
-
-import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -36,7 +23,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
-import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 

@@ -3,16 +3,20 @@ package au.org.ala.ws.security
 import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.grails.AnnotationMatcher
+import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator
 import au.org.ala.ws.security.service.ApiKeyService
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.apache.catalina.User
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContext
+import org.pac4j.core.credentials.Credentials
 import org.pac4j.core.profile.ProfileManager
+import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.FindBest
-import org.pac4j.http.client.direct.DirectBearerAuthClient
 import org.pac4j.jee.context.JEEContextFactory
+import org.pac4j.oidc.credentials.OidcCredentials
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.http.HttpStatus
@@ -34,10 +38,13 @@ class ApiKeyInterceptor {
 
     @Autowired
     JwtProperties jwtProperties
+
     @Autowired(required = false)
-    DirectBearerAuthClient bearerAuthClient // Could be any DirectClient?
+    AlaAuthClient alaAuthClient // Could be any DirectClient?
+
     @Autowired(required = false)
     Config config
+
     GrailsApplication grailsApplication
 
     ApiKeyInterceptor() {
@@ -55,20 +62,77 @@ class ApiKeyInterceptor {
      * @return Whether the action should continue and execute
      */
     boolean before() {
+
         def matchResult = AnnotationMatcher.getAnnotation(grailsApplication, controllerNamespace, controllerName, actionName, RequireApiKey, SkipApiKeyCheck)
         def effectiveAnnotation = matchResult.effectiveAnnotation()
         def skipAnnotation = matchResult.overrideAnnotation
 
-        def result = true
-        if (effectiveAnnotation && !skipAnnotation) {
-            if (jwtProperties.enabled) {
-                def fallbackToLegacy = jwtProperties.fallbackToLegacyBehaviour
-                result = jwtApiKeyInterceptor(effectiveAnnotation, fallbackToLegacy)
+        boolean authorised = true
+        if (effectiveAnnotation && !skipAnnotation && alaAuthClient) {
+
+            WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
+
+            Optional<Credentials> optCredentials = alaAuthClient.getCredentials(context, config.sessionStore)
+            if (optCredentials.isPresent()) {
+
+                Credentials credentials = optCredentials.get()
+
+                String[] requiredScopes = effectiveAnnotation.scopes()
+                if (requiredScopes) {
+
+                    if (credentials instanceof OidcCredentials) {
+
+                        authorised = requiredScopes.every { String requiredScope ->
+                            ((OidcCredentials)credentials).accessToken.scope.contains(requiredScope)
+                        }
+
+                        if (!authorised) {
+//                            log.info "access_token scopes '${credentials.accessToken.scope}' is missing required scopes ${requiredScopes}"
+                        }
+                    }
+                }
+
+                if (!authorised) {
+
+                    Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(credentials, context, config.sessionStore)
+                    if (optProfile.isPresent()) {
+
+                        UserProfile userProfile = optProfile.get()
+
+                        ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
+                        profileManager.setConfig(config)
+
+                        profileManager.save(
+                                alaAuthClient.getSaveProfileInSession(context, userProfile),
+                                userProfile,
+                                alaAuthClient.isMultiProfile(context, userProfile)
+                        )
+
+                        String[] requiredRoles = effectiveAnnotation.roles()
+
+                        if (requiredRoles) {
+                            authorised = requiredRoles.every() { String requiredRole -> userProfile.roles.contains(requiredRole) }
+
+                            if (!authorised) {
+                                log.info "user profile roles '${userProfile.roles}' is missing required scopes ${requiredRoles}"
+                            }
+                        }
+                    }
+                }
             } else {
-                result = legacyApiKeyInterceptor()
+
+                log.info "no auth credentials found"
+                authorised = false
             }
         }
-        return result
+
+        if (!authorised) {
+
+            response.status = HttpStatus.UNAUTHORIZED.value()
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase())
+        }
+
+        return authorised
     }
 
     /**
@@ -92,19 +156,19 @@ class ApiKeyInterceptor {
     boolean jwtApiKeyInterceptor(RequireApiKey requireApiKey, boolean fallbackToLegacy) {
         def result = false
 
-        def context = context()
+        final WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
         ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
         profileManager.setConfig(config)
 
-        def credentials = bearerAuthClient.getCredentials(context, config.sessionStore)
+        def credentials = alaAuthClient.getCredentials(context, config.sessionStore)
         if (credentials.isPresent()) {
-            def profile = bearerAuthClient.getUserProfile(credentials.get(), context, config.sessionStore)
+            def profile = alaAuthClient.getUserProfile(credentials.get(), context, config.sessionStore)
             if (profile.isPresent()) {
                 def userProfile = profile.get()
                 profileManager.save(
-                        bearerAuthClient.getSaveProfileInSession(context, userProfile),
+                        alaAuthClient.getSaveProfileInSession(context, userProfile),
                         userProfile,
-                        bearerAuthClient.isMultiProfile(context, userProfile)
+                        alaAuthClient.isMultiProfile(context, userProfile)
                 )
 
                 result = true
