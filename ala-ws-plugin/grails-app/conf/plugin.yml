@@ -1,3 +1,5 @@
 webservice:
   jwt: false
+  jwt-include-legacy-headers: true
+  cache-tokens: true
   scopes: openid

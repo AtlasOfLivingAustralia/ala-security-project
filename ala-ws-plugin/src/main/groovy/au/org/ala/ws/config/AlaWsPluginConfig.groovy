@@ -24,6 +24,9 @@ class AlaWsPluginConfig {
     @Value('${webservice.jwt-scopes:openid}')
     String jwtScopes
 
+    @Value('${webservices.cache-tokens:true}')
+    boolean cacheTokens
+
     @Bean
     TokenClient tokenClient(
             @Autowired(required = false) OidcConfiguration oidcConfiguration
@@ -40,7 +43,7 @@ class AlaWsPluginConfig {
             @Autowired TokenClient tokenClient
     ) {
         new TokenService(config, oidcConfiguration, pac4jContextProvider,
-                sessionStore, tokenClient, oidcScopes, jwtScopes)
+                sessionStore, tokenClient, oidcScopes, jwtScopes, cacheTokens)
     }
 
     /**
