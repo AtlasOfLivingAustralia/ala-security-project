@@ -51,9 +51,9 @@ class AlaWsPluginConfig {
      * @return
      */
     @ConditionalOnProperty(prefix='webservice', name ='jwt')
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "jwtInterceptor")
     @Bean
-    Interceptor jwtInterceptor(@Autowired TokenService tokenService) {
+    TokenInterceptor jwtInterceptor(@Autowired TokenService tokenService) {
         new TokenInterceptor(tokenService)
     }
 }
