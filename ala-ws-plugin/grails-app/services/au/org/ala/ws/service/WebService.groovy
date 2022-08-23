@@ -443,6 +443,9 @@ class WebService {
     private void includeAuthTokensInternal(Boolean includeUser, Boolean includeApiKey, UserDetails user, Closure<Void> headerSetter) {
         if (grailsApplication.config.getProperty('webservice.jwt', Boolean, false)) {
             includeAuthTokensJwt(includeUser, includeApiKey, user, headerSetter)
+            if (grailsApplication.config.getProperty('webservice.jwt-include-legacy-headers', Boolean, true)) {
+                includeAuthTokensLegacy(includeUser, includeApiKey, user, headerSetter)
+            }
         } else {
             includeAuthTokensLegacy(includeUser, includeApiKey, user, headerSetter)
         }
@@ -450,7 +453,7 @@ class WebService {
 
     void includeAuthTokensJwt(includeUser, includeApiKey, user, headerSetter) {
         if ((user && includeUser) || (includeApiKey)) {
-            def token = tokenService.getAuthToken(user && includeUser) // TODO use includeUser here?
+            def token = tokenService.getAuthToken(user && includeUser)
             if (token) {
                 headerSetter(AUTHORIZATION, token.toAuthorizationHeader())
             }
