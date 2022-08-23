@@ -156,6 +156,33 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
         "action2" | OK           | true
     }
 
+    void "Secured methods should be accessible when given a valid key in the alternate headers"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClassController)
+
+        AnnotatedClassController controller = new AnnotatedClassController()
+        grailsApplication.config.security.apikey.header.alternatives = ['Authorization']
+
+        when:
+        request.addHeader("Authorization", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | OK           | true
+        "action2" | OK           | true
+    }
+
     void "Secured methods should be accessible when the request is from an IP on the whitelist, even with no API Key"() {
         setup:
         // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
