@@ -108,6 +108,8 @@ class AuthPac4jPluginConfig {
         config.setClientId(oidcClientProperties.clientId)
         config.setSecret(oidcClientProperties.secret)
         config.setDiscoveryURI(oidcClientProperties.discoveryUri)
+        config.setConnectTimeout(oidcClientProperties.connectTimeout)
+        config.setReadTimeout(oidcClientProperties.readTimeout)
         config.setScope(oidcClientProperties.scope)
         config.setWithState(oidcClientProperties.withState)
         config.customParams.putAll(oidcClientProperties.customParams)

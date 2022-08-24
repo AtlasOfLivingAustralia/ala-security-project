@@ -1,5 +1,6 @@
 package au.org.ala.web;
 
+import org.pac4j.core.context.HttpConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.LinkedHashMap;
@@ -18,6 +19,8 @@ public class OidcClientProperties {
     private String clientAuthenticationMethod = null;
     private boolean allowUnsignedIdTokens = false;
     private boolean useAnonymousClient = true;
+    private int connectTimeout = HttpConstants.DEFAULT_CONNECT_TIMEOUT;
+    private int readTimeout = HttpConstants.DEFAULT_READ_TIMEOUT;
 
     public boolean isEnabled() {
         return enabled;
@@ -97,5 +100,21 @@ public class OidcClientProperties {
 
     public void setUseAnonymousClient(boolean useAnonymousClient) {
         this.useAnonymousClient = useAnonymousClient;
+    }
+
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public int getReadTimeout() {
+        return readTimeout;
+    }
+
+    public void setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
     }
 }
