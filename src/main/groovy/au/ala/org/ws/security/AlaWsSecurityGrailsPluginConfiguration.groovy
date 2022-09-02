@@ -1,10 +1,10 @@
 package au.ala.org.ws.security
 
-import au.org.ala.ws.security.AlaAuthClient
+
+import au.org.ala.ws.security.client.AlaAuthClient
 import au.org.ala.ws.security.JwtProperties
 import au.org.ala.ws.security.Pac4jProfileManagerHttpRequestWrapperFilter
-import au.org.ala.ws.security.authenticator.AlaAuthenticator
-import au.org.ala.ws.security.credentials.AlaCredentialsExtractor
+import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor
 import grails.util.Metadata
 
 import org.pac4j.core.authorization.generator.AuthorizationGenerator
@@ -17,6 +17,7 @@ import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.oidc.config.OidcConfiguration
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -35,6 +36,9 @@ class AlaWsSecurityGrailsPluginConfiguration {
 
     @Autowired
     JwtProperties jwtProperties
+
+    @Value('${security.apikey.header.override:apiKey}')
+    String apiKeyHeader
 
     @Bean
     @ConditionalOnMissingBean
@@ -58,6 +62,23 @@ class AlaWsSecurityGrailsPluginConfiguration {
         config.webContextFactory = webContextFactory
         config
     }
+/*
+    @Bean
+    Client alaJwtAuthClient(OidcConfiguration configuration) {
+
+        AlaOidcAuthenticator alaOidcAuthenticator =  new AlaOidcAuthenticator(configuration)
+        alaOidcAuthenticator.requiredClaims = jwtProperties.requiredClaims
+        alaOidcAuthenticator.requiredScopes = jwtProperties.requiredScopes
+
+        return new DirectBearerAuthClient(alaOidcAuthenticator)
+    }
+
+    @Bean
+    AlaAuthClient apiKeyAuthClient(AlaApiKeyCredentialsExtractor alaApiKeyCredentialsExtractor, AlaApiKeyAuthenticator alaApiKeyAuthenticator) {
+
+        return new HeaderClient(apiKeyHeader, alaApiKeyAuthenticator)
+    }
+*/
 /*
     @Bean
     @ConditionalOnMissingBean
@@ -158,10 +179,10 @@ class AlaWsSecurityGrailsPluginConfiguration {
 
         client
     }
-*/
+
     @Bean
     @ConditionalOnProperty(prefix='security.jwt',name='enabled')
-    AlaAuthClient alaAuthClient(AlaCredentialsExtractor alaCredentialsExtractor, AlaAuthenticator alaAuthenticator) {
+    AlaAuthClient alaAuthClient(AlaOidcCredentialsExtractor alaCredentialsExtractor, AlaAuthenticator alaAuthenticator) {
 
         AlaAuthClient alaAuthClient = new AlaAuthClient()
 
@@ -174,7 +195,7 @@ class AlaWsSecurityGrailsPluginConfiguration {
 
         return alaAuthClient
     }
-/*
+
     @ConditionalOnProperty(prefix= 'security.jwt', name='enabled')
     @Bean
     FilterRegistrationBean pac4jJwtFilter(Config pac4jConfig) {

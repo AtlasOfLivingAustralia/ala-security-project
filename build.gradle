@@ -87,6 +87,7 @@ dependencies {
     api 'org.pac4j:pac4j-http:5.4.3'
     api 'org.pac4j:pac4j-javaee:5.4.3'
     api 'org.pac4j:javaee-pac4j:7.0.0'
+    api 'org.springframework.security:spring-security-web:5.7.3'
 }
 
 compileGroovy {

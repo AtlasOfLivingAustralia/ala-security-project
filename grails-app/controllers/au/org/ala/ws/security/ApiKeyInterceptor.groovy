@@ -1,17 +1,18 @@
 package au.org.ala.ws.security
 
+
 import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.grails.AnnotationMatcher
-import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator
+import au.org.ala.ws.security.client.AlaAuthClient
 import au.org.ala.ws.security.service.ApiKeyService
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.apache.catalina.User
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.credentials.Credentials
+import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.FindBest
@@ -28,16 +29,6 @@ import javax.servlet.http.HttpServletRequest
 @Slf4j
 @EnableConfigurationProperties(JwtProperties)
 class ApiKeyInterceptor {
-    ApiKeyService apiKeyService
-
-    static final int STATUS_UNAUTHORISED = 403
-    static final String API_KEY_HEADER_NAME = "apiKey"
-    static final List<String> LOOPBACK_ADDRESSES = ["127.0.0.1",
-                                                    "0:0:0:0:0:0:0:1", // IP v6
-                                                    "::1"] // IP v6 short form
-
-    @Autowired
-    JwtProperties jwtProperties
 
     @Autowired(required = false)
     AlaAuthClient alaAuthClient // Could be any DirectClient?
@@ -67,72 +58,95 @@ class ApiKeyInterceptor {
         def effectiveAnnotation = matchResult.effectiveAnnotation()
         def skipAnnotation = matchResult.overrideAnnotation
 
-        boolean authorised = true
         if (effectiveAnnotation && !skipAnnotation && alaAuthClient) {
 
-            WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
+            boolean authenticated = false
+            boolean authorised = true
 
-            Optional<Credentials> optCredentials = alaAuthClient.getCredentials(context, config.sessionStore)
-            if (optCredentials.isPresent()) {
+            try {
 
-                Credentials credentials = optCredentials.get()
+                WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
 
-                String[] requiredScopes = effectiveAnnotation.scopes()
-                if (requiredScopes) {
+                Optional<Credentials> optCredentials = alaAuthClient.getCredentials(context, config.sessionStore)
+                if (optCredentials.isPresent()) {
 
-                    if (credentials instanceof OidcCredentials) {
+                    authenticated = true
+                    Credentials credentials = optCredentials.get()
 
-                        authorised = requiredScopes.every { String requiredScope ->
-                            ((OidcCredentials)credentials).accessToken.scope.contains(requiredScope)
-                        }
+                    String[] requiredScopes = effectiveAnnotation.scopes()
+                    if (requiredScopes) {
 
-                        if (!authorised) {
-//                            log.info "access_token scopes '${credentials.accessToken.scope}' is missing required scopes ${requiredScopes}"
-                        }
-                    }
-                }
+                        if (credentials instanceof OidcCredentials) {
 
-                if (!authorised) {
+                            OidcCredentials oidcCredentials = credentials
 
-                    Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(credentials, context, config.sessionStore)
-                    if (optProfile.isPresent()) {
-
-                        UserProfile userProfile = optProfile.get()
-
-                        ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
-                        profileManager.setConfig(config)
-
-                        profileManager.save(
-                                alaAuthClient.getSaveProfileInSession(context, userProfile),
-                                userProfile,
-                                alaAuthClient.isMultiProfile(context, userProfile)
-                        )
-
-                        String[] requiredRoles = effectiveAnnotation.roles()
-
-                        if (requiredRoles) {
-                            authorised = requiredRoles.every() { String requiredRole -> userProfile.roles.contains(requiredRole) }
+                            authorised = requiredScopes.every { String requiredScope ->
+                                oidcCredentials.accessToken.scope.contains(requiredScope)
+                            }
 
                             if (!authorised) {
-                                log.info "user profile roles '${userProfile.roles}' is missing required scopes ${requiredRoles}"
+                                log.info "access_token scopes '${oidcCredentials.accessToken.scope}' is missing required scopes ${requiredScopes}"
                             }
                         }
                     }
-                }
-            } else {
 
-                log.info "no auth credentials found"
-                authorised = false
+                    if (authorised) {
+
+                        Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(credentials, context, config.sessionStore)
+                        if (optProfile.isPresent()) {
+
+                            UserProfile userProfile = optProfile.get()
+
+                            ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
+                            profileManager.setConfig(config)
+
+                            profileManager.save(
+                                    alaAuthClient.getSaveProfileInSession(context, userProfile),
+                                    userProfile,
+                                    alaAuthClient.isMultiProfile(context, userProfile)
+                            )
+
+                            String[] requiredRoles = effectiveAnnotation.roles()
+
+                            if (requiredRoles) {
+                                authorised = requiredRoles.every() { String requiredRole -> userProfile.roles.contains(requiredRole) }
+
+                                if (!authorised) {
+                                    log.info "user profile roles '${userProfile.roles}' is missing required scopes ${requiredRoles}"
+                                }
+                            }
+                        } else if (effectiveAnnotation.roles()) {
+
+                            authorised = false
+                            log.info "no user profile available missing roles"
+                        }
+                    }
+                } else {
+
+                    log.info "no auth credentials found"
+                    authorised = false
+                }
+
+            } catch (CredentialsException e) {
+
+                log.info "authentication failed invalid credentials", e
+                authenticated = false
+            }
+
+            if (!authenticated) {
+
+                response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase())
+                return false
+            }
+
+            if (!authorised) {
+
+                response.sendError(HttpStatus.FORBIDDEN.value(), HttpStatus.FORBIDDEN.getReasonPhrase())
+                return false
             }
         }
 
-        if (!authorised) {
-
-            response.status = HttpStatus.UNAUTHORIZED.value()
-            response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase())
-        }
-
-        return authorised
+        return true
     }
 
     /**
@@ -146,123 +160,4 @@ class ApiKeyInterceptor {
      * Executed after view rendering completes
      */
     void afterView() {}
-
-    /**
-     * Validate a JWT Bearer token instead of the API key.
-     * @param requireApiKey The RequireApiKey annotation
-     * @param fallbackToLegacy Whether to fall back to legacy API keys if the JWT is not present.
-     * @return true if the request is authorised
-     */
-    boolean jwtApiKeyInterceptor(RequireApiKey requireApiKey, boolean fallbackToLegacy) {
-        def result = false
-
-        final WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
-        ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
-        profileManager.setConfig(config)
-
-        def credentials = alaAuthClient.getCredentials(context, config.sessionStore)
-        if (credentials.isPresent()) {
-            def profile = alaAuthClient.getUserProfile(credentials.get(), context, config.sessionStore)
-            if (profile.isPresent()) {
-                def userProfile = profile.get()
-                profileManager.save(
-                        alaAuthClient.getSaveProfileInSession(context, userProfile),
-                        userProfile,
-                        alaAuthClient.isMultiProfile(context, userProfile)
-                )
-
-                result = true
-
-                if (result && requireApiKey.roles()) {
-                    def roles = userProfile.roles
-                    result = requireApiKey.roles().every() {
-                        roles.contains(it)
-                    }
-                }
-
-                def requiredScopes = requireApiKey.scopes() + jwtProperties.requiredScopes
-                if (result && requiredScopes) {
-                    def scope = userProfile.permissions //attributes['scope'] as List<String>
-                    result = requiredScopes.every {
-                        scope.contains(it)
-                    }
-                }
-
-            } else {
-                log.info("Bearer token present but no user info found: {}", credentials)
-                result = false
-            }
-
-            if (!result) {
-                response.status = STATUS_UNAUTHORISED
-                response.sendError(STATUS_UNAUTHORISED, "Forbidden")
-            }
-        } else if (fallbackToLegacy) {
-            result = legacyApiKeyInterceptor()
-        } else {
-            response.status = HttpStatus.UNAUTHORIZED.value()
-            response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase())
-            result = false
-        }
-        return result
-    }
-
-    private WebContext context() {
-        final WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
-        return context
-    }
-
-    boolean legacyApiKeyInterceptor() {
-        List<String> whiteList = buildWhiteList()
-        String clientIp = getClientIP(request)
-        boolean ipOk = checkClientIp(clientIp, whiteList)
-        def result = true
-        if (!ipOk) {
-            String headerName = grailsApplication.config.getProperty('security.apikey.header.override') ?: API_KEY_HEADER_NAME
-            boolean keyOk = apiKeyService.checkApiKey(request.getHeader(headerName)).valid
-            log.debug "IP ${clientIp} ${ipOk ? 'is' : 'is not'} ok. Key ${keyOk ? 'is' : 'is not'} ok."
-
-            if (!keyOk) {
-                log.warn(ipOk ? "No valid api key for ${controllerName}/${actionName}" :
-                        "Non-authorised IP address - ${clientIp}")
-                response.status = STATUS_UNAUTHORISED
-                response.sendError(STATUS_UNAUTHORISED, "Forbidden")
-                result = false
-            }
-        } else {
-            log.debug("IP ${clientIp} is exempt from the API Key check. Authorising.")
-        }
-        return result
-    }
-
-    /**
-     * Client IP passes if it is in the whitelist
-     * @param clientIp
-     * @return
-     */
-    def checkClientIp(clientIp, List<String> whiteList) {
-        whiteList.contains(clientIp)
-    }
-
-    List<String> buildWhiteList() {
-        List<String> whiteList = []
-        whiteList.addAll(LOOPBACK_ADDRESSES) // allow calls from localhost to make testing easier
-        String config = grailsApplication.config.getProperty('security.apikey.ip.whitelist')
-        if (config) {
-            whiteList.addAll(config.split(',').collect({ String s -> s.trim() }))
-        }
-        log.debug('{}', whiteList)
-        return whiteList
-    }
-
-    def getClientIP(HttpServletRequest request) {
-        // External requests may be proxied by Apache, which uses X-Forwarded-For to identify the original IP.
-        String ip = request.getHeader("X-Forwarded-For")
-        if (!ip || LOOPBACK_ADDRESSES.contains(ip)) {
-            // don't accept localhost from the X-Forwarded-For header, since it can be easily spoofed.
-            ip = request.getRemoteHost()
-        }
-        return ip
-    }
-
 }

@@ -1,5 +1,6 @@
 package au.org.ala.ws.security.authenticator
 
+import au.org.ala.ws.security.JwtProperties
 import au.org.ala.ws.security.profile.AlaOidcUserProfile
 
 import com.nimbusds.jose.JOSEException
@@ -48,8 +49,8 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
     private List<JWSAlgorithm> expectedJWSAlgs
     private JWKSource<SecurityContext> keySource
 
-    Set<String> requiredClaims
-    Set<String> requiredScopes
+    @Autowired
+    JwtProperties jwtProperties
 
     AlaOidcAuthenticator(final OidcConfiguration configuration) {
 
@@ -107,13 +108,13 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         // TODO externalise the required claims
         jwtProcessor.JWTClaimsSetVerifier = new DefaultJWTClaimsVerifier(
                 new JWTClaimsSet.Builder().issuer(issuer).build(),
-                requiredClaims)
+                jwtProperties.requiredClaims.toSet())
 
         try {
 
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null)
 
-            Scope scope = Scope.parse(claimsSet.getStringListClaim('scope'))
+            Scope scope = Scope.parse(claimsSet.getClaim(OidcConfiguration.SCOPE))
             credentials.accessToken = new BearerAccessToken(accessToken, 0L, scope)
 
         } catch (BadJOSEException e) {
@@ -122,12 +123,12 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
             throw new CredentialsException("Internal error parsing token: " + accessToken, e)
         }
 
-        if (requiredScopes) {
+        if (jwtProperties.requiredScopes) {
 
-            if (!requiredScopes.every {requiredScope -> credentials.accessToken.scope.any {scope -> requiredScope == scope.value } }) {
+            if (!jwtProperties.requiredScopes.every {requiredScope -> credentials.accessToken.scope.any {scope -> requiredScope == scope.value } }) {
 
-                log.info "access_token scopes '${ credentials.accessToken.scope}' is missing required scopes ${requiredScopes}"
-                throw new CredentialsException("access_token with scope '${credentials.accessToken.scope}' is missing required scopes ${requiredScopes}")
+                log.info "access_token scopes '${ credentials.accessToken.scope}' is missing required scopes ${jwtProperties.requiredScopes}"
+                throw new CredentialsException("access_token with scope '${credentials.accessToken.scope}' is missing required scopes ${jwtProperties.requiredScopes}")
             }
 
         }

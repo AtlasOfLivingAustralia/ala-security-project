@@ -1,9 +1,17 @@
 package au.org.ala.ws.security
 
+import au.org.ala.ws.security.client.AlaAuthClient
 import org.pac4j.core.config.Config
+import org.pac4j.core.context.WebContext
+import org.pac4j.core.credentials.Credentials
+import org.pac4j.core.exception.CredentialsException
+import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
-
+import org.pac4j.core.util.FindBest
+import org.pac4j.jee.context.JEEContextFactory
+import org.pac4j.oidc.credentials.OidcCredentials
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContext
@@ -26,33 +34,69 @@ import javax.servlet.http.HttpServletResponse
  */
 class AlaWebServiceAuthFilter extends OncePerRequestFilter {
 
-    @Autowired
-    JwtProperties jwtProperties
-
     @Autowired(required = false)
     Config config
 
-//    @Inject
-    AlaWebServiceAuthUtils alaWebServiceAuthUtils
+    @Autowired(required = false)
+    AlaAuthClient alaAuthClient // Could be any DirectClient?
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        Optional<UserProfile> userProfile = Optional.empty()
+        boolean authenticated = false
+        boolean authorised = true
 
-        if (jwtProperties.enabled) {
-            userProfile = alaWebServiceAuthUtils.oidcInterceptor(request, response)
+        try {
+
+            WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
+
+            Optional<Credentials> optCredentials = alaAuthClient.getCredentials(context, config.sessionStore)
+            if (optCredentials.isPresent()) {
+
+                authenticated = true
+                Credentials credentials = optCredentials.get()
+
+                    Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(credentials, context, config.sessionStore)
+                    if (optProfile.isPresent()) {
+
+                        UserProfile userProfile = optProfile.get()
+
+                        setAuthenticatedUserAsPrincipal(userProfile)
+
+                        ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
+                        profileManager.setConfig(config)
+
+                        profileManager.save(
+                                alaAuthClient.getSaveProfileInSession(context, userProfile),
+                                userProfile,
+                                alaAuthClient.isMultiProfile(context, userProfile)
+                        )
+                    }
+                }
+
+
+        } catch (CredentialsException e) {
+
+            log.info "authentication failed invalid credentials", e
+            authenticated = false
         }
 
-        if (!userProfile.isPresent() && jwtProperties.fallbackToLegacyBehaviour) {
-            alaWebServiceAuthUtils.legacyApiKeyInterceptor(request, response)
+        if (!authenticated) {
+
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase())
+            return
         }
 
-        userProfile.ifPresent this.&setAuthenticatedUserAsPrincipal
+        if (!authorised) {
 
-        chain.doFilter(request, response);
+            response.sendError(HttpStatus.FORBIDDEN.value(), HttpStatus.FORBIDDEN.getReasonPhrase())
+            return
+        }
+
+        chain.doFilter(request, response)
     }
+
 
     private void setAuthenticatedUserAsPrincipal(UserProfile userProfile) {
 

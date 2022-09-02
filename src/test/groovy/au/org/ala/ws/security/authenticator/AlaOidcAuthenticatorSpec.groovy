@@ -1,5 +1,6 @@
 package au.org.ala.ws.security.authenticator
 
+import au.org.ala.ws.security.JwtProperties
 import au.org.ala.ws.security.profile.AlaOidcUserProfile
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.common.Json
@@ -49,6 +50,7 @@ class AlaOidcAuthenticatorSpec extends Specification {
         }
 
         AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        alaOidcAuthenticator.jwtProperties = new JwtProperties()
 
         OidcCredentials oidcCredentials = new OidcCredentials()
         oidcCredentials.accessToken = new BearerAccessToken('access_token')
@@ -81,7 +83,7 @@ class AlaOidcAuthenticatorSpec extends Specification {
         JWTParser.parse(_) >> Mock(JWT)
 
         JWTClaimsSet claimsSet = GroovyMock(JWTClaimsSet)
-        1 * claimsSet.getStringClaim('scope') >> 'test/scope'
+        1 * claimsSet.getClaim('scope') >> [ 'test/scope' ]
 
         GroovyMock(DefaultJWTProcessor, global: true)
         new DefaultJWTProcessor() >> Mock(DefaultJWTProcessor) {
@@ -89,7 +91,9 @@ class AlaOidcAuthenticatorSpec extends Specification {
         }
 
         AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
-        alaOidcAuthenticator.requiredScopes = [ 'required/scope' ]
+        JwtProperties jwtProperties = new JwtProperties()
+        jwtProperties.requiredScopes = [ 'required/scope' ]
+        alaOidcAuthenticator.jwtProperties = jwtProperties
 
         OidcCredentials oidcCredentials = new OidcCredentials()
         oidcCredentials.accessToken = new BearerAccessToken('access_token')
@@ -127,7 +131,8 @@ class AlaOidcAuthenticatorSpec extends Specification {
         JWTParser.parse(_) >> Mock(JWT)
 
         JWTClaimsSet claimsSet = GroovyMock(JWTClaimsSet)
-        1 * claimsSet.getStringClaim('scope') >> 'openid profile email'
+//        1 * claimsSet.getClaim('scope') >> [ 'openid', 'profile', 'email' ]
+        1 * claimsSet.getClaim('scope') >> 'openid profile email'
 
         GroovyMock(DefaultJWTProcessor, global: true)
         new DefaultJWTProcessor() >> Mock(DefaultJWTProcessor) {
@@ -145,7 +150,9 @@ class AlaOidcAuthenticatorSpec extends Specification {
         )
 
         AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
-        alaOidcAuthenticator.requiredScopes = [ 'openid', 'profile', 'email' ]
+        JwtProperties jwtProperties = new JwtProperties()
+        jwtProperties.requiredScopes = [ 'openid', 'profile', 'email' ]
+        alaOidcAuthenticator.jwtProperties = jwtProperties
 
         OidcCredentials oidcCredentials = new OidcCredentials()
         oidcCredentials.accessToken = new BearerAccessToken('access_token')

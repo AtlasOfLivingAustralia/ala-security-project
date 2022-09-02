@@ -1,6 +1,5 @@
 package au.org.ala.ws.security.authenticator
 
-import au.org.ala.ws.security.credentials.AlaApiKeyCredentials
 import au.org.ala.ws.security.profile.AlaApiUserProfile
 import com.nimbusds.common.contenttype.ContentType
 import com.nimbusds.jose.shaded.json.JSONObject
@@ -10,6 +9,7 @@ import com.nimbusds.oauth2.sdk.http.HTTPResponse
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.Credentials
+import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.credentials.authenticator.Authenticator
 import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.util.CommonHelper
@@ -19,7 +19,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
 @Component
-@ConditionalOnProperty('security.apiKey')
+@ConditionalOnProperty('security.apikey.enabled')
 class AlaApiKeyAuthenticator extends InitializableObject implements Authenticator {
 
     @Value('security.apikey.check.serviceUrl')
@@ -39,9 +39,9 @@ class AlaApiKeyAuthenticator extends InitializableObject implements Authenticato
 
         init()
 
-        AlaApiKeyCredentials alaApiKeyCredentials = (AlaApiKeyCredentials) credentials
+        TokenCredentials alaApiKeyCredentials = (TokenCredentials) credentials
 
-        AlaApiUserProfile alaApiUserProfile = fetchUserProfile(alaApiKeyCredentials.apiKey)
+        AlaApiUserProfile alaApiUserProfile = fetchUserProfile(alaApiKeyCredentials.token)
 
         if (alaApiUserProfile.activated && !alaApiUserProfile.locked) {
 

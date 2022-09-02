@@ -10,33 +10,18 @@ import org.pac4j.core.credentials.extractor.CredentialsExtractor
 import org.pac4j.core.credentials.extractor.HeaderExtractor
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
 @Component
-class AlaCredentialsExtractor implements CredentialsExtractor {
+@ConditionalOnProperty('security.jwt.enabled')
+class AlaOidcCredentialsExtractor extends BearerAuthExtractor {
 
-    BearerAuthExtractor bearerAuthExtractor
-    HeaderExtractor apiKeyHeaderExtractor
-
-    AlaCredentialsExtractor() {
-        bearerAuthExtractor = new BearerAuthExtractor()
-    }
-
-    AlaCredentialsExtractor(String apiKeyHeaderName) {
-        bearerAuthExtractor = new BearerAuthExtractor()
-        apiKeyHeaderExtractor = new HeaderExtractor(apiKeyHeaderName, '')
-    }
-
-    @Value('${security.apikey.header.override:apiKey}')
-    void setApiKeyHeaderName(String apiKeyHeaderName) {
-
-        apiKeyHeaderExtractor = new HeaderExtractor(apiKeyHeaderName, '')
-    }
 
     @Override
     Optional<Credentials> extract(WebContext context, SessionStore sessionStore) {
 
-        Optional<Credentials> credentials = bearerAuthExtractor.extract(context, sessionStore)
+        return super.extract(context, sessionStore)
                 .map { TokenCredentials tokenCredentials ->
 
                     OidcCredentials oidcCredentials = new OidcCredentials()
@@ -44,13 +29,5 @@ class AlaCredentialsExtractor implements CredentialsExtractor {
 
                     oidcCredentials
                 }
-
-        if (apiKeyHeaderExtractor && !credentials.isPresent()) {
-
-            credentials = apiKeyHeaderExtractor.extract(context, sessionStore)
-                .map { TokenCredentials tokenCredentials -> new AlaApiKeyCredentials(tokenCredentials.token)}
-        }
-
-        return credentials
     }
 }
