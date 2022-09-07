@@ -8,6 +8,7 @@ import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.credentials.extractor.BearerAuthExtractor
 import org.pac4j.core.credentials.extractor.CredentialsExtractor
 import org.pac4j.core.credentials.extractor.HeaderExtractor
+import org.pac4j.core.exception.CredentialsException
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -21,13 +22,21 @@ class AlaOidcCredentialsExtractor extends BearerAuthExtractor {
     @Override
     Optional<Credentials> extract(WebContext context, SessionStore sessionStore) {
 
-        return super.extract(context, sessionStore)
-                .map { TokenCredentials tokenCredentials ->
+        try {
 
-                    OidcCredentials oidcCredentials = new OidcCredentials()
-                    oidcCredentials.accessToken = new BearerAccessToken(tokenCredentials.token)
+            return super.extract(context, sessionStore)
+                    .map { TokenCredentials tokenCredentials ->
 
-                    oidcCredentials
-                }
+                        OidcCredentials oidcCredentials = new OidcCredentials()
+                        oidcCredentials.accessToken = new BearerAccessToken(tokenCredentials.token)
+
+                        oidcCredentials
+                    }
+
+        } catch (CredentialsException ce) {
+            // exception extracting credentials, treat as no credentials to allow pass through
+        }
+
+        return Optional.empty()
     }
 }

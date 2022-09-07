@@ -19,25 +19,14 @@ import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jose.proc.SecurityContext
-import com.nimbusds.jose.util.ResourceRetriever
-import com.nimbusds.jwt.JWT
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.JWTParser
-import com.nimbusds.jwt.proc.DefaultJWTProcessor
-import com.nimbusds.oauth2.sdk.id.Issuer
-import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import grails.testing.web.interceptor.InterceptorUnitTest
 import groovy.time.TimeCategory
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.util.GrailsApplicationAttributes
-import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
 import org.pac4j.core.config.Config
-import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.exception.CredentialsException
-import org.pac4j.http.client.direct.DirectBearerAuthClient
 import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.oidc.config.OidcConfiguration
-import spock.lang.Issue
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -56,6 +45,14 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
     JWKSet jwkSet = jwkSet('test.jwks')
     def jwtProperties = new JwtProperties()
 
+    @Shared
+    AlaOidcClient alaOidcClient
+
+    @Shared
+    AlaApiKeyClient alaApiKeyClient
+
+    @Shared
+    AlaIpWhitelistClient alaIpWhitelistClient
     void setup() {
 
         AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(Stub(OidcConfiguration))
@@ -77,9 +74,9 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
         AlaIpWhitelistAuthenticator alaIpWhitelistAuthenticator = new AlaIpWhitelistAuthenticator()
         alaIpWhitelistAuthenticator.ipWhitelist = [ '2.2.2.2', '3.3.3.3' ]
 
-        AlaOidcClient alaOidcClient = new AlaOidcClient(new AlaOidcCredentialsExtractor(), alaOidcAuthenticator)
-        AlaApiKeyClient alaApiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
-        AlaIpWhitelistClient alaIpWhitelistClient = new AlaIpWhitelistClient(new AlaIpExtractor(), alaIpWhitelistAuthenticator)
+        alaOidcClient = new AlaOidcClient(new AlaOidcCredentialsExtractor(), alaOidcAuthenticator)
+        alaApiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
+        alaIpWhitelistClient = new AlaIpWhitelistClient(new AlaIpExtractor(), alaIpWhitelistAuthenticator)
 
         defineBeans {
             config(InstanceFactoryBean, new Config().tap { sessionStore = JEESessionStore.INSTANCE })
@@ -204,6 +201,35 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
 
         when:
         request.addHeader("apiKey", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | OK           | true
+        "action2" | OK           | true
+    }
+
+    void "Secured methods should be accessible when given a valid key in the alternate headers"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClassController)
+
+        AnnotatedClassController controller = new AnnotatedClassController()
+
+        alaApiKeyClient.credentialsExtractor.alternativeHeaderNames = [ 'Authorization' ]
+//        grailsApplication.config.security.apikey.header.alternatives = [ 'Authorization' ]
+
+        when:
+        request.addHeader("Authorization", "valid")
 
         request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
         request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
