@@ -21,12 +21,14 @@ import com.nimbusds.oauth2.sdk.Scope
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 
 import groovy.util.logging.Slf4j
-
+import org.pac4j.core.authorization.generator.AuthorizationGenerator
+import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.Credentials
 import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.exception.CredentialsException
+import org.pac4j.core.profile.UserProfile
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator
@@ -46,8 +48,9 @@ import java.text.ParseException
 class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
     private String issuer
-    private List<JWSAlgorithm> expectedJWSAlgs
+//    private List<JWSAlgorithm> expectedJWSAlgs
     private JWKSource<SecurityContext> keySource
+    private AuthorizationGenerator authorizationGenerator
 
     @Autowired
     JwtProperties jwtProperties
@@ -62,11 +65,11 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
         super.internalInit(forceReinit)
 
-        if (forceReinit || this.issuer == null) {
-            this.issuer = configuration.findProviderMetadata().issuer
-            this.expectedJWSAlgs = configuration.findProviderMetadata().userInfoJWSAlgs
-            this.keySource = new RemoteJWKSet(configuration.findProviderMetadata().JWKSetURI.toURL(), configuration.findResourceRetriever())
-        }
+        this.issuer = configuration.findProviderMetadata().issuer
+//            this.expectedJWSAlgs = configuration.findProviderMetadata().idTokenJWSAlgs
+        this.keySource = new RemoteJWKSet(configuration.findProviderMetadata().JWKSetURI.toURL(), configuration.findResourceRetriever())
+
+        this.authorizationGenerator = new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes, jwtProperties.permissionAttributes)
     }
 
     @Override
@@ -96,7 +99,7 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         // Configure the JWT processor with a key selector to feed matching public
         // RSA keys sourced from the JWK set URL
         JWSKeySelector<SecurityContext> keySelector =
-                new JWSVerificationKeySelector<>(expectedJWSAlgs.toSet(), keySource)
+                new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, keySource)
 
 //        JWEKeySelector<SecurityContext> jweKeySelector =
 //                new JWEDecryptionKeySelector<>(expectedJWSAlgs, keySource);
@@ -138,7 +141,10 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
             TokenCredentials tokenCredentials = new TokenCredentials(accessToken)
             super.validate(tokenCredentials, context, sessionStore)
 
-            cred.userProfile = new AlaOidcUserProfile(tokenCredentials.userProfile)
+            UserProfile profile = tokenCredentials.userProfile
+            cred.userProfile = authorizationGenerator.generate(context, sessionStore, profile)
+                        .map { new AlaOidcUserProfile(it) }
+                        .get()
         }
     }
 

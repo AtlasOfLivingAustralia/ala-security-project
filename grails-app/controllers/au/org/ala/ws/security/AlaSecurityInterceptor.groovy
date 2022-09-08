@@ -5,7 +5,6 @@ import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.grails.AnnotationMatcher
 import au.org.ala.ws.security.client.AlaAuthClient
-import au.org.ala.ws.security.service.ApiKeyService
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -23,12 +22,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.http.HttpStatus
 
 import javax.annotation.PostConstruct
-import javax.servlet.http.HttpServletRequest
 
 @CompileStatic
 @Slf4j
 @EnableConfigurationProperties(JwtProperties)
-class ApiKeyInterceptor {
+class AlaSecurityInterceptor {
 
     @Autowired(required = false)
     AlaAuthClient alaAuthClient // Could be any DirectClient?
@@ -38,7 +36,7 @@ class ApiKeyInterceptor {
 
     GrailsApplication grailsApplication
 
-    ApiKeyInterceptor() {
+    AlaSecurityInterceptor() {
 //        matchAll()
     }
 

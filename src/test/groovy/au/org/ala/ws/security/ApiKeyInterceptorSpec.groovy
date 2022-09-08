@@ -13,8 +13,7 @@ import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor
 import au.org.ala.ws.security.credentials.AlaIpExtractor
 import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor
 import au.org.ala.ws.security.profile.AlaApiUserProfile
-import au.org.ala.ws.security.profile.AlaUserProfile
-import au.org.ala.ws.security.service.ApiKeyService
+
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
@@ -34,7 +33,7 @@ import spock.lang.Unroll
 import static au.org.ala.ws.security.JwtUtils.*
 
 @Unroll
-class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest<ApiKeyInterceptor> {
+class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest<AlaSecurityInterceptor> {
 
     static final int UNAUTHORISED = 401
     static final int FORBIDDEN = 403

@@ -15,7 +15,6 @@ public class JwtProperties {
     private String jwtType = "jwt";
     private int connectTimeoutMs = HttpConstants.DEFAULT_CONNECT_TIMEOUT;;
     private int readTimeoutMs = HttpConstants.DEFAULT_READ_TIMEOUT;
-    private boolean requireUserInfo = true;
     private List<String> roleAttributes = List.of("role");
     private List<String> permissionAttributes = List.of("scope","scp", "scopes");
     private List<String> requiredClaims = List.of("sub", "iat", "exp", "client_id", "jti", "iss");
@@ -84,14 +83,6 @@ public class JwtProperties {
 
     public void setJwtType(String jwtType) {
         this.jwtType = jwtType;
-    }
-
-    public boolean isRequireUserInfo() {
-        return requireUserInfo;
-    }
-
-    public void setRequireUserInfo(boolean requireUserInfo) {
-        this.requireUserInfo = requireUserInfo;
     }
 
     public List<String> getRoleAttributes() {

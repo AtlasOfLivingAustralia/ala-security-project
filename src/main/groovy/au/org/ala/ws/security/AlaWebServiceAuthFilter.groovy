@@ -1,6 +1,7 @@
 package au.org.ala.ws.security
 
 import au.org.ala.ws.security.client.AlaAuthClient
+import groovy.util.logging.Slf4j
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.credentials.Credentials
@@ -9,7 +10,6 @@ import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.FindBest
 import org.pac4j.jee.context.JEEContextFactory
-import org.pac4j.oidc.credentials.OidcCredentials
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.GrantedAuthority
@@ -20,7 +20,6 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
-import javax.inject.Inject
 import javax.servlet.FilterChain
 import javax.servlet.ServletException
 import javax.servlet.http.HttpServletRequest
@@ -32,13 +31,15 @@ import javax.servlet.http.HttpServletResponse
  * 2) Legacy API keys using ALA's apikey app
  * 3) Whitelist IP
  */
+@Slf4j
+@Component
 class AlaWebServiceAuthFilter extends OncePerRequestFilter {
 
     @Autowired(required = false)
     Config config
 
     @Autowired(required = false)
-    AlaAuthClient alaAuthClient // Could be any DirectClient?
+    AlaAuthClient alaAuthClient
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)

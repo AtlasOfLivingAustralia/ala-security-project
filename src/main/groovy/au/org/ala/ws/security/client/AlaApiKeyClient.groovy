@@ -8,9 +8,8 @@ import org.springframework.stereotype.Component
 
 @Component
 @Order(20)
-@ConditionalOnProperty('security.apikey.enabled')
+@ConditionalOnProperty([ 'security.apikey.enabled', 'security.jwt.fallback-to-legacy-behaviour' ])
 class AlaApiKeyClient extends AlaDirectClient {
-
 
     AlaApiKeyClient(AlaApiKeyCredentialsExtractor alaApiKeyCredentialsExtractor, AlaApiKeyAuthenticator alaApiKeyAuthenticator) {
 

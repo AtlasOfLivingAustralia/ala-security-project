@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
 @Component
-@ConditionalOnProperty('security.apikey.enabled')
+@ConditionalOnProperty([ 'security.apikey.enabled', 'security.jwt.fallback-to-legacy-behaviour' ])
 class AlaApiKeyCredentialsExtractor extends HeaderExtractor {
 
     List<AlaApiKeyCredentialsExtractor> alternativeHeaderExtractors = []

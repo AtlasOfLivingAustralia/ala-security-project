@@ -1,6 +1,5 @@
 package au.org.ala.ws.security
 
-import au.org.ala.ws.security.credentials.AlaApiKeyCredentials
 import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor
 import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor
 import org.pac4j.core.context.WebContext
