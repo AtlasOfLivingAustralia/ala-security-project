@@ -17,7 +17,10 @@ import au.org.ala.ws.security.profile.AlaApiUserProfile
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
+import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.oauth2.sdk.id.Issuer
+import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import grails.testing.web.interceptor.InterceptorUnitTest
 import groovy.time.TimeCategory
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -33,13 +36,11 @@ import spock.lang.Unroll
 import static au.org.ala.ws.security.JwtUtils.*
 
 @Unroll
-class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest<AlaSecurityInterceptor> {
+class AlaSecurityInterceptorSpec extends Specification implements InterceptorUnitTest<AlaSecurityInterceptor> {
 
     static final int UNAUTHORISED = 401
     static final int FORBIDDEN = 403
     static final int OK = 200
-
-    ApiKeyService apiKeyService
 
     JWKSet jwkSet = jwkSet('test.jwks')
     def jwtProperties = new JwtProperties()
@@ -54,10 +55,20 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
     AlaIpWhitelistClient alaIpWhitelistClient
     void setup() {
 
-        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(Stub(OidcConfiguration))
+        OidcConfiguration oidcConfiguration = Stub() {
+            findProviderMetadata() >> Stub(OIDCProviderMetadata) {
+                getIssuer() >> new Issuer('http://localhost')
+                getJWKSetURI() >> new URI('http://localhost/jwk')
+            }
+        }
+
+        GroovyMock(RemoteJWKSet, global: true)
+        new RemoteJWKSet(_, _) >> new ImmutableJWKSet<SecurityContext>(jwkSet('test.jwks'))
+
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
         alaOidcAuthenticator.jwtProperties = jwtProperties
         alaOidcAuthenticator.issuer = 'http://localhost'
-        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ]
+//        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ]
         alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet('test.jwks'))
 
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = Stub(AlaApiKeyAuthenticator) {
@@ -84,28 +95,9 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
                 it.authClients = [ alaOidcClient, alaApiKeyClient, alaIpWhitelistClient ]
             })
 
-
-//            alaOidcClient(InstanceFactoryBean, new AlaOidcClient(new AlaOidcCredentialsExtractor(), new AlaOidcAuthenticator()))
-//            directBearerAuthClient(InstanceFactoryBean,
-//                    new DirectBearerAuthClient(
-//                            new JwtAuthenticator(
-//                                    'http://localhost',
-//                                    jwtProperties.getRequiredClaims(),
-//                                    [JWSAlgorithm.RS256].toSet(),
-//                                    new ImmutableJWKSet<SecurityContext>(jwkSet))
-//                    ).tap {
-//                        it.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator(['role'],['scope', 'scp']))
-//                    })
-
             jwtProperties(InstanceFactoryBean, jwtProperties)
         }
-//
-//        // grailsApplication is not isolated in unit tests, so clear the ip.whitelist property to avoid polluting independent tests
-//        grailsApplication.config.security.apikey.ip = [whitelist: ""]
-//        apiKeyService = Stub(ApiKeyService)
-//        apiKeyService.checkApiKey(_) >> { String key -> [valid: (key == "valid")] }
-//
-//        interceptor.apiKeyService = apiKeyService
+
     }
 
     void "All methods of a controller annotated with RequireApiKey at the class level should be protected"() {

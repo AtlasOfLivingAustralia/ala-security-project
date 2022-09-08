@@ -31,7 +31,7 @@ class AlaOidcAuthenticatorSpec extends Specification {
         setup:
         OIDCProviderMetadata oidcProviderMetadata = Mock() {
             1 * getJWKSetURI() >> new URI('http://localhost/jwk')
-            1 * getUserInfoJWSAlgs() >> [ new JWSAlgorithm('TEST') ]
+//            1 * getUserInfoJWSAlgs() >> [ new JWSAlgorithm('TEST') ]
         }
 
         OidcConfiguration oidcConfiguration = Mock() {
@@ -71,7 +71,6 @@ class AlaOidcAuthenticatorSpec extends Specification {
         setup:
         OIDCProviderMetadata oidcProviderMetadata = Mock() {
             1 * getJWKSetURI() >> new URI('http://localhost/jwk')
-            1 * getUserInfoJWSAlgs() >> [ new JWSAlgorithm('TEST') ]
         }
 
         OidcConfiguration oidcConfiguration = Mock() {
@@ -118,7 +117,6 @@ class AlaOidcAuthenticatorSpec extends Specification {
         OIDCProviderMetadata oidcProviderMetadata = Mock() {
             1 * getUserInfoEndpointURI() >> new URI("http://localhost:${wm.port()}/userInfo")
             1 * getJWKSetURI() >> new URI('http://localhost/jwk')
-            1 * getUserInfoJWSAlgs() >> [ new JWSAlgorithm('TEST') ]
         }
 
         OidcConfiguration oidcConfiguration = Mock() {
