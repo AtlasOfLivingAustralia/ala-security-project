@@ -49,7 +49,6 @@ class AlaWsSecurityGrailsPluginConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(prefix='security.jwt',name='enabled')
     Config pac4jConfig(List<Client> clients, SessionStore sessionStore, WebContextFactory webContextFactory) {
         Config config = new Config(clients)
 
