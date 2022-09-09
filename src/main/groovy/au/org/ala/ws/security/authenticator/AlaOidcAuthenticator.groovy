@@ -33,6 +33,7 @@ import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
 import java.text.ParseException
@@ -45,6 +46,7 @@ import java.text.ParseException
  */
 @Slf4j
 @Component
+@ConditionalOnProperty('security.jwt.enabled')
 class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
     private String issuer
