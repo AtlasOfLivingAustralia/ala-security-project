@@ -10,6 +10,7 @@ import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.FindBest
 import org.pac4j.jee.context.JEEContextFactory
+import org.pac4j.oidc.credentials.OidcCredentials
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.GrantedAuthority
@@ -45,9 +46,6 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        boolean authenticated = false
-        boolean authorised = true
-
         try {
 
             WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
@@ -55,43 +53,31 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
             Optional<Credentials> optCredentials = alaAuthClient.getCredentials(context, config.sessionStore)
             if (optCredentials.isPresent()) {
 
-                authenticated = true
                 Credentials credentials = optCredentials.get()
 
-                    Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(credentials, context, config.sessionStore)
-                    if (optProfile.isPresent()) {
+                Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(credentials, context, config.sessionStore)
+                if (optProfile.isPresent()) {
 
-                        UserProfile userProfile = optProfile.get()
+                    UserProfile userProfile = optProfile.get()
 
-                        setAuthenticatedUserAsPrincipal(userProfile)
+                    setAuthenticatedUserAsPrincipal(userProfile)
 
-                        ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
-                        profileManager.setConfig(config)
+                    ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
+                    profileManager.setConfig(config)
 
-                        profileManager.save(
-                                alaAuthClient.getSaveProfileInSession(context, userProfile),
-                                userProfile,
-                                alaAuthClient.isMultiProfile(context, userProfile)
-                        )
-                    }
+                    profileManager.save(
+                            alaAuthClient.getSaveProfileInSession(context, userProfile),
+                            userProfile,
+                            alaAuthClient.isMultiProfile(context, userProfile)
+                    )
                 }
-
+            }
 
         } catch (CredentialsException e) {
 
             log.info "authentication failed invalid credentials", e
-            authenticated = false
-        }
-
-        if (!authenticated) {
 
             response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase())
-            return
-        }
-
-        if (!authorised) {
-
-            response.sendError(HttpStatus.FORBIDDEN.value(), HttpStatus.FORBIDDEN.getReasonPhrase())
             return
         }
 
