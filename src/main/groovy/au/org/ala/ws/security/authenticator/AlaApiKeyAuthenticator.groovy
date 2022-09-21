@@ -1,11 +1,7 @@
 package au.org.ala.ws.security.authenticator
 
+import au.org.ala.ws.security.ApiKeyClient
 import au.org.ala.ws.security.profile.AlaApiUserProfile
-import com.nimbusds.common.contenttype.ContentType
-import com.nimbusds.jose.shaded.json.JSONObject
-import com.nimbusds.oauth2.sdk.ParseException
-import com.nimbusds.oauth2.sdk.http.HTTPRequest
-import com.nimbusds.oauth2.sdk.http.HTTPResponse
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.Credentials
@@ -14,24 +10,16 @@ import org.pac4j.core.credentials.authenticator.Authenticator
 import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.util.CommonHelper
 import org.pac4j.core.util.InitializableObject
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.stereotype.Component
+import retrofit2.Call
+import retrofit2.Response
 
-@Component
-@ConditionalOnProperty([ 'security.apikey.enabled', 'security.jwt.fallback-to-legacy-behaviour' ])
 class AlaApiKeyAuthenticator extends InitializableObject implements Authenticator {
 
-    @Value('security.apikey.check.serviceUrl')
-    String apiKeyUri
-
-    @Value('security.apikey.userdetails.serviceUrl')
-    String userDetailsUri
+    ApiKeyClient apiKeyClient
 
     @Override
     protected void internalInit(boolean forceReinit) {
-        CommonHelper.assertNotBlank("apiKeyUri", apiKeyUri);
-        CommonHelper.assertNotBlank("userDetailsUri", userDetailsUri);
+        CommonHelper.assertNotNull("apiKeyClient", apiKeyClient)
     }
 
     @Override
@@ -53,69 +41,43 @@ class AlaApiKeyAuthenticator extends InitializableObject implements Authenticato
 
         AlaApiUserProfile alaApiUserProfile = new AlaApiUserProfile()
 
-        HTTPRequest apiKeyRequest = new HTTPRequest(HTTPRequest.Method.GET, URI.create("${apiKeyUri}/${apiKey}"))
-        HTTPResponse apiKeyResponse = apiKeyRequest.send()
+        Call<Map<String, Object>> checkApiKeyCall = apiKeyClient.checkApiKey(apiKey)
 
-        apiKeyResponse.ensureStatusCode(HTTPResponse.SC_OK)
-        apiKeyResponse.ensureEntityContentType()
+        Response<Map<String, Object>> checkApiKeyResponse = checkApiKeyCall.execute()
 
-        ContentType ct = apiKeyResponse.getEntityContentType()
+        if (!checkApiKeyResponse.successful) {
+            throw new CredentialsException("apikey check failed : ${checkApiKeyResponse.message()}")
+        }
 
-        if (ct.matches(ContentType.APPLICATION_JSON)) {
+        Map<String, Object> apiKeyCheck = checkApiKeyResponse.body()
 
-            JSONObject apiKeyCheck = apiKeyResponse.contentAsJSONObject
+        if (apiKeyCheck.valid) {
 
-            if (!apiKeyCheck.getOrDefault("valid", false)) {
-                throw new CredentialsException("invalid apiKey: '${apiKey}'")
-            }
-
-            String userId = (String) apiKeyCheck.get("userId")
-            String email = (String) apiKeyCheck.get("email")
+            String userId = apiKeyCheck.userId
 
             alaApiUserProfile.userId = userId
-            alaApiUserProfile.email = email
+            alaApiUserProfile.email = apiKeyCheck.email
 
-        } else {
+            Call<Map<String, Object>> userDetailsCall = apiKeyClient.getUserDetails(userId, true)
 
-            throw new ParseException("Unexpected ApiKey Content-Type, must be ${ContentType.APPLICATION_JSON}")
+            Response<Map<String, Object>> response = userDetailsCall.execute()
+
+            if (response.successful) {
+
+                Map<String, Object> userDetails = response.body()
+
+                alaApiUserProfile.firstName = userDetails.firstName
+                alaApiUserProfile.lastName = userDetails.lastName
+                alaApiUserProfile.activated = userDetails.activated
+                alaApiUserProfile.locked = userDetails.getOrDefault('locked', true)
+                alaApiUserProfile.addRoles(userDetails.getOrDefault('roles', []))
+
+                alaApiUserProfile.attributes = userDetails
+             }
+
+            return alaApiUserProfile
         }
 
-
-        HTTPRequest userDetailsRequest = new HTTPRequest(HTTPRequest.Method.POST, URI.create(userDetailsUri))
-        userDetailsRequest.setQuery("userName=${alaApiUserProfile.userId}")
-
-        HTTPResponse userDetailsResponse = userDetailsRequest.send()
-
-        userDetailsResponse.ensureStatusCode(HTTPResponse.SC_OK)
-        userDetailsResponse.ensureEntityContentType()
-
-        ct = userDetailsResponse.getEntityContentType()
-
-        if (ct.matches(ContentType.APPLICATION_JSON)) {
-
-            JSONObject userDetails = userDetailsResponse.contentAsJSONObject
-
-            boolean activated = (Boolean) userDetails.getOrDefault("activated", false)
-            boolean locked = (Boolean) userDetails.getOrDefault("locked", true)
-            String firstName = (String) userDetails.getOrDefault("firstName", "")
-            String lastName = (String) userDetails.getOrDefault("lastName", "")
-
-            List<String> userRoles = userDetails.getOrDefault("roles", Collections.emptyList())
-
-            alaApiUserProfile.firstName = firstName
-            alaApiUserProfile.lastName = lastName
-
-            alaApiUserProfile.activated = activated
-            alaApiUserProfile.locked = locked
-
-            alaApiUserProfile.attributes = userDetails
-            alaApiUserProfile.addRoles(userRoles)
-
-        } else {
-
-            throw new ParseException("Unexpected UserDetails Content-Type, must be ${ContentType.APPLICATION_JSON}")
-        }
-
-        return alaApiUserProfile
+        throw new CredentialsException("invalid apiKey: '${apiKey}'")
     }
 }

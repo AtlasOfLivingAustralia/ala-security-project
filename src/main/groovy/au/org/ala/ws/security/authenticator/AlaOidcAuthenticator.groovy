@@ -18,6 +18,7 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.nimbusds.jwt.proc.DefaultJWTProcessor
 import com.nimbusds.oauth2.sdk.Scope
+import com.nimbusds.oauth2.sdk.id.Issuer
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 
 import groovy.util.logging.Slf4j
@@ -29,12 +30,10 @@ import org.pac4j.core.credentials.Credentials
 import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.profile.UserProfile
+import org.pac4j.core.util.CommonHelper
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.stereotype.Component
 
 import java.text.ParseException
 
@@ -45,17 +44,15 @@ import java.text.ParseException
  * The credentials.userProfile is set to an instance of {@link AlaOidcUserProfile} a wrapped {@link org.pac4j.oidc.profile.OidcProfile} from the OIDC UserInfo endpoint.
  */
 @Slf4j
-@Component
-@ConditionalOnProperty('security.jwt.enabled')
 class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
-    private String issuer
-//    private List<JWSAlgorithm> expectedJWSAlgs
-    private JWKSource<SecurityContext> keySource
-    private AuthorizationGenerator authorizationGenerator
+    Issuer issuer
+    Set<JWSAlgorithm> expectedJWSAlgs
+    JWKSource<SecurityContext> keySource
+    AuthorizationGenerator authorizationGenerator
 
-    @Autowired
-    JwtProperties jwtProperties
+    List<String> requiredClaims
+    List<String> requiredScopes
 
     AlaOidcAuthenticator(final OidcConfiguration configuration) {
 
@@ -67,11 +64,9 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
         super.internalInit(forceReinit)
 
-        this.issuer = configuration.findProviderMetadata().issuer
-//            this.expectedJWSAlgs = configuration.findProviderMetadata().idTokenJWSAlgs
-        this.keySource = new RemoteJWKSet(configuration.findProviderMetadata().JWKSetURI.toURL(), configuration.findResourceRetriever())
-
-        this.authorizationGenerator = new FromAttributesAuthorizationGenerator(jwtProperties.roleAttributes, jwtProperties.permissionAttributes)
+        CommonHelper.assertNotNull('issuer', issuer)
+        CommonHelper.assertTrue(CommonHelper.isNotEmpty(expectedJWSAlgs), 'expectedJWSAlgs cannot be empty')
+        CommonHelper.assertNotNull('keySource', keySource)
     }
 
     @Override
@@ -101,7 +96,7 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         // Configure the JWT processor with a key selector to feed matching public
         // RSA keys sourced from the JWK set URL
         JWSKeySelector<SecurityContext> keySelector =
-                new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, keySource)
+                new JWSVerificationKeySelector<>(expectedJWSAlgs, keySource)
 
 //        JWEKeySelector<SecurityContext> jweKeySelector =
 //                new JWEDecryptionKeySelector<>(expectedJWSAlgs, keySource);
@@ -112,8 +107,8 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         // Set the required JWT claims for access tokens issued by the server
         // TODO externalise the required claims
         jwtProcessor.JWTClaimsSetVerifier = new DefaultJWTClaimsVerifier(
-                new JWTClaimsSet.Builder().issuer(issuer).build(),
-                jwtProperties.requiredClaims.toSet())
+                new JWTClaimsSet.Builder().issuer(issuer.value).build(),
+                requiredClaims?.toSet())
 
         try {
 
@@ -128,14 +123,13 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
             throw new CredentialsException("Internal error parsing token: " + accessToken, e)
         }
 
-        if (jwtProperties.requiredScopes) {
+        if (requiredScopes) {
 
-            if (!jwtProperties.requiredScopes.every {requiredScope -> credentials.accessToken.scope.any {scope -> requiredScope == scope.value } }) {
+            if (!requiredScopes.every {requiredScope -> credentials.accessToken.scope.any {scope -> requiredScope == scope.value } }) {
 
-                log.info "access_token scopes '${ credentials.accessToken.scope}' is missing required scopes ${jwtProperties.requiredScopes}"
-                throw new CredentialsException("access_token with scope '${credentials.accessToken.scope}' is missing required scopes ${jwtProperties.requiredScopes}")
+                log.info "access_token scopes '${ credentials.accessToken.scope}' is missing required scopes ${requiredScopes}"
+                throw new CredentialsException("access_token with scope '${credentials.accessToken.scope}' is missing required scopes ${requiredScopes}")
             }
-
         }
 
         if (credentials.accessToken.scope?.contains('profile')) {
@@ -144,9 +138,14 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
             super.validate(tokenCredentials, context, sessionStore)
 
             UserProfile profile = tokenCredentials.userProfile
-            cred.userProfile = authorizationGenerator.generate(context, sessionStore, profile)
-                        .map { new AlaOidcUserProfile(it) }
-                        .get()
+
+            if (authorizationGenerator) {
+                cred.userProfile = authorizationGenerator.generate(context, sessionStore, profile)
+                                .map { new AlaOidcUserProfile(it) }
+                                .get()
+            } else {
+                cred.userProfile = new AlaOidcUserProfile(profile)
+            }
         }
     }
 

@@ -8,17 +8,13 @@ import org.pac4j.core.credentials.Credentials
 import org.pac4j.core.exception.http.RedirectionAction
 import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.Pac4jConstants
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
 
 import static org.pac4j.core.util.CommonHelper.assertNotBlank
 
-@Component
 class AlaAuthClient extends BaseClient {
 
     private String realmName = Pac4jConstants.DEFAULT_REALM_NAME
 
-    @Autowired(required = false)
     List<AlaDirectClient> authClients
 
     @Override

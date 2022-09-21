@@ -6,9 +6,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
-@Component
-@Order(30)
-@ConditionalOnProperty('security.ip.whitelist')
 class AlaIpWhitelistClient extends AlaDirectClient {
 
     AlaIpWhitelistClient(AlaIpExtractor alaIpExtractor, AlaIpWhitelistAuthenticator alaIpWhitelistAuthenticator) {

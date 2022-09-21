@@ -5,12 +5,16 @@ import au.org.ala.ws.security.profile.AlaOidcUserProfile
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.common.Json
 import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.jwk.JWKSet
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet
+import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jose.util.ResourceRetriever
 import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.proc.DefaultJWTProcessor
 import com.nimbusds.oauth2.sdk.Scope
+import com.nimbusds.oauth2.sdk.id.Issuer
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 
@@ -21,23 +25,19 @@ import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import spock.lang.Specification
 
+import static au.org.ala.ws.security.JwtUtils.*
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 
 class AlaOidcAuthenticatorSpec extends Specification {
 
+    JWKSet jwkSet = jwkSet('test.jwks')
+
     def 'validate access_token without scope'() {
 
         setup:
-        OIDCProviderMetadata oidcProviderMetadata = Mock() {
-            1 * getJWKSetURI() >> new URI('http://localhost/jwk')
-//            1 * getUserInfoJWSAlgs() >> [ new JWSAlgorithm('TEST') ]
-        }
-
-        OidcConfiguration oidcConfiguration = Mock() {
-            _ * findProviderMetadata() >> oidcProviderMetadata
-            1 * findResourceRetriever() >> Mock(ResourceRetriever)
-        }
+        OidcConfiguration oidcConfiguration = Mock()
 
         GroovyMock(JWTParser, global: true)
         JWTParser.parse(_) >> Mock(JWT)
@@ -50,7 +50,10 @@ class AlaOidcAuthenticatorSpec extends Specification {
         }
 
         AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
-        alaOidcAuthenticator.jwtProperties = new JwtProperties()
+        alaOidcAuthenticator.issuer = new Issuer('test')
+        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
+
 
         OidcCredentials oidcCredentials = new OidcCredentials()
         oidcCredentials.accessToken = new BearerAccessToken('access_token')
@@ -69,33 +72,17 @@ class AlaOidcAuthenticatorSpec extends Specification {
     def 'access_token missing required scope'() {
 
         setup:
-        OIDCProviderMetadata oidcProviderMetadata = Mock() {
-            1 * getJWKSetURI() >> new URI('http://localhost/jwk')
-        }
-
-        OidcConfiguration oidcConfiguration = Mock() {
-            _ * findProviderMetadata() >> oidcProviderMetadata
-            1 * findResourceRetriever() >> Mock(ResourceRetriever)
-        }
-
-        GroovyMock(JWTParser, global: true)
-        JWTParser.parse(_) >> Mock(JWT)
-
-        JWTClaimsSet claimsSet = GroovyMock(JWTClaimsSet)
-        1 * claimsSet.getClaim('scope') >> [ 'test/scope' ]
-
-        GroovyMock(DefaultJWTProcessor, global: true)
-        new DefaultJWTProcessor() >> Mock(DefaultJWTProcessor) {
-            1 * process(_, null) >> claimsSet
-        }
+        OidcConfiguration oidcConfiguration = Mock()
 
         AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
-        JwtProperties jwtProperties = new JwtProperties()
-        jwtProperties.requiredScopes = [ 'required/scope' ]
-        alaOidcAuthenticator.jwtProperties = jwtProperties
+        alaOidcAuthenticator.issuer = new Issuer('http://localhost')
+        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
+
+        alaOidcAuthenticator.requiredScopes = [ 'required/scope' ]
 
         OidcCredentials oidcCredentials = new OidcCredentials()
-        oidcCredentials.accessToken = new BearerAccessToken('access_token')
+        oidcCredentials.accessToken = new BearerAccessToken(generateJwt(jwkSet, [ 'test/scope' ].toSet()))
 
         WebContext context = Mock()
         SessionStore sessionStore = Mock()
@@ -116,25 +103,11 @@ class AlaOidcAuthenticatorSpec extends Specification {
 
         OIDCProviderMetadata oidcProviderMetadata = Mock() {
             1 * getUserInfoEndpointURI() >> new URI("http://localhost:${wm.port()}/userInfo")
-            1 * getJWKSetURI() >> new URI('http://localhost/jwk')
         }
 
         OidcConfiguration oidcConfiguration = Mock() {
             _ * findProviderMetadata() >> oidcProviderMetadata
-            1 * findResourceRetriever() >> Mock(ResourceRetriever)
             _ * getMappedClaims() >> [:]
-        }
-
-        GroovyMock(JWTParser, global: true)
-        JWTParser.parse(_) >> Mock(JWT)
-
-        JWTClaimsSet claimsSet = GroovyMock(JWTClaimsSet)
-//        1 * claimsSet.getClaim('scope') >> [ 'openid', 'profile', 'email' ]
-        1 * claimsSet.getClaim('scope') >> 'openid profile email'
-
-        GroovyMock(DefaultJWTProcessor, global: true)
-        new DefaultJWTProcessor() >> Mock(DefaultJWTProcessor) {
-            1 * process(_, null) >> claimsSet
         }
 
         wm.stubFor(
@@ -148,12 +121,15 @@ class AlaOidcAuthenticatorSpec extends Specification {
         )
 
         AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
-        JwtProperties jwtProperties = new JwtProperties()
-        jwtProperties.requiredScopes = [ 'openid', 'profile', 'email' ]
-        alaOidcAuthenticator.jwtProperties = jwtProperties
+        alaOidcAuthenticator.issuer = new Issuer('http://localhost')
+        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
+
+        alaOidcAuthenticator.requiredScopes = [ 'openid', 'profile', 'email' ]
+
 
         OidcCredentials oidcCredentials = new OidcCredentials()
-        oidcCredentials.accessToken = new BearerAccessToken('access_token')
+        oidcCredentials.accessToken = new BearerAccessToken(generateJwt(jwkSet, [ 'openid', 'profile', 'email' ].toSet()))
 
         WebContext context = Mock()
         SessionStore sessionStore = Mock()

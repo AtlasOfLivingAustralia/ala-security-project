@@ -20,7 +20,6 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.oauth2.sdk.id.Issuer
-import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import grails.testing.web.interceptor.InterceptorUnitTest
 import groovy.time.TimeCategory
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -55,21 +54,15 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
     AlaIpWhitelistClient alaIpWhitelistClient
     void setup() {
 
-        OidcConfiguration oidcConfiguration = Stub() {
-            findProviderMetadata() >> Stub(OIDCProviderMetadata) {
-                getIssuer() >> new Issuer('http://localhost')
-                getJWKSetURI() >> new URI('http://localhost/jwk')
-            }
-        }
+        OidcConfiguration oidcConfiguration = Mock()
 
         GroovyMock(RemoteJWKSet, global: true)
         new RemoteJWKSet(_, _) >> new ImmutableJWKSet<SecurityContext>(jwkSet('test.jwks'))
 
         AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
-        alaOidcAuthenticator.jwtProperties = jwtProperties
-        alaOidcAuthenticator.issuer = 'http://localhost'
-//        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ]
-        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet('test.jwks'))
+        alaOidcAuthenticator.issuer = new Issuer('http://localhost')
+        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
 
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = Stub(AlaApiKeyAuthenticator) {
             validate(_, _, _) >> { args ->
@@ -380,7 +373,8 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         grailsApplication.addArtefact("Controller", AnnotatedClassController)
 
         AnnotatedClassController controller = new AnnotatedClassController()
-        jwtProperties.requiredScopes += 'missing'
+
+        alaOidcClient.authenticator.requiredScopes = [ 'missing' ]
 
         when:
         request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet)}")

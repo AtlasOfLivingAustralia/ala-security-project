@@ -5,11 +5,7 @@ import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.Credentials
 import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.credentials.extractor.CredentialsExtractor
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.stereotype.Component
 
-@Component
-@ConditionalOnProperty('security.ip.whitelist')
 class AlaIpExtractor implements CredentialsExtractor {
 
     static final List<String> LOOPBACK_ADDRESSES = ["127.0.0.1",

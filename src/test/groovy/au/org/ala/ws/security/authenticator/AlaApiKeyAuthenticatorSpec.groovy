@@ -1,12 +1,22 @@
 package au.org.ala.ws.security.authenticator
 
+import au.org.ala.ws.security.ApiKeyClient
 import au.org.ala.ws.security.profile.AlaApiUserProfile
+import co.infinum.retromock.BodyFactory
+import co.infinum.retromock.Retromock
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.common.Json
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
+import okhttp3.OkHttpClient
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.exception.CredentialsException
+import retrofit2.Call
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 import spock.lang.Specification
 
 import static com.github.tomakehurst.wiremock.client.WireMock.get
@@ -23,9 +33,18 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         WireMockServer wm = new WireMockServer(wireMockConfig().dynamicPort())
         wm.start()
 
+        Moshi moshi = new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build()
+
+        OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
+        ApiKeyClient apiKeyClient = new Retrofit.Builder()
+                .baseUrl("http://localhost:${wm.port()}")
+                .addConverterFactory(MoshiConverterFactory.create(moshi))
+                .client(httpClient.build())
+                .build()
+                .create(ApiKeyClient)
+
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = new AlaApiKeyAuthenticator()
-        alaApiKeyAuthenticator.apiKeyUri = "http://localhost:${wm.port()}/apikey/check"
-        alaApiKeyAuthenticator.userDetailsUri = "http://localhost:${wm.port()}/userdetails"
+        alaApiKeyAuthenticator.apiKeyClient = apiKeyClient
 
         TokenCredentials alaApiKeyCredentials = new TokenCredentials('testkey')
 
@@ -33,7 +52,7 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         SessionStore sessionStore = Mock()
 
         wm.stubFor(
-                get(urlEqualTo('/apikey/check/testkey'))
+                get(urlEqualTo('/apikey/ws/check?apikey=testkey'))
                         .willReturn(okJson(Json.write([
                                 valid: true,
                                 userId: "0",
@@ -42,7 +61,7 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         )
 
         wm.stubFor(
-                post(urlEqualTo('/userdetails'))
+                post(urlEqualTo('/userDetails/getUserDetails?userName=0&includeProps=true'))
                         .willReturn(okJson(Json.write([
                                 userId: "0",
                                 email: "email@test.com",
@@ -69,9 +88,18 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         WireMockServer wm = new WireMockServer(wireMockConfig().dynamicPort())
         wm.start()
 
+        Moshi moshi = new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build()
+
+        OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
+        ApiKeyClient apiKeyClient = new Retrofit.Builder()
+                .baseUrl("http://localhost:${wm.port()}")
+                .addConverterFactory(MoshiConverterFactory.create(moshi))
+                .client(httpClient.build())
+                .build()
+                .create(ApiKeyClient)
+
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = new AlaApiKeyAuthenticator()
-        alaApiKeyAuthenticator.apiKeyUri = "http://localhost:${wm.port()}/apikey/check"
-        alaApiKeyAuthenticator.userDetailsUri = "http://localhost:${wm.port()}/userdetails"
+        alaApiKeyAuthenticator.apiKeyClient = apiKeyClient
 
         TokenCredentials alaApiKeyCredentials = new TokenCredentials('testkey')
 
@@ -79,7 +107,7 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         SessionStore sessionStore = Mock()
 
         wm.stubFor(
-                get(urlEqualTo('/apikey/check/testkey'))
+                get(urlEqualTo('/apikey/ws/check?apikey=testkey'))
                         .willReturn(okJson(Json.write([
                                 valid: false
                         ])))
