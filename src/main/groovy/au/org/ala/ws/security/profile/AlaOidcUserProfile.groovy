@@ -5,7 +5,7 @@ import org.pac4j.oidc.profile.OidcProfileDefinition
 
 import java.security.Principal
 
-class AlaOidcUserProfile implements AlaUserProfile {
+class AlaOidcUserProfile extends AlaUserProfile {
 
     OidcProfile delegate
 
@@ -23,6 +23,7 @@ class AlaOidcUserProfile implements AlaUserProfile {
         return delegate.getFirstName()
     }
 
+    @Override
     String getLastName() {
         getFamilyName()
     }
@@ -149,10 +150,5 @@ class AlaOidcUserProfile implements AlaUserProfile {
     @Override
     boolean isExpired() {
         return delegate.expired
-    }
-
-    @Override
-    Principal asPrincipal() {
-        return delegate.asPrincipal()
     }
 }

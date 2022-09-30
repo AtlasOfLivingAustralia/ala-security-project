@@ -93,15 +93,8 @@ class AlaWebServiceAuthFilter extends OncePerRequestFilter {
 
         userProfile.roles.forEach {s -> authorities.add(new SimpleGrantedAuthority(s)) }
 
-        AlaUser alaUser = new AlaUser()
-        alaUser.email = userProfile.getAttribute('email')
-        alaUser.roles = userProfile.roles
-        alaUser.attributes = userProfile.attributes
-        alaUser.firstName = userProfile.getAttribute('given_name')
-        alaUser.lastName = userProfile.getAttribute('family_name')
-
         PreAuthenticatedAuthenticationToken token = new PreAuthenticatedAuthenticationToken(
-                alaUser, credentials, authorities)
+                userProfile, credentials, authorities)
         token.setAuthenticated(true)
         securityContext.setAuthentication(token)
     }
