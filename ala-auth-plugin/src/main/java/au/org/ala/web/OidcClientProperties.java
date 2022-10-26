@@ -21,6 +21,7 @@ public class OidcClientProperties {
     private boolean useAnonymousClient = true;
     private int connectTimeout = HttpConstants.DEFAULT_CONNECT_TIMEOUT;
     private int readTimeout = HttpConstants.DEFAULT_READ_TIMEOUT;
+    private String logoutUrl;
 
     public boolean isEnabled() {
         return enabled;
@@ -117,4 +118,13 @@ public class OidcClientProperties {
     public void setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
     }
+
+    public String getLogoutUrl() {
+        return logoutUrl;
+    }
+
+    public void setLogoutUrl(String logoutUrl) {
+        this.logoutUrl = logoutUrl;
+    }
+
 }
