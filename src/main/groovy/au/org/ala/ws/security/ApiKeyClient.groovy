@@ -10,6 +10,6 @@ interface ApiKeyClient {
     @GET('/apikey/ws/check')
     Call<Map<String, Object>> checkApiKey(@Query('apikey') String apiKey)
 
-    @POST('/userDetails/getUserDetails')
+    @POST('/userdetails/userDetails/getUserDetails')
     Call<Map<String, Object>> getUserDetails(@Query("userName") String username, @Query("includeProps") boolean includeProps)
 }
