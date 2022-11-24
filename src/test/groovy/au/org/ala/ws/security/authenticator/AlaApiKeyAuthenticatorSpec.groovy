@@ -61,7 +61,7 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         )
 
         wm.stubFor(
-                post(urlEqualTo('/userDetails/getUserDetails?userName=0&includeProps=true'))
+                post(urlEqualTo('/userdetails/userDetails/getUserDetails?userName=0&includeProps=true'))
                         .willReturn(okJson(Json.write([
                                 userId: "0",
                                 email: "email@test.com",
