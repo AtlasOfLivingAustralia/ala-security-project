@@ -141,8 +141,8 @@ class AlaOidcAuthenticatorSpec extends Specification {
         oidcCredentials.accessToken.scope == new Scope('openid', 'profile', 'email')
         oidcCredentials.userProfile instanceof AlaOidcUserProfile
 
-        oidcCredentials.userProfile.firstName == 'given_name'
-        oidcCredentials.userProfile.lastName == 'family_name'
+        oidcCredentials.userProfile.givenName == 'given_name'
+        oidcCredentials.userProfile.familyName == 'family_name'
         oidcCredentials.userProfile.email == 'email@test.com'
 
         cleanup:

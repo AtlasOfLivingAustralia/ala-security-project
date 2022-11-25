@@ -2,7 +2,7 @@ package au.org.ala.ws.security.authenticator
 
 import au.org.ala.ws.security.JwtProperties
 import au.org.ala.ws.security.profile.AlaOidcUserProfile
-
+import au.org.ala.ws.security.profile.AlaUserProfile
 import com.nimbusds.jose.JOSEException
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.source.JWKSource
@@ -34,8 +34,12 @@ import org.pac4j.core.util.CommonHelper
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator
+import org.pac4j.oidc.profile.OidcProfile
+import org.pac4j.oidc.profile.OidcProfileDefinition
 
 import java.text.ParseException
+
+import static java.util.Optional.ofNullable
 
 /**
  * Authenticator for JWT access_token based on the Pac4j {@link org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator},
@@ -141,12 +145,23 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
             if (authorizationGenerator) {
                 cred.userProfile = authorizationGenerator.generate(context, sessionStore, profile)
-                                .map { new AlaOidcUserProfile(it) }
+                                .map(this::generateAlaUserProfile)
                                 .get()
             } else {
-                cred.userProfile = new AlaOidcUserProfile(profile)
+                cred.userProfile = generateAlaUserProfile(profile)
             }
         }
+    }
+
+    AlaUserProfile generateAlaUserProfile(UserProfile profile) {
+
+        AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile()
+        alaOidcUserProfile.addAttributes(profile.attributes)
+
+        // session expiration with token behavior
+        alaOidcUserProfile.setTokenExpirationAdvance(configuration.getTokenExpirationAdvance())
+
+        return alaOidcUserProfile
     }
 
     @Override

@@ -66,8 +66,8 @@ class AlaApiKeyAuthenticator extends InitializableObject implements Authenticato
 
                 Map<String, Object> userDetails = response.body()
 
-                alaApiUserProfile.firstName = userDetails.firstName
-                alaApiUserProfile.lastName = userDetails.lastName
+                alaApiUserProfile.givenName = userDetails.firstName
+                alaApiUserProfile.familyName = userDetails.lastName
                 alaApiUserProfile.activated = userDetails.activated
                 alaApiUserProfile.locked = userDetails.getOrDefault('locked', true)
                 alaApiUserProfile.addRoles(userDetails.getOrDefault('roles', []))

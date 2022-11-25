@@ -67,7 +67,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = Stub(AlaApiKeyAuthenticator) {
             validate(_, _, _) >> { args ->
                 if (args[0].token == 'valid') {
-                    args[0].userProfile = new AlaApiUserProfile(email: 'email@test.com', firstName: 'first_name', lastName: 'last_name')
+                    args[0].userProfile = new AlaApiUserProfile(email: 'email@test.com', givenName: 'first_name', familyName: 'last_name')
                 } else {
                     throw new CredentialsException("invalid apikey: '${args[0].token}'")
                 }

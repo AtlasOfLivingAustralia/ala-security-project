@@ -77,8 +77,8 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
 
         then:
         alaApiKeyCredentials.userProfile instanceof AlaApiUserProfile
-        alaApiKeyCredentials.userProfile.firstName == 'given_name'
-        alaApiKeyCredentials.userProfile.lastName == 'family_name'
+        alaApiKeyCredentials.userProfile.givenName == 'given_name'
+        alaApiKeyCredentials.userProfile.familyName == 'family_name'
         alaApiKeyCredentials.userProfile.email == 'email@test.com'
     }
 
