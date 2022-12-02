@@ -34,6 +34,9 @@ On the server side, annotate protected controllers (either the class or individu
 - ```security.jwt.read-timeout-ms``` - HTTP request read timeout
 - ```security.jwt.required-claims``` - The claims that must be present on the JWT for it to be valid.  By default this is `"sub", "iat", "exp", "nbf", "cid", "jti"`
 - ```security.jwt.required-scopes``` - List of scopes that are required for all JWT endpoints in this app
+- ```security.jwt.accessTokenRoles``` - The name of the claim in the access token that contains the roles (will need to be set to `cognito:groups` when authentication is performed by coginto)
+- ```security.jwt.rolePrefix``` - The prefix to apply to the access token roles (eg. `ROLE_`)
+- ```security.jwt.roleToUppercase``` - Should the role be converted to upper case (default: `true`)
 
 ### ApiKey support
 - ```security.apikey.enabled``` - Defaults to false. True indicated the plugin should check for apikey on incoming requests.
