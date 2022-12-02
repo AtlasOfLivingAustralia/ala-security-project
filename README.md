@@ -6,7 +6,7 @@ Web service specific security code, e.g. API Key filters
 
 ## Usage
 ```
-compile "org.grails.plugins:ala-ws-security-plugin:4.0.0-SNAPSHOT"
+compile "org.grails.plugins:ala-ws-security-plugin:4.2.0-SNAPSHOT"
 ```
 
 ### JWT Usage
@@ -29,19 +29,24 @@ On the server side, annotate protected controllers (either the class or individu
 
 ### JWT support
 - ```security.jwt.enabled``` - Defaults to true.  True indicates the plugin should check for JWTs on incoming requests.
-- ```security.jwt.fallback-to-legacy-behaviour``` - Defaults to true.  True indicates that if no JWT is present on a request, legacy api keys will be checked instead.
 - ```security.jwt.discovery-uri``` - The discovery URI of the OIDC provider.  JWT validation will be bootstrapped from this document.
 - ```security.jwt.connect-timeout-ms``` - HTTP request connection timeout
 - ```security.jwt.read-timeout-ms``` - HTTP request read timeout
 - ```security.jwt.required-claims``` - The claims that must be present on the JWT for it to be valid.  By default this is `"sub", "iat", "exp", "nbf", "cid", "jti"`
 - ```security.jwt.required-scopes``` - List of scopes that are required for all JWT endpoints in this app
 
-### Mandatory
-- ```security.apikey.check.serviceUrl``` - URL of the API Key service endpoint, up to and including the key parameter name. E.g. https://auth.ala.org.au/apikey/ws/check?apikey=
+### ApiKey support
+- ```security.apikey.enabled``` - Defaults to false. True indicated the plugin should check for apikey on incoming requests.
 
-### Optional
-- ```security.apikey.ip.whitelist``` - comma separated list of IP Addresses that are exempt from the API key security check.
-- ```security.apikey.header.override ``` - override the default request header name (apiKey) to use a different name.
+#### Mandatory
+- ```security.apikey.check.serviceUrl``` - URL of the API Key service endpoint, up to and including the key parameter name. E.g. https://auth.ala.org.au/apikey/ws/check?apikey=
+- ```security.apikey.userdetails.serviceUrl``` - URL of the userdetails service endpoint. E.g. https://auth.ala.org.au/userdetails/getUserDetails
+#### Optional
+- ```security.apikey.header.override``` - override the default request header name (apiKey) to use a different name.
+- ```security.apikey.header.alternatives``` - alternate request header names to check if the default request header (`apiKey`) is not found
+
+### IP whitelist support
+- ```security.ip.whitelist``` - comma separated list of IP Addresses that are exempt from the API key security check. If the property is not defined then IP whitelisting is disabled.
 
 ## Changelog
 - **Version 4.0.0**

@@ -145,7 +145,7 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
 
         // Set the required "typ" header "at+jwt" for access tokens issued by the
         // Connect2id server, may not be set by other servers
-        jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(new JOSEObjectType(jwtType)));
+//        jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(new JOSEObjectType(jwtType)));
 
 // The expected JWS algorithm of the access tokens (agreed out-of-band)
 //        JWSAlgorithm expectedJWSAlg = JWSAlgorithm.RS256;

@@ -2,58 +2,95 @@ package au.org.ala.ws.security
 
 import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
-import au.org.ala.ws.security.service.ApiKeyService
+import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator
+import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator
+import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator
+import au.org.ala.ws.security.client.AlaApiKeyClient
+import au.org.ala.ws.security.client.AlaAuthClient
+import au.org.ala.ws.security.client.AlaIpWhitelistClient
+import au.org.ala.ws.security.client.AlaOidcClient
+import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor
+import au.org.ala.ws.security.credentials.AlaIpExtractor
+import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor
+import au.org.ala.ws.security.profile.AlaApiUserProfile
+
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
+import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.oauth2.sdk.id.Issuer
 import grails.testing.web.interceptor.InterceptorUnitTest
 import groovy.time.TimeCategory
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.util.GrailsApplicationAttributes
-import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
 import org.pac4j.core.config.Config
-import org.pac4j.http.client.direct.DirectBearerAuthClient
+import org.pac4j.core.exception.CredentialsException
 import org.pac4j.jee.context.session.JEESessionStore
+import org.pac4j.oidc.config.OidcConfiguration
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import static au.org.ala.ws.security.JwtUtils.*
 
 @Unroll
-class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest<ApiKeyInterceptor> {
+class AlaSecurityInterceptorSpec extends Specification implements InterceptorUnitTest<AlaSecurityInterceptor> {
 
-    static final int UNAUTHORISED = 403
+    static final int UNAUTHORISED = 401
+    static final int FORBIDDEN = 403
     static final int OK = 200
-
-    ApiKeyService apiKeyService
 
     JWKSet jwkSet = jwkSet('test.jwks')
     def jwtProperties = new JwtProperties()
 
+    @Shared
+    AlaOidcClient alaOidcClient
+
+    @Shared
+    AlaApiKeyClient alaApiKeyClient
+
+    @Shared
+    AlaIpWhitelistClient alaIpWhitelistClient
     void setup() {
+
+        OidcConfiguration oidcConfiguration = Mock()
+
+        GroovyMock(RemoteJWKSet, global: true)
+        new RemoteJWKSet(_, _) >> new ImmutableJWKSet<SecurityContext>(jwkSet('test.jwks'))
+
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        alaOidcAuthenticator.issuer = new Issuer('http://localhost')
+        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
+
+        AlaApiKeyAuthenticator alaApiKeyAuthenticator = Stub(AlaApiKeyAuthenticator) {
+            validate(_, _, _) >> { args ->
+                if (args[0].token == 'valid') {
+                    args[0].userProfile = new AlaApiUserProfile(email: 'email@test.com', givenName: 'first_name', familyName: 'last_name')
+                } else {
+                    throw new CredentialsException("invalid apikey: '${args[0].token}'")
+                }
+            }
+        }
+
+        AlaIpWhitelistAuthenticator alaIpWhitelistAuthenticator = new AlaIpWhitelistAuthenticator()
+        alaIpWhitelistAuthenticator.ipWhitelist = [ '2.2.2.2', '3.3.3.3' ]
+
+        alaOidcClient = new AlaOidcClient(new AlaOidcCredentialsExtractor(), alaOidcAuthenticator)
+        alaApiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
+        alaIpWhitelistClient = new AlaIpWhitelistClient(new AlaIpExtractor(), alaIpWhitelistAuthenticator)
 
         defineBeans {
             config(InstanceFactoryBean, new Config().tap { sessionStore = JEESessionStore.INSTANCE })
-            directBearerAuthClient(InstanceFactoryBean,
-                    new DirectBearerAuthClient(
-                            new JwtAuthenticator(
-                                    'http://localhost',
-                                    jwtProperties.getRequiredClaims(),
-                                    [JWSAlgorithm.RS256].toSet(),
-                                    new ImmutableJWKSet<SecurityContext>(jwkSet))
-                    ).tap {
-                        it.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator(['role'],['scope', 'scp']))
-                    })
+            alaAuthClient(InstanceFactoryBean, new AlaAuthClient().tap {
+
+                it.authClients = [ alaOidcClient, alaApiKeyClient, alaIpWhitelistClient ]
+            })
+
             jwtProperties(InstanceFactoryBean, jwtProperties)
         }
 
-        // grailsApplication is not isolated in unit tests, so clear the ip.whitelist property to avoid polluting independent tests
-        grailsApplication.config.security.apikey.ip = [whitelist: ""]
-        apiKeyService = Stub(ApiKeyService)
-        apiKeyService.checkApiKey(_) >> { String key -> [valid: (key == "valid")] }
-
-        interceptor.apiKeyService = apiKeyService
     }
 
     void "All methods of a controller annotated with RequireApiKey at the class level should be protected"() {
@@ -73,6 +110,8 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
         def result = interceptor.before()
 
         then:
+//        1 * alaAuthClient.getCredentials(_, _) >> Optional.empty()
+
         result == before
         response.status == responseCode
 
@@ -88,6 +127,11 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
         // unless we manually add the dummy controller class used in this test
         grailsApplication.addArtefact("Controller", AnnotatedMethodController)
 
+        AlaApiKeyAuthenticator alaApiKeyAuthenticator = Spy()
+        AlaApiKeyClient apiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
+        interceptor.alaAuthClient = new AlaAuthClient()
+        interceptor.alaAuthClient.authClients = [ apiKeyClient ]
+
         AnnotatedMethodController controller = new AnnotatedMethodController()
 
         when:
@@ -99,6 +143,7 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
         def result = interceptor.before()
 
         then:
+        alaApiKeyAuthenticator.validate(_, _, _) >> { throw new CredentialsException('invalid apikey')}
         result == before
         response.status == responseCode
 
@@ -163,7 +208,9 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
         grailsApplication.addArtefact("Controller", AnnotatedClassController)
 
         AnnotatedClassController controller = new AnnotatedClassController()
-        grailsApplication.config.security.apikey.header.alternatives = ['Authorization']
+
+        alaApiKeyClient.credentialsExtractor.alternativeHeaderNames = [ 'Authorization' ]
+//        grailsApplication.config.security.apikey.header.alternatives = [ 'Authorization' ]
 
         when:
         request.addHeader("Authorization", "valid")
@@ -192,8 +239,7 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
         AnnotatedClassController controller = new AnnotatedClassController()
 
         when:
-        grailsApplication.config.security.apikey.ip = [whitelist: "2.2.2.2, 3.3.3.3"]
-        request.remoteHost = ipAddress
+        request.remoteAddr = ipAddress
 
         request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
         request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
@@ -220,7 +266,7 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
         AnnotatedClassController controller = new AnnotatedClassController()
 
         when:
-        request.remoteHost = ipAddress
+        request.remoteAddr = ipAddress
 
         request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
         request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
@@ -249,7 +295,7 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
 
         when:
         request.addHeader("X-Forwarded-For", ipAddress)
-        request.remoteHost = "1.2.3.4"
+        request.remoteAddr = "1.2.3.4"
 
         request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass')
         request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
@@ -316,8 +362,8 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
 
         where:
         action    | responseCode | before
-        "action1" | UNAUTHORISED | false
-        "action2" | UNAUTHORISED | false
+        "action1" | FORBIDDEN | false
+        "action2" | FORBIDDEN | false
     }
 
     void "Secured methods should be inaccessible when given a valid JWT without the required scopes from properties"() {
@@ -327,7 +373,8 @@ class ApiKeyInterceptorSpec extends Specification implements InterceptorUnitTest
         grailsApplication.addArtefact("Controller", AnnotatedClassController)
 
         AnnotatedClassController controller = new AnnotatedClassController()
-        interceptor.jwtProperties.requiredScopes += 'missing'
+
+        alaOidcClient.authenticator.requiredScopes = [ 'missing' ]
 
         when:
         request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet)}")
