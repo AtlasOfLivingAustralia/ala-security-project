@@ -17,7 +17,7 @@ import com.nimbusds.oauth2.sdk.Scope
 import com.nimbusds.oauth2.sdk.id.Issuer
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
-
+import groovy.time.TimeCategory
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.exception.CredentialsException
@@ -93,6 +93,42 @@ class AlaOidcAuthenticatorSpec extends Specification {
         then:
         CredentialsException ce = thrown CredentialsException
         ce.message == 'access_token with scope \'[test/scope]\' is missing required scopes [required/scope]'
+    }
+
+    def 'validate access_token with roles'() {
+
+        setup:
+        OidcConfiguration oidcConfiguration = Mock()
+
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        alaOidcAuthenticator.issuer = new Issuer('http://localhost')
+        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
+
+        alaOidcAuthenticator.accessTokenRoleClaims = [ 'roles' ]
+        alaOidcAuthenticator.rolePrefix = 'ROLE_'
+
+        OidcCredentials oidcCredentials = new OidcCredentials()
+        JWTClaimsSet jwtClaims = new JWTClaimsSet.Builder()
+                .subject('sub')
+                .issuer(alaOidcAuthenticator.issuer.value)
+                .notBeforeTime(new Date())
+                .expirationTime(use(TimeCategory) { new Date() + 1.minute })
+                .audience('aud')
+                .issueTime(new Date())
+                .claim('roles', [ 'user', 'admin' ])
+                .build()
+
+        oidcCredentials.accessToken = new BearerAccessToken(generateJwt(jwkSet, jwtClaims))
+
+        WebContext context = Mock()
+        SessionStore sessionStore = Mock()
+
+        when:
+        alaOidcAuthenticator.validate(oidcCredentials, context, sessionStore)
+
+        then:
+        oidcCredentials.userProfile.roles == Set.of('ROLE_USER', 'ROLE_ADMIN')
     }
 
     def 'validate access_token with user profile'() {

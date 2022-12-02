@@ -15,8 +15,13 @@ public class JwtProperties {
     private String jwtType = "jwt";
     private int connectTimeoutMs = HttpConstants.DEFAULT_CONNECT_TIMEOUT;;
     private int readTimeoutMs = HttpConstants.DEFAULT_READ_TIMEOUT;
+
+    private List<String> accessTokenRoles = List.of();
+    private String rolePrefix = "ROLE_";
+    private boolean roleToUppercase = true;
     private List<String> roleAttributes = List.of("role");
     private List<String> permissionAttributes = List.of("scope","scp", "scopes");
+
     private List<String> requiredClaims = List.of("sub", "iat", "exp", "client_id", "jti", "iss");
     private List<String> requiredScopes = List.of();
     private List<String> urlPatterns = List.of(); // hard coded paths to apply JWT authentication to
@@ -83,6 +88,30 @@ public class JwtProperties {
 
     public void setJwtType(String jwtType) {
         this.jwtType = jwtType;
+    }
+
+    public List<String> getAccessTokenRoles() {
+        return accessTokenRoles;
+    }
+
+    public void setAccessTokenRoles(List<String> accessTokenRoles) {
+        this.accessTokenRoles = accessTokenRoles;
+    }
+
+    public String getRolePrefix() {
+        return rolePrefix;
+    }
+
+    public void setRolePrefix(String rolePrefix) {
+        this.rolePrefix = rolePrefix;
+    }
+
+    public boolean isRoleToUppercase() {
+        return roleToUppercase;
+    }
+
+    public void setRoleToUppercase(boolean roleToUppercase) {
+        this.roleToUppercase = roleToUppercase;
     }
 
     public List<String> getRoleAttributes() {
