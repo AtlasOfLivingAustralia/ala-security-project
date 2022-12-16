@@ -1,0 +1,81 @@
+plugins {
+    id("org.springframework.boot") version "2.7.0" apply false
+    id("io.spring.dependency-management") version "1.0.13.RELEASE"
+
+    id 'groovy'
+    id 'java-library'
+
+    id 'maven-publish'
+}
+
+version "4.3.2-SNAPSHOT"
+group "au.org.ala"
+
+dependencyManagement {
+    imports {
+        mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+    }
+}
+
+repositories {
+    mavenLocal()
+    maven { url "https://nexus.ala.org.au/content/groups/public/" }
+    mavenCentral()
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+dependencies {
+    implementation 'org.codehaus.groovy:groovy-all:3.0.11'
+
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor"
+    compileOnly 'org.springframework.boot:spring-boot-starter-security'
+    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+
+    api project(':ala-ws-security')
+
+}
+
+publishing {
+    repositories {
+        maven {
+            name 'Nexus'
+            url "https://nexus.ala.org.au/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
+            credentials {
+                username = System.getenv('TRAVIS_DEPLOY_USERNAME')
+                password = System.getenv('TRAVIS_DEPLOY_PASSWORD')
+            }
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                name = 'ALA WS Spring Security Library'
+                description = 'Library for integrating ALA WS Security library with Spring Security'
+                url = 'https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin'
+                licenses {
+                    license {
+                        name = 'MPL-1.1'
+                        url = 'https://www.mozilla.org/en-US/MPL/1.1/'
+                    }
+                }
+                developers {
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin.git'
+                    developerConnection = 'scm:git:ssh://github.com:AtlasOfLivingAustralia/ala-ws-security-plugin.git'
+                    url = 'https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin/tree/main'
+                }
+            }
+        }
+    }
+}
+
