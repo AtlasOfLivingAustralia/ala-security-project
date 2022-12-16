@@ -41,6 +41,8 @@ dependencies {
 
     api "au.org.ala:userdetails-service-client:2.0.0"
 
+    implementation 'com.github.seancfoley:ipaddress:5.3.4'
+
     api 'org.pac4j:pac4j-oidc:5.4.3'
     api 'org.pac4j:pac4j-jwt:5.4.3'
     api 'org.pac4j:pac4j-http:5.4.3'

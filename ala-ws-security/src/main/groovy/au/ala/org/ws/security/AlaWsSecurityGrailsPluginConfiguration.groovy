@@ -14,11 +14,11 @@ import au.org.ala.ws.security.client.AlaDirectClient
 import au.org.ala.ws.security.client.AlaIpWhitelistClient
 import au.org.ala.ws.security.client.AlaOidcClient
 import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor
-import au.org.ala.ws.security.credentials.AlaIpExtractor
 import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor
 import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
+import org.pac4j.http.credentials.extractor.IpExtractor
 import retrofit2.converter.moshi.MoshiConverterFactory
 import okhttp3.OkHttpClient
 import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
@@ -147,7 +147,7 @@ class AlaWsSecurityGrailsPluginConfiguration {
     @ConditionalOnProperty('security.ip.whitelist')
     AlaIpWhitelistClient getAlaIpWhitelistClient() {
 
-        AlaIpExtractor credentialsExtractor = new AlaIpExtractor()
+        IpExtractor credentialsExtractor = new IpExtractor()
 
         AlaIpWhitelistAuthenticator authenticator = new AlaIpWhitelistAuthenticator()
         authenticator.ipWhitelist = ipWhitelistProperties.whitelist

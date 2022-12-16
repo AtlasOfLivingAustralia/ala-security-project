@@ -1,16 +1,13 @@
 package au.org.ala.ws.security.client
 
 import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator
-import au.org.ala.ws.security.credentials.AlaIpExtractor
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.core.annotation.Order
-import org.springframework.stereotype.Component
+import org.pac4j.http.credentials.extractor.IpExtractor
 
 class AlaIpWhitelistClient extends AlaDirectClient {
 
-    AlaIpWhitelistClient(AlaIpExtractor alaIpExtractor, AlaIpWhitelistAuthenticator alaIpWhitelistAuthenticator) {
+    AlaIpWhitelistClient(IpExtractor ipExtractor, AlaIpWhitelistAuthenticator alaIpWhitelistAuthenticator) {
 
-        defaultCredentialsExtractor(alaIpExtractor)
+        defaultCredentialsExtractor(ipExtractor)
         defaultAuthenticator(alaIpWhitelistAuthenticator)
     }
 

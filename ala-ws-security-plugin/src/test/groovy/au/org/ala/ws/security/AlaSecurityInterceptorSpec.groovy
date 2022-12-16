@@ -10,7 +10,6 @@ import au.org.ala.ws.security.client.AlaAuthClient
 import au.org.ala.ws.security.client.AlaIpWhitelistClient
 import au.org.ala.ws.security.client.AlaOidcClient
 import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor
-import au.org.ala.ws.security.credentials.AlaIpExtractor
 import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor
 import au.org.ala.ws.security.profile.AlaApiUserProfile
 
@@ -26,6 +25,7 @@ import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.util.GrailsApplicationAttributes
 import org.pac4j.core.config.Config
 import org.pac4j.core.exception.CredentialsException
+import org.pac4j.http.credentials.extractor.IpExtractor
 import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.oidc.config.OidcConfiguration
 import spock.lang.Shared
@@ -79,7 +79,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
         alaOidcClient = new AlaOidcClient(new AlaOidcCredentialsExtractor(), alaOidcAuthenticator)
         alaApiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
-        alaIpWhitelistClient = new AlaIpWhitelistClient(new AlaIpExtractor(), alaIpWhitelistAuthenticator)
+        alaIpWhitelistClient = new AlaIpWhitelistClient(new IpExtractor(), alaIpWhitelistAuthenticator)
 
         defineBeans {
             config(InstanceFactoryBean, new Config().tap { sessionStore = JEESessionStore.INSTANCE })
