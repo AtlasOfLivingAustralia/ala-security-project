@@ -1,4 +1,4 @@
-import au.ala.org.ws.security.AlaWsSecurityGrailsPluginConfiguration
+import au.org.ala.ws.security.AlaWsSecurityGrailsPluginConfiguration
 
 class AlaWsSecurityGrailsPlugin {
     // the plugin version

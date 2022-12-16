@@ -1,4 +1,4 @@
-package au.ala.org.ws.security
+package au.org.ala.ws.security
 
 import au.org.ala.ws.security.ApiKeyClient
 import au.org.ala.ws.security.ApiKeyProperties
