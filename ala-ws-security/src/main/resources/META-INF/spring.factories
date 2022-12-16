@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+au.ala.org.ws.security.AlaWsSecurityGrailsPluginConfiguration
