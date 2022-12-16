@@ -41,7 +41,7 @@ import retrofit2.Retrofit
 
 @Configuration
 @EnableConfigurationProperties([ JwtProperties, ApiKeyProperties, IpWhitelistProperties ])
-class AlaWsSecurityGrailsPluginConfiguration {
+class AlaWsSecurityConfiguration {
 
     static final String JWT_CLIENT = 'JwtClient'
 

@@ -1,4 +1,4 @@
-import au.org.ala.ws.security.AlaWsSecurityGrailsPluginConfiguration
+import au.org.ala.ws.security.AlaWsSecurityConfiguration
 
 class AlaWsSecurityGrailsPlugin {
     // the plugin version
@@ -41,7 +41,7 @@ This plugin provides web service specific security code, such as API Key filters
     }
 
     def doWithSpring = {
-        alaWsSecurityGrailsPluiginConfiguration(AlaWsSecurityGrailsPluginConfiguration)
+//        alaWsSecurityConfiguration(AlaWsSecurityConfiguration)
     }
 
     def doWithDynamicMethods = { ctx ->
