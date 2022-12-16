@@ -54,6 +54,7 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
     List<String> requiredScopes
 
     List<String> accessTokenRoleClaims
+    boolean rolesFromAccessToken = false
     String rolePrefix = ''
     boolean roleToUppercase = true
 
@@ -179,8 +180,8 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
     Collection<String> getRoles(JWTClaimsSet claimsSet) {
 
-        if (!accessTokenRoleClaims) {
-            return null
+        if (!rolesFromAccessToken) {
+            return []
         }
 
         Stream<String> roles = accessTokenRoleClaims.stream()

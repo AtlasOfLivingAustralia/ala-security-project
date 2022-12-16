@@ -16,7 +16,7 @@ public class JwtProperties {
     private int connectTimeoutMs = HttpConstants.DEFAULT_CONNECT_TIMEOUT;;
     private int readTimeoutMs = HttpConstants.DEFAULT_READ_TIMEOUT;
 
-    private List<String> accessTokenRoles = List.of();
+    private boolean rolesFromAccessToken = false;
     private String rolePrefix = "ROLE_";
     private boolean roleToUppercase = true;
     private List<String> roleAttributes = List.of("role");
@@ -90,12 +90,12 @@ public class JwtProperties {
         this.jwtType = jwtType;
     }
 
-    public List<String> getAccessTokenRoles() {
-        return accessTokenRoles;
+    public boolean isRolesFromAccessToken() {
+        return rolesFromAccessToken;
     }
 
-    public void setAccessTokenRoles(List<String> accessTokenRoles) {
-        this.accessTokenRoles = accessTokenRoles;
+    public void setRolesFromAccessToken(boolean rolesFromAccessToken) {
+        this.rolesFromAccessToken = rolesFromAccessToken;
     }
 
     public String getRolePrefix() {

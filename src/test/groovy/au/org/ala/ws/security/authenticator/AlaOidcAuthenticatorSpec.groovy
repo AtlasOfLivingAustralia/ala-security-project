@@ -1,6 +1,5 @@
 package au.org.ala.ws.security.authenticator
 
-import au.org.ala.ws.security.JwtProperties
 import au.org.ala.ws.security.profile.AlaOidcUserProfile
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.common.Json
@@ -8,7 +7,6 @@ import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jose.proc.SecurityContext
-import com.nimbusds.jose.util.ResourceRetriever
 import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
@@ -105,6 +103,7 @@ class AlaOidcAuthenticatorSpec extends Specification {
         alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
         alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
 
+        alaOidcAuthenticator.rolesFromAccessToken = true
         alaOidcAuthenticator.accessTokenRoleClaims = [ 'roles' ]
         alaOidcAuthenticator.rolePrefix = 'ROLE_'
 

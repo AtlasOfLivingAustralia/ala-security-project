@@ -106,7 +106,11 @@ class AlaWsSecurityGrailsPluginConfiguration {
         authenticator.requiredClaims = jwtProperties.requiredClaims
         authenticator.requiredScopes = jwtProperties.requiredScopes
 
-        authenticator.accessTokenRoleClaims = jwtProperties.accessTokenRoles
+        authenticator.rolesFromAccessToken = jwtProperties.rolesFromAccessToken
+        if (authenticator.accessTokenRoleClaims = jwtProperties.roleAttributes) {
+            authenticator.accessTokenRoleClaims = jwtProperties.roleAttributes
+        }
+
         authenticator.rolePrefix = jwtProperties.rolePrefix
         authenticator.roleToUppercase = jwtProperties.roleToUppercase
 
