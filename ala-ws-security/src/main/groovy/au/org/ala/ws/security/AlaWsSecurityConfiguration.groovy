@@ -1,10 +1,6 @@
 package au.org.ala.ws.security
 
-import au.org.ala.ws.security.ApiKeyClient
-import au.org.ala.ws.security.ApiKeyProperties
-import au.org.ala.ws.security.IpWhitelistProperties
-import au.org.ala.ws.security.JwtProperties
-import au.org.ala.ws.security.Pac4jProfileManagerHttpRequestWrapperFilter
+import au.org.ala.userdetails.UserDetailsClient
 import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator
 import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator
 import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator
@@ -30,7 +26,6 @@ import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.oidc.config.OidcConfiguration
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -40,7 +35,7 @@ import org.springframework.context.annotation.Configuration
 import retrofit2.Retrofit
 
 @Configuration
-@EnableConfigurationProperties([ JwtProperties, ApiKeyProperties, IpWhitelistProperties ])
+@EnableConfigurationProperties([ JwtProperties, ApiKeyProperties, IpWhitelistProperties, UserDetailsProperties ])
 class AlaWsSecurityConfiguration {
 
     static final String JWT_CLIENT = 'JwtClient'
@@ -53,6 +48,9 @@ class AlaWsSecurityConfiguration {
 
     @Autowired
     IpWhitelistProperties ipWhitelistProperties
+
+    @Autowired
+    UserDetailsProperties userDetailsProperties
 
     @Bean
     @ConditionalOnMissingBean
@@ -119,20 +117,36 @@ class AlaWsSecurityConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    OkHttpClient okHttpClient() {
+        OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
+        return httpClient.build()
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    Moshi moshi() {
+        return new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build()
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    UserDetailsClient userDetailsClient(OkHttpClient okHttpClient, Moshi moshi) {
+        return UserDetailsClient.Builder.from(okHttpClient, userDetailsProperties.url).moshi(moshi).build()
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     @ConditionalOnProperty('security.apikey.enabled')
-    AlaApiKeyClient getAlaApiKeyClient() {
+    AlaApiKeyClient getAlaApiKeyClient(OkHttpClient okHttpClient, Moshi moshi) {
 
         AlaApiKeyCredentialsExtractor credentialsExtractor = new AlaApiKeyCredentialsExtractor()
         credentialsExtractor.headerName = apiKeyProperties.header.override
         credentialsExtractor.alternativeHeaderNames = apiKeyProperties.header.alternatives
 
-        Moshi moshi = new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build()
-
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
         ApiKeyClient apiKeyClient = new Retrofit.Builder()
                 .baseUrl(apiKeyProperties.auth.serviceUrl)
                 .addConverterFactory(MoshiConverterFactory.create(moshi))
-                .client(httpClient.build())
+                .client(okHttpClient)
                 .build()
                 .create(ApiKeyClient)
 

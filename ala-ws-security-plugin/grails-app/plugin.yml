@@ -1,0 +1,3 @@
+security:
+  auth:
+    serviceUrl: https://auth.ala.org.au/apikey/

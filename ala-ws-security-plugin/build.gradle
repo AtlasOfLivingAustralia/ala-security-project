@@ -76,7 +76,6 @@ dependencies {
 //    testImplementation 'org.objenesis:objenesis:3.3'
 //    testImplementation 'org.modelmapper:modelmapper:3.1.0'
 
-    implementation 'au.org.ala:userdetails-service-client:2.0.0'
     implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
 //    testImplementation 'io.github.joke:spock-mockable:1.5.5'
 

@@ -1,5 +1,7 @@
 package au.org.ala.ws.security.authenticator
 
+import au.org.ala.userdetails.UserDetailsClient
+import au.org.ala.web.UserDetails
 import au.org.ala.ws.security.ApiKeyClient
 import au.org.ala.ws.security.profile.AlaApiUserProfile
 import org.pac4j.core.context.WebContext
@@ -16,10 +18,12 @@ import retrofit2.Response
 class AlaApiKeyAuthenticator extends InitializableObject implements Authenticator {
 
     ApiKeyClient apiKeyClient
+    UserDetailsClient userDetailsClient
 
     @Override
     protected void internalInit(boolean forceReinit) {
         CommonHelper.assertNotNull("apiKeyClient", apiKeyClient)
+        CommonHelper.assertNotNull("userDetailsClient", userDetailsClient)
     }
 
     @Override
@@ -41,15 +45,15 @@ class AlaApiKeyAuthenticator extends InitializableObject implements Authenticato
 
         AlaApiUserProfile alaApiUserProfile = new AlaApiUserProfile()
 
-        Call<Map<String, Object>> checkApiKeyCall = apiKeyClient.checkApiKey(apiKey)
+        def checkApiKeyCall = apiKeyClient.checkApiKey(apiKey)
 
-        Response<Map<String, Object>> checkApiKeyResponse = checkApiKeyCall.execute()
+        def checkApiKeyResponse = checkApiKeyCall.execute()
 
         if (!checkApiKeyResponse.successful) {
             throw new CredentialsException("apikey check failed : ${checkApiKeyResponse.message()}")
         }
 
-        Map<String, Object> apiKeyCheck = checkApiKeyResponse.body()
+        def apiKeyCheck = checkApiKeyResponse.body()
 
         if (apiKeyCheck.valid) {
 
@@ -58,21 +62,21 @@ class AlaApiKeyAuthenticator extends InitializableObject implements Authenticato
             alaApiUserProfile.userId = userId
             alaApiUserProfile.email = apiKeyCheck.email
 
-            Call<Map<String, Object>> userDetailsCall = apiKeyClient.getUserDetails(userId, true)
+            Call<UserDetails> userDetailsCall = userDetailsClient.getUserDetails(userId, true)
 
-            Response<Map<String, Object>> response = userDetailsCall.execute()
+            Response<UserDetails> response = userDetailsCall.execute()
 
             if (response.successful) {
 
-                Map<String, Object> userDetails = response.body()
+                UserDetails userDetails = response.body()
 
                 alaApiUserProfile.givenName = userDetails.firstName
                 alaApiUserProfile.familyName = userDetails.lastName
                 alaApiUserProfile.activated = userDetails.activated
-                alaApiUserProfile.locked = userDetails.getOrDefault('locked', true)
-                alaApiUserProfile.addRoles(userDetails.getOrDefault('roles', []))
+                alaApiUserProfile.locked = userDetails.locked ?: true
+                alaApiUserProfile.addRoles(userDetails.roles)
 
-                alaApiUserProfile.attributes = userDetails
+                alaApiUserProfile.attributes = userDetails.props
              }
 
             return alaApiUserProfile
