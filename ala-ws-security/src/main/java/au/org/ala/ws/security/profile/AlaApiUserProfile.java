@@ -1,7 +1,5 @@
 package au.org.ala.ws.security.profile;
 
-import org.pac4j.core.profile.UserProfile;
-
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;

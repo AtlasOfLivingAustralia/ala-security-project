@@ -10,7 +10,6 @@ import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.util.FindBest
 import org.pac4j.jee.context.JEEContextFactory
-import org.pac4j.oidc.credentials.OidcCredentials
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.GrantedAuthority

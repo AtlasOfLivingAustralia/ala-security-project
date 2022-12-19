@@ -2,8 +2,6 @@ package au.org.ala.ws.security.authenticator
 
 import au.org.ala.ws.security.ApiKeyClient
 import au.org.ala.ws.security.profile.AlaApiUserProfile
-import co.infinum.retromock.BodyFactory
-import co.infinum.retromock.Retromock
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.common.Json
 import com.squareup.moshi.Moshi
@@ -13,8 +11,6 @@ import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.exception.CredentialsException
-import retrofit2.Call
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import spock.lang.Specification
