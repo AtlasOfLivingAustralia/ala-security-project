@@ -127,6 +127,10 @@ public interface UserDetailsClient {
 
         private Moshi moshi = null;
 
+        public static Builder from(okhttp3.Call.Factory callFactory, String baseUrl) {
+            return new Builder(callFactory, baseUrl);
+        }
+
         /**
          * Create a Builder using an okHttpClient and String baseUrl.  The baseUrl will be
          * converted to an HttpUrl and a trailing / will be added if required.

@@ -30,11 +30,13 @@ public class UserDetails implements Serializable {
     // Some old services return userId as an number id
     private Long id;
 
+    private String displayName;
     private String firstName;
     private String lastName;
     private String userName;    // email
     private String userId;      // numeric id
     private Boolean locked;
+    private Boolean activated;
 
     private Map<String, String> props = new LinkedHashMap<>(); // optional props
 
