@@ -11,7 +11,6 @@ import org.pac4j.core.util.FindBest;
 import org.pac4j.jee.context.JEEContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -40,10 +39,13 @@ import java.util.Optional;
 public class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     public static final Logger log = LoggerFactory.getLogger(AlaWebServiceAuthFilter.class);
 
-    @Autowired(required = false)
     private Config config;
-    @Autowired(required = false)
     private AlaAuthClient alaAuthClient;
+
+    public AlaWebServiceAuthFilter(Config config, AlaAuthClient alaAuthClient) {
+        this.config = config;
+        this.alaAuthClient = alaAuthClient;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
