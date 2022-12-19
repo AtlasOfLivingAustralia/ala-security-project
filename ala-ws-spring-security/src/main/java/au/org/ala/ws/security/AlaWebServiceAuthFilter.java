@@ -17,7 +17,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -35,7 +34,6 @@ import java.util.Optional;
  * 2) Legacy API keys using ALA's apikey app
  * 3) Whitelist IP
  */
-@Component
 public class AlaWebServiceAuthFilter extends OncePerRequestFilter {
     public static final Logger log = LoggerFactory.getLogger(AlaWebServiceAuthFilter.class);
 
