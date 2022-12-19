@@ -1,147 +1,223 @@
-package au.org.ala.ws.security.profile
+package au.org.ala.ws.security.profile;
 
-import java.security.Principal
+import org.pac4j.core.profile.UserProfile;
 
-class AlaApiUserProfile implements AlaUserProfile {
+import java.security.Principal;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
-    String userId
-    String givenName
-    String familyName
-    String email
+public class AlaApiUserProfile implements AlaUserProfile {
+    public AlaApiUserProfile() {
+    }
 
-    boolean activated = true
-    boolean locked = false
-
-    Set<String> roles = Collections.emptySet()
-    Map<String, Object> attributes = Collections.emptyMap()
-
-    AlaApiUserProfile() {}
-
-    AlaApiUserProfile(String userId, String email, String givenName, String familyName, Set<String> roles, Map<String, Object> attributes) {
-        this.email = email
-        this.userId = userId
-        this.roles = roles
-        this.attributes = attributes
-        this.givenName = givenName
-        this.familyName = familyName
+    public AlaApiUserProfile(String userId, String email, String givenName, String familyName, Set<String> roles, Map<String, Object> attributes) {
+        this.email = email;
+        this.userId = userId;
+        this.roles = roles;
+        this.attributes = attributes;
+        this.givenName = givenName;
+        this.familyName = familyName;
     }
 
     @Override
-    String getName() {
-        return username
+    public String getName() {
+        return getUsername();
     }
 
     @Override
-    String getId() {
-        return userId
+    public String getId() {
+        return userId;
     }
 
     @Override
-    void setId(String id) {
-        this.userId = id
+    public void setId(String id) {
+        this.userId = id;
     }
 
     @Override
-    String getTypedId() {
-        return null
+    public String getTypedId() {
+        return null;
     }
 
     @Override
-    String getUsername() {
-        return email
+    public String getUsername() {
+        return email;
     }
 
     @Override
-    Object getAttribute(String name) {
-        return attributes.get(name)
+    public Object getAttribute(String name) {
+        return attributes.get(name);
     }
 
     @Override
-    boolean containsAttribute(String name) {
-        return attributes.containsKey(name)
+    public boolean containsAttribute(String name) {
+        return attributes.containsKey(name);
     }
 
     @Override
-    void addAttribute(String key, Object value) {
-        attributes.put(key, value)
+    public void addAttribute(String key, Object value) {
+        attributes.put(key, value);
     }
 
     @Override
-    void removeAttribute(String key) {
-        attributes.remove(key)
+    public void removeAttribute(String key) {
+        attributes.remove(key);
     }
 
     @Override
-    void addAuthenticationAttribute(String key, Object value) {
+    public void addAuthenticationAttribute(String key, Object value) {
     }
 
     @Override
-    void removeAuthenticationAttribute(String key) {
+    public void removeAuthenticationAttribute(String key) {
     }
 
     @Override
-    void addRole(String role) {
-        roles.add(role)
+    public void addRole(String role) {
+        roles.add(role);
     }
 
     @Override
-    void addRoles(Collection<String> roles) {
-        roles.addAll(roles)
+    public void addRoles(Collection<String> roles) {
+        roles.addAll(roles);
     }
 
     @Override
-    void addPermission(String permission) {
+    public void addPermission(String permission) {
 
     }
 
     @Override
-    void addPermissions(Collection<String> permissions) {
+    public void addPermissions(Collection<String> permissions) {
 
     }
 
     @Override
-    Set<String> getPermissions() {
-        return Set.of()
+    public Set<String> getPermissions() {
+        return Set.of();
     }
 
     @Override
-    boolean isRemembered() {
-        return false
+    public boolean isRemembered() {
+        return false;
     }
 
     @Override
-    void setRemembered(boolean rme) {
-
-    }
-
-    @Override
-    String getClientName() {
-        return null
-    }
-
-    @Override
-    void setClientName(String clientName) {
+    public void setRemembered(boolean rme) {
 
     }
 
     @Override
-    String getLinkedId() {
-        return null
+    public String getClientName() {
+        return null;
     }
 
     @Override
-    void setLinkedId(String linkedId) {
+    public void setClientName(String clientName) {
 
     }
 
     @Override
-    boolean isExpired() {
-        return false
+    public String getLinkedId() {
+        return null;
     }
 
     @Override
-    Principal asPrincipal() {
+    public void setLinkedId(String linkedId) {
 
-        return this
     }
+
+    @Override
+    public boolean isExpired() {
+        return false;
+    }
+
+    @Override
+    public Principal asPrincipal() {
+
+        return this;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getGivenName() {
+        return givenName;
+    }
+
+    public void setGivenName(String givenName) {
+        this.givenName = givenName;
+    }
+
+    public String getFamilyName() {
+        return familyName;
+    }
+
+    public void setFamilyName(String familyName) {
+        this.familyName = familyName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public boolean getActivated() {
+        return activated;
+    }
+
+    public boolean isActivated() {
+        return activated;
+    }
+
+    public void setActivated(boolean activated) {
+        this.activated = activated;
+    }
+
+    public boolean getLocked() {
+        return locked;
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    public void setLocked(boolean locked) {
+        this.locked = locked;
+    }
+
+    public Set<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<String> roles) {
+        this.roles = roles;
+    }
+
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Map<String, Object> attributes) {
+        this.attributes = attributes;
+    }
+
+    private String userId;
+    private String givenName;
+    private String familyName;
+    private String email;
+    private boolean activated = true;
+    private boolean locked = false;
+    private Set<String> roles = Collections.emptySet();
+    private Map<String, Object> attributes = Collections.emptyMap();
 }

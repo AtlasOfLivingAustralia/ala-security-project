@@ -1,16 +1,17 @@
-package au.org.ala.ws.security.client
+package au.org.ala.ws.security.client;
 
-import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator
-import org.pac4j.http.credentials.extractor.IpExtractor
+import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator;
+import org.pac4j.http.credentials.extractor.IpExtractor;
 
-class AlaIpWhitelistClient extends AlaDirectClient {
+public class AlaIpWhitelistClient extends AlaDirectClient {
+    public AlaIpWhitelistClient(IpExtractor ipExtractor, AlaIpWhitelistAuthenticator alaIpWhitelistAuthenticator) {
 
-    AlaIpWhitelistClient(IpExtractor ipExtractor, AlaIpWhitelistAuthenticator alaIpWhitelistAuthenticator) {
-
-        defaultCredentialsExtractor(ipExtractor)
-        defaultAuthenticator(alaIpWhitelistAuthenticator)
+        defaultCredentialsExtractor(ipExtractor);
+        defaultAuthenticator(alaIpWhitelistAuthenticator);
     }
 
     @Override
-    protected void internalInit(boolean forceReinit) {}
+    protected void internalInit(boolean forceReinit) {
+    }
+
 }

@@ -1,36 +1,42 @@
-package au.org.ala.ws.security.authenticator
+package au.org.ala.ws.security.authenticator;
 
-import inet.ipaddr.IPAddressString
-import org.pac4j.core.context.WebContext
-import org.pac4j.core.context.session.SessionStore
-import org.pac4j.core.credentials.Credentials
-import org.pac4j.core.credentials.TokenCredentials
-import org.pac4j.core.credentials.authenticator.Authenticator
-import org.pac4j.core.exception.CredentialsException
-import org.pac4j.core.util.InitializableObject
+import inet.ipaddr.IPAddressString;
+import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.credentials.Credentials;
+import org.pac4j.core.credentials.TokenCredentials;
+import org.pac4j.core.credentials.authenticator.Authenticator;
+import org.pac4j.core.exception.CredentialsException;
+import org.pac4j.core.util.InitializableObject;
 
-class AlaIpWhitelistAuthenticator extends InitializableObject implements Authenticator {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
-    static final List<String> LOOPBACK_ADDRESSES = ["127.0.0.1",
-                                                    "0:0:0:0:0:0:0:1", // IP v6
-                                                    "::1"]
+public class AlaIpWhitelistAuthenticator extends InitializableObject implements Authenticator {
+    private static final List<String> LOOPBACK_ADDRESSES = Arrays.asList("127.0.0.1",
+                                                    "0:0:0:0:0:0:0:1",
+                                                    "::1");
 
-    private List<IPAddressString> ipMatches = LOOPBACK_ADDRESSES.collect { new IPAddressString(it) }
+    private List<IPAddressString> ipMatches = LOOPBACK_ADDRESSES.stream().map(IPAddressString::new).collect(Collectors.toList());
 
-    void setIpWhitelist(Collection<String> ipWhitelist) {
+    public void setIpWhitelist(Collection<String> ipWhitelist) {
 
-        ipMatches += ipWhitelist.collect { String ipAddress ->
-            new IPAddressString(ipAddress)
-        }
+        ArrayList<IPAddressString> result = new ArrayList<>(ipMatches.size() + ipWhitelist.size());
+        result.addAll(ipMatches);
+        ipWhitelist.forEach(s -> result.add(new IPAddressString(s)));
+        ipMatches = result;
     }
 
     @Override
-    void validate(Credentials credentials, WebContext context, SessionStore sessionStore) {
+    public void validate(Credentials credentials, WebContext context, SessionStore sessionStore) {
 
-        final IPAddressString ip = new IPAddressString(((TokenCredentials) credentials).getToken())
+        final IPAddressString ip = new IPAddressString(((TokenCredentials) credentials).getToken());
 
-        if (!ipMatches.any { IPAddressString ipMatcher -> ipMatcher.contains(ip) }) {
-            throw new CredentialsException("Unauthorized IP address: " + ip)
+        if (ipMatches.stream().anyMatch( ipMatcher -> ipMatcher.contains(ip))) {
+            throw new CredentialsException("Unauthorized IP address: " + ip);
         }
     }
 

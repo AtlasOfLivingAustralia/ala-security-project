@@ -1,14 +1,13 @@
-package au.org.ala.ws.security.profile
+package au.org.ala.ws.security.profile;
 
-import org.pac4j.core.profile.UserProfile
+import org.pac4j.core.profile.UserProfile;
 
-import java.security.Principal
+import java.security.Principal;
 
-interface AlaUserProfile extends Principal, UserProfile {
+public interface AlaUserProfile extends Principal, UserProfile {
+    String getEmail();
 
-    String getEmail()
+    String getGivenName();
 
-    String getGivenName()
-
-    String getFamilyName()
+    String getFamilyName();
 }

@@ -1,47 +1,57 @@
-package au.org.ala.ws.security.credentials
+package au.org.ala.ws.security.credentials;
 
-import org.pac4j.core.context.WebContext
-import org.pac4j.core.context.session.SessionStore
-import org.pac4j.core.credentials.Credentials
-import org.pac4j.core.credentials.extractor.HeaderExtractor
+import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.credentials.Credentials;
+import org.pac4j.core.credentials.extractor.HeaderExtractor;
 
-class AlaApiKeyCredentialsExtractor extends HeaderExtractor {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-    List<AlaApiKeyCredentialsExtractor> alternativeHeaderExtractors = []
-
-    AlaApiKeyCredentialsExtractor() {
-        headerName = 'apiKey'
-        prefixHeader = ''
+public class AlaApiKeyCredentialsExtractor extends HeaderExtractor {
+    public AlaApiKeyCredentialsExtractor() {
+        setHeaderName("apiKey");
+        setPrefixHeader("");
     }
 
     @Override
-    void setHeaderName(String headerName) {
-        super.setHeaderName(headerName)
+    public void setHeaderName(String headerName) {
+        super.setHeaderName(headerName);
     }
 
-    void setAlternativeHeaderNames(List<String> alternativeHeaderNames) {
+    public void setAlternativeHeaderNames(List<String> alternativeHeaderNames) {
 
-        alternativeHeaderExtractors = alternativeHeaderNames.collect { String alternativeHeaderName ->
-            AlaApiKeyCredentialsExtractor alternativeHeaderExtractor = new AlaApiKeyCredentialsExtractor()
-            alternativeHeaderExtractor.headerName = alternativeHeaderName
-            alternativeHeaderExtractor
-        }
+        alternativeHeaderExtractors = alternativeHeaderNames.stream().map( alternativeHeaderName -> {
+            AlaApiKeyCredentialsExtractor alternativeHeaderExtractor = new AlaApiKeyCredentialsExtractor();
+            alternativeHeaderExtractor.setHeaderName(alternativeHeaderName);
+            return alternativeHeaderExtractor;
+        }).collect(Collectors.toList());
     }
 
     @Override
-    Optional<Credentials> extract(WebContext context, SessionStore sessionStore) {
+    public Optional<Credentials> extract(final WebContext context, final SessionStore sessionStore) {
 
-        Optional<Credentials> credentials = super.extract(context, sessionStore)
+        final Optional<Credentials> credentials = super.extract(context, sessionStore);
 
-        if (credentials.present) {
-            return credentials
+        if (credentials.isPresent()) {
+            return credentials;
         }
 
-        alternativeHeaderExtractors.find { HeaderExtractor alternativeHeaderExtractor ->
-            credentials = alternativeHeaderExtractor.extract(context, sessionStore)
-            credentials.present
-        }
-
-        return credentials
+        return alternativeHeaderExtractors.stream()
+                .map(alternativeHeaderExtractor -> alternativeHeaderExtractor.extract(context, sessionStore))
+                .flatMap(Optional::stream)
+                .findFirst();
     }
+
+    public List<AlaApiKeyCredentialsExtractor> getAlternativeHeaderExtractors() {
+        return alternativeHeaderExtractors;
+    }
+
+    public void setAlternativeHeaderExtractors(List<AlaApiKeyCredentialsExtractor> alternativeHeaderExtractors) {
+        this.alternativeHeaderExtractors = alternativeHeaderExtractors;
+    }
+
+    private List<AlaApiKeyCredentialsExtractor> alternativeHeaderExtractors = new ArrayList<AlaApiKeyCredentialsExtractor>();
 }

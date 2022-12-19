@@ -1,16 +1,16 @@
-package au.org.ala.ws.security.profile
+package au.org.ala.ws.security.profile;
 
-import org.pac4j.oidc.profile.OidcProfile
+import org.pac4j.oidc.profile.OidcProfile;
 
-class AlaOidcUserProfile extends OidcProfile implements AlaUserProfile {
-
+public class AlaOidcUserProfile extends OidcProfile implements AlaUserProfile {
     @Override
-    String getName() {
-        return this.displayName
+    public String getName() {
+        return this.getDisplayName();
     }
 
     @Override
-    String getGivenName() {
-        return super.getFirstName()
+    public String getGivenName() {
+        return super.getFirstName();
     }
+
 }

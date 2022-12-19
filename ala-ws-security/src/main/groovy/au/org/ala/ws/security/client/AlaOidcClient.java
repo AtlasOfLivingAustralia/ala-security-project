@@ -1,21 +1,20 @@
-package au.org.ala.ws.security.client
+package au.org.ala.ws.security.client;
 
-import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator
-import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor
-import org.pac4j.core.context.HttpConstants
-import org.pac4j.core.context.WebContext
-import org.pac4j.core.context.session.SessionStore
-import org.pac4j.core.credentials.Credentials
-import org.pac4j.core.util.Pac4jConstants
+import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator;
+import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor;
+import org.pac4j.core.context.HttpConstants;
+import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.credentials.Credentials;
+import org.pac4j.core.util.Pac4jConstants;
 
-class AlaOidcClient extends AlaDirectClient {
+import java.util.Optional;
 
-    private String realmName = Pac4jConstants.DEFAULT_REALM_NAME
+public class AlaOidcClient extends AlaDirectClient {
+    public AlaOidcClient(AlaOidcCredentialsExtractor alaOidcCredentialsExtractor, AlaOidcAuthenticator alaOidcAuthenticator) {
 
-    AlaOidcClient(AlaOidcCredentialsExtractor alaOidcCredentialsExtractor, AlaOidcAuthenticator alaOidcAuthenticator) {
-
-        defaultAuthenticator(alaOidcAuthenticator)
-        defaultCredentialsExtractor(alaOidcCredentialsExtractor)
+        defaultAuthenticator(alaOidcAuthenticator);
+        defaultCredentialsExtractor(alaOidcCredentialsExtractor);
     }
 
     @Override
@@ -25,16 +24,18 @@ class AlaOidcClient extends AlaDirectClient {
     @Override
     protected Optional<Credentials> retrieveCredentials(final WebContext context, final SessionStore sessionStore) {
         // set the www-authenticate in case of error
-        context.setResponseHeader(HttpConstants.AUTHENTICATE_HEADER, HttpConstants.BEARER_HEADER_PREFIX + "realm=\"" + realmName + "\"")
+        context.setResponseHeader(HttpConstants.AUTHENTICATE_HEADER, HttpConstants.BEARER_HEADER_PREFIX + "realm=\"" + realmName + "\"");
 
-        return super.retrieveCredentials(context, sessionStore)
+        return super.retrieveCredentials(context, sessionStore);
     }
 
-    String getRealmName() {
-        return realmName
+    public String getRealmName() {
+        return realmName;
     }
 
-    void setRealmName(final String realmName) {
-        this.realmName = realmName
+    public void setRealmName(final String realmName) {
+        this.realmName = realmName;
     }
+
+    private String realmName = Pac4jConstants.DEFAULT_REALM_NAME;
 }
