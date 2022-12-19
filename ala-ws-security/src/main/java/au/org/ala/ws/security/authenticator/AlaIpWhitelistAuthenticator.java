@@ -35,7 +35,7 @@ public class AlaIpWhitelistAuthenticator extends InitializableObject implements 
 
         final IPAddressString ip = new IPAddressString(((TokenCredentials) credentials).getToken());
 
-        if (ipMatches.stream().anyMatch( ipMatcher -> ipMatcher.contains(ip))) {
+        if (ipMatches.stream().noneMatch(ipMatcher -> ipMatcher.contains(ip))) {
             throw new CredentialsException("Unauthorized IP address: " + ip);
         }
     }
