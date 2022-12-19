@@ -1,6 +1,5 @@
 package au.org.ala.ws.security;
 
-import au.org.ala.userdetails.UserDetailsClient;
 import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator;
 import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator;
 import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator;
@@ -13,10 +12,6 @@ import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor;
 import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor;
 import com.nimbusds.jose.jwk.source.RemoteJWKSet;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
-import com.squareup.moshi.Moshi;
-import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
 import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
@@ -33,19 +28,25 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import retrofit2.Retrofit;
-import retrofit2.converter.moshi.MoshiConverterFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, ApiKeyProperties.class, IpWhitelistProperties.class, UserDetailsProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, ApiKeyProperties.class, IpWhitelistProperties.class})
 public class AlaWsSecurityConfiguration {
+
+    private static final String JWT_CLIENT = "JwtClient";
+    @Autowired
+    private JwtProperties jwtProperties;
+    @Autowired
+    private ApiKeyProperties apiKeyProperties;
+    @Autowired
+    private IpWhitelistProperties ipWhitelistProperties;
+
     @Bean
     @ConditionalOnMissingBean
     public SessionStore sessionStore() {
@@ -118,33 +119,12 @@ public class AlaWsSecurityConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public OkHttpClient okHttpClient() {
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
-        return httpClient.build();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public Moshi moshi() {
-        return new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public UserDetailsClient userDetailsClient(OkHttpClient okHttpClient, Moshi moshi) {
-        return new UserDetailsClient.Builder((Call.Factory) okHttpClient, userDetailsProperties.getUrl()).moshi(moshi).build();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty("security.apikey.enabled")
-    public AlaApiKeyClient getAlaApiKeyClient(OkHttpClient okHttpClient, Moshi moshi) {
+    @ConditionalOnProperty(prefix = "security.apikey", name = "enabled")
+    public AlaApiKeyClient getAlaApiKeyClient(ApiKeyClient apiKeyClient) {
 
         AlaApiKeyCredentialsExtractor credentialsExtractor = new AlaApiKeyCredentialsExtractor();
         credentialsExtractor.setHeaderName(apiKeyProperties.getHeader().getOverride());
         credentialsExtractor.setAlternativeHeaderNames(apiKeyProperties.getHeader().getAlternatives());
-
-        ApiKeyClient apiKeyClient = new Retrofit.Builder().baseUrl(apiKeyProperties.getAuth().getServiceUrl()).addConverterFactory(MoshiConverterFactory.create(moshi)).client(okHttpClient).build().create(ApiKeyClient.class);
 
         AlaApiKeyAuthenticator authenticator = new AlaApiKeyAuthenticator();
         authenticator.setApiKeyClient(apiKeyClient);
@@ -177,8 +157,8 @@ public class AlaWsSecurityConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "security.jwt", name = "enabled")
-    public FilterRegistrationBean pac4jHttpRequestWrapper(Config config) {
-        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+    public FilterRegistrationBean<Pac4jProfileManagerHttpRequestWrapperFilter> pac4jHttpRequestWrapper(Config config) {
+        FilterRegistrationBean<Pac4jProfileManagerHttpRequestWrapperFilter> filterRegistrationBean = new FilterRegistrationBean<>();
         filterRegistrationBean.setFilter(new Pac4jProfileManagerHttpRequestWrapperFilter(config));
         filterRegistrationBean.setOrder(filterOrder() + 6);// This is to place this filter after the request wrapper filter in the ala-auth-plugin
         filterRegistrationBean.setInitParameters(new LinkedHashMap<String, String>());
@@ -191,49 +171,4 @@ public class AlaWsSecurityConfiguration {
         return 21;// FilterRegistrationBean.REQUEST_WRAPPER_FILTER_MAX_ORDER + 21
     }
 
-    public static String getJWT_CLIENT() {
-        return JWT_CLIENT;
-    }
-
-    public JwtProperties getJwtProperties() {
-        return jwtProperties;
-    }
-
-    public void setJwtProperties(JwtProperties jwtProperties) {
-        this.jwtProperties = jwtProperties;
-    }
-
-    public ApiKeyProperties getApiKeyProperties() {
-        return apiKeyProperties;
-    }
-
-    public void setApiKeyProperties(ApiKeyProperties apiKeyProperties) {
-        this.apiKeyProperties = apiKeyProperties;
-    }
-
-    public IpWhitelistProperties getIpWhitelistProperties() {
-        return ipWhitelistProperties;
-    }
-
-    public void setIpWhitelistProperties(IpWhitelistProperties ipWhitelistProperties) {
-        this.ipWhitelistProperties = ipWhitelistProperties;
-    }
-
-    public UserDetailsProperties getUserDetailsProperties() {
-        return userDetailsProperties;
-    }
-
-    public void setUserDetailsProperties(UserDetailsProperties userDetailsProperties) {
-        this.userDetailsProperties = userDetailsProperties;
-    }
-
-    private static final String JWT_CLIENT = "JwtClient";
-    @Autowired
-    private JwtProperties jwtProperties;
-    @Autowired
-    private ApiKeyProperties apiKeyProperties;
-    @Autowired
-    private IpWhitelistProperties ipWhitelistProperties;
-    @Autowired
-    private UserDetailsProperties userDetailsProperties;
 }
