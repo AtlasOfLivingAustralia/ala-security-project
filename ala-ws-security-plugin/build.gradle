@@ -10,7 +10,6 @@ buildscript {
     }
 }
 
-version "4.3.5-SNAPSHOT"
 group "org.grails.plugins"
 
 apply plugin:"eclipse"
