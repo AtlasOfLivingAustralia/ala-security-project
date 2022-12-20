@@ -30,7 +30,6 @@ public class UserDetails implements Serializable {
     // Some old services return userId as an number id
     private Long id;
 
-    private String displayName;
     private String firstName;
     private String lastName;
     private String userName;    // email
