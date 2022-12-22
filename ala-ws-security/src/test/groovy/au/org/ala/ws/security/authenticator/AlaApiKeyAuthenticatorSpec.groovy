@@ -1,5 +1,7 @@
 package au.org.ala.ws.security.authenticator
 
+import au.org.ala.userdetails.UserDetailsClient
+import au.org.ala.web.UserDetails
 import au.org.ala.ws.security.ApiKeyClient
 import au.org.ala.ws.security.profile.AlaApiUserProfile
 import com.github.tomakehurst.wiremock.WireMockServer
@@ -13,6 +15,7 @@ import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.exception.CredentialsException
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.mock.Calls
 import spock.lang.Specification
 
 import static com.github.tomakehurst.wiremock.client.WireMock.get
@@ -33,14 +36,20 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
 
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
         ApiKeyClient apiKeyClient = new Retrofit.Builder()
-                .baseUrl("http://localhost:${wm.port()}")
+                .baseUrl("http://localhost:${wm.port()}/apikey/")
                 .addConverterFactory(MoshiConverterFactory.create(moshi))
                 .client(httpClient.build())
                 .build()
                 .create(ApiKeyClient)
 
+        UserDetailsClient userDetailsClient = Stub()
+        userDetailsClient.getUserDetails('0', true) >>
+                { Calls.response(new UserDetails(0l, "given_name", "family_name", "email@test.com", "0",
+                        false, true, Map.of(), Set.of('ROLE_USER'))) }
+
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = new AlaApiKeyAuthenticator()
         alaApiKeyAuthenticator.apiKeyClient = apiKeyClient
+        alaApiKeyAuthenticator.userDetailsClient = userDetailsClient
 
         TokenCredentials alaApiKeyCredentials = new TokenCredentials('testkey')
 
@@ -53,18 +62,6 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
                                 valid: true,
                                 userId: "0",
                                 email: "email@test.com"
-                        ])))
-        )
-
-        wm.stubFor(
-                post(urlEqualTo('/userdetails/userDetails/getUserDetails?userName=0&includeProps=true'))
-                        .willReturn(okJson(Json.write([
-                                userId: "0",
-                                email: "email@test.com",
-                                activated: true,
-                                locked: false,
-                                firstName: 'given_name',
-                                lastName: 'family_name'
                         ])))
         )
 
@@ -88,14 +85,17 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
 
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
         ApiKeyClient apiKeyClient = new Retrofit.Builder()
-                .baseUrl("http://localhost:${wm.port()}")
+                .baseUrl("http://localhost:${wm.port()}/apikey/")
                 .addConverterFactory(MoshiConverterFactory.create(moshi))
                 .client(httpClient.build())
                 .build()
                 .create(ApiKeyClient)
 
+        UserDetailsClient userDetailsClient = Stub()
+
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = new AlaApiKeyAuthenticator()
         alaApiKeyAuthenticator.apiKeyClient = apiKeyClient
+        alaApiKeyAuthenticator.userDetailsClient = userDetailsClient
 
         TokenCredentials alaApiKeyCredentials = new TokenCredentials('testkey')
 

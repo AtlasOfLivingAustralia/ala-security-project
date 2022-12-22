@@ -3,6 +3,8 @@ package au.org.ala.ws.security.profile;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -79,7 +81,7 @@ public class AlaApiUserProfile implements AlaUserProfile {
 
     @Override
     public void addRoles(Collection<String> roles) {
-        roles.addAll(roles);
+        this.roles.addAll(roles);
     }
 
     @Override
@@ -216,6 +218,6 @@ public class AlaApiUserProfile implements AlaUserProfile {
     private String email;
     private boolean activated = true;
     private boolean locked = false;
-    private Set<String> roles = Collections.emptySet();
-    private Map<String, Object> attributes = Collections.emptyMap();
+    private Set<String> roles = new LinkedHashSet<>();
+    private Map<String, Object> attributes = new LinkedHashMap<>();
 }
