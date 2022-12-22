@@ -11,6 +11,7 @@ import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.TokenCredentials;
 import org.pac4j.core.credentials.authenticator.Authenticator;
 import org.pac4j.core.exception.CredentialsException;
+import org.pac4j.core.profile.definition.CommonProfileDefinition;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.core.util.InitializableObject;
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ import retrofit2.Call;
 import retrofit2.Response;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.LinkedHashMap;
 
 public class AlaApiKeyAuthenticator extends InitializableObject implements Authenticator {
 
@@ -89,8 +90,18 @@ public class AlaApiKeyAuthenticator extends InitializableObject implements Authe
                 final Boolean locked = userDetails.getLocked();
                 alaApiUserProfile.setLocked(locked != null ? locked : true);
                 alaApiUserProfile.addRoles(userDetails.getRoles());
-                // TODO this isn't quite right
-                alaApiUserProfile.setAttributes((Map)userDetails.getProps());
+
+                // The attributes map doesn't appear to be used but just in case...
+                var attributes = new LinkedHashMap<String, Object>();
+                attributes.put(CommonProfileDefinition.FIRST_NAME, userDetails.getFirstName());
+                attributes.put(CommonProfileDefinition.FAMILY_NAME, userDetails.getLastName());
+                attributes.put(CommonProfileDefinition.EMAIL, userDetails.getEmail());
+                attributes.put("activated", userDetails.getActivated());
+                attributes.put("locked", userDetails.getLocked());
+                attributes.put("roles", userDetails.getRoles());
+                attributes.putAll(userDetails.getProps());
+
+                alaApiUserProfile.setAttributes(attributes);
             }
 
 
