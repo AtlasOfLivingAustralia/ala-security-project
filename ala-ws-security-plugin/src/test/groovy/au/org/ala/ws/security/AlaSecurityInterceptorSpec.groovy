@@ -62,6 +62,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
         alaOidcAuthenticator.issuer = new Issuer('http://localhost')
         alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+        alaOidcAuthenticator.requiredClaims = []
         alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
 
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = Stub(AlaApiKeyAuthenticator) {
