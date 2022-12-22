@@ -1,12 +1,10 @@
 package au.org.ala.ws.security.authenticator
 
-import au.org.ala.ws.security.JwtProperties
 import au.org.ala.ws.security.profile.AlaOidcUserProfile
 import au.org.ala.ws.security.profile.AlaUserProfile
 import com.nimbusds.jose.JOSEException
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.source.JWKSource
-import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.BadJOSEException
 import com.nimbusds.jose.proc.JWSKeySelector
 import com.nimbusds.jose.proc.JWSVerificationKeySelector
@@ -23,7 +21,6 @@ import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 
 import groovy.util.logging.Slf4j
 import org.pac4j.core.authorization.generator.AuthorizationGenerator
-import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.Credentials
@@ -34,12 +31,10 @@ import org.pac4j.core.util.CommonHelper
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator
-import org.pac4j.oidc.profile.OidcProfile
-import org.pac4j.oidc.profile.OidcProfileDefinition
 
 import java.text.ParseException
-
-import static java.util.Optional.ofNullable
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
 /**
  * Authenticator for JWT access_token based on the Pac4j {@link org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator},
@@ -57,6 +52,11 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
     List<String> requiredClaims
     List<String> requiredScopes
+
+    List<String> accessTokenRoleClaims
+    boolean rolesFromAccessToken = false
+    String rolePrefix = ''
+    boolean roleToUppercase = true
 
     AlaOidcAuthenticator(final OidcConfiguration configuration) {
 
@@ -114,9 +114,13 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
                 new JWTClaimsSet.Builder().issuer(issuer.value).build(),
                 requiredClaims?.toSet())
 
+        Collection<String> accessTokenRoles
+
         try {
 
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null)
+
+            accessTokenRoles = getRoles(claimsSet)
 
             Scope scope = Scope.parse(claimsSet.getClaim(OidcConfiguration.SCOPE))
             credentials.accessToken = new BearerAccessToken(accessToken, 0L, scope)
@@ -150,6 +154,17 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
             } else {
                 cred.userProfile = generateAlaUserProfile(profile)
             }
+
+            if (accessTokenRoles) {
+                cred.userProfile.addRoles(accessTokenRoles)
+            }
+
+        } else if (accessTokenRoles) {
+
+            AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile()
+            alaOidcUserProfile.addRoles(accessTokenRoles)
+
+            cred.userProfile = alaOidcUserProfile
         }
     }
 
@@ -157,11 +172,40 @@ class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
         AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile()
         alaOidcUserProfile.addAttributes(profile.attributes)
-
-        // session expiration with token behavior
-        alaOidcUserProfile.setTokenExpirationAdvance(configuration.getTokenExpirationAdvance())
+        alaOidcUserProfile.roles = profile.roles
+        alaOidcUserProfile.permissions = profile.permissions
 
         return alaOidcUserProfile
+    }
+
+    Collection<String> getRoles(JWTClaimsSet claimsSet) {
+
+        if (!rolesFromAccessToken) {
+            return []
+        }
+
+        Stream<String> roles = accessTokenRoleClaims.stream()
+                .map(claimsSet::getClaim)
+                .filter(Objects::nonNull)
+                .flatMap { Object roleClaim ->
+                    if (roleClaim instanceof String) {
+                        Stream.of(roleClaim.split(','))
+                    } else if (roleClaim.getClass().isArray() && roleClaim.getClass().getComponentType().isAssignableFrom(String.class)) {
+                        Stream.of(roleClaim)
+                    } else if (Collection.class.isAssignableFrom(roleClaim.getClass())) {
+                        ((Collection) roleClaim).stream()
+                    }
+                }
+
+        if (this.rolePrefix) {
+            roles = roles.map { String role -> this.rolePrefix + role }
+        }
+
+        if (this.roleToUppercase) {
+            roles = roles.map { String role -> role.toUpperCase() }
+        }
+
+        return roles.collect(Collectors.toSet())
     }
 
     @Override

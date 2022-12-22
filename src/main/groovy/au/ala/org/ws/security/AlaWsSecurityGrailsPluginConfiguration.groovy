@@ -106,6 +106,14 @@ class AlaWsSecurityGrailsPluginConfiguration {
         authenticator.requiredClaims = jwtProperties.requiredClaims
         authenticator.requiredScopes = jwtProperties.requiredScopes
 
+        authenticator.rolesFromAccessToken = jwtProperties.rolesFromAccessToken
+        if (authenticator.rolesFromAccessToken) {
+            authenticator.accessTokenRoleClaims = jwtProperties.roleAttributes
+        }
+
+        authenticator.rolePrefix = jwtProperties.rolePrefix
+        authenticator.roleToUppercase = jwtProperties.roleToUppercase
+
         return new AlaOidcClient(credentialsExtractor, authenticator)
     }
 
