@@ -113,6 +113,9 @@ class AuthPac4jPluginConfig {
         config.setScope(oidcClientProperties.scope)
         config.setWithState(oidcClientProperties.withState)
         config.customParams.putAll(oidcClientProperties.customParams)
+        if (oidcClientProperties.logoutUrl) {
+            config.setLogoutUrl(oidcClientProperties.logoutUrl)
+        }
         if (oidcClientProperties.clientAuthenticationMethod) {
             config.setClientAuthenticationMethodAsString(oidcClientProperties.clientAuthenticationMethod)
         }
