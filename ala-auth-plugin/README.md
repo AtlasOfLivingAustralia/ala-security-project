@@ -65,6 +65,17 @@ security:
     client-id: 'ChangeMe'
     secret: 'ChangeMe'
     scope: 'openid profile email ala roles'
+    with-state: true // set to false to disable use of state parameter in login
+    logout-action: DEFAULT // use COGNITO for cognito non-standard logout
+    logout-url: // omit if OIDC provider has end_session_endpoint in discovery doc, otherwise provide here
+  core:
+    default-logout-redirect-uri: '/' // App relative URI to redirect to after OIDC logout
+    auth-cookie-name: 'ALA-Auth' // not supported with cognito
+    uri-filter-pattern: ['/paths/*','/that','/require/*,'/auth/*'] // Java servlet filter style paths only
+    authenticate-only-if-cookie-filter-pattern:  ['/optional-auth/*'] // Will force OIDC auth if the Auth Cookie is defined
+    gateway-filter-pattern: ['/api/*'] // Use OIDC prompt=none
+    gateway-if-cookie-filter-pattern: ['/sso-only/*'] // Use OIDC prompt=none for these paths if the Auth Cookie is defined
+    uri-exclusion-filter-pattern: ['/paths/anonymous/.*', 'https?://.*/.*\?ignoreCas=true'] // Regex URLs supported, only necessary to exclude a path from one / all of the above.
 ```
 
 For ease of transition, the following old property names are accepted for configuring the OIDC authn:
@@ -78,8 +89,6 @@ security:
     gatewayIfCookieFilterPattern: ['/sso-only/*'] // Use OIDC prompt=none for these paths if the Auth Cookie is defined
     uriExclusionFilterPattern: ['/paths/anonymous/.*', 'https?://.*/.*\?ignoreCas=true'] // Regex URLs supported, only necessary to exclude a path from one / all of the above.
 ```
-
-TODO: OIDC prefix versions of these.
 
 For local development, dev and test deployments `discovery-uri` should be set to auth-test or auth-dev instead.
 

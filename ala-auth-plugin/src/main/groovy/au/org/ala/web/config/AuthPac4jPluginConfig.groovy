@@ -1,5 +1,6 @@
 package au.org.ala.web.config
 
+
 import au.org.ala.web.CasClientProperties
 import au.org.ala.web.CookieFilterWrapper
 import au.org.ala.web.CookieMatcher
@@ -16,7 +17,9 @@ import au.org.ala.web.Pac4jHttpServletRequestWrapperFilter
 import au.org.ala.web.Pac4jSSOStrategy
 import au.org.ala.web.SSOStrategy
 import au.org.ala.web.UserAgentFilterService
+import com.nimbusds.jose.util.DefaultResourceRetriever
 import grails.core.GrailsApplication
+import grails.web.http.HttpHeaders
 import grails.web.mapping.LinkGenerator
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -26,9 +29,13 @@ import org.pac4j.core.client.Client
 import org.pac4j.core.client.Clients
 import org.pac4j.core.client.direct.AnonymousClient
 import org.pac4j.core.config.Config
+import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.context.session.SessionStoreFactory
+import org.pac4j.core.engine.DefaultLogoutLogic
 import org.pac4j.core.engine.DefaultSecurityLogic
+import org.pac4j.core.engine.LogoutLogic
 import org.pac4j.core.engine.SecurityLogic
 import org.pac4j.core.engine.savedrequest.SavedRequestHandler
 import org.pac4j.core.http.url.DefaultUrlResolver
@@ -37,12 +44,15 @@ import org.pac4j.core.matching.matcher.PathMatcher
 import org.pac4j.core.util.Pac4jConstants
 import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.jee.context.session.JEESessionStore
+import org.pac4j.jee.context.session.JEESessionStoreFactory
 import org.pac4j.jee.filter.CallbackFilter
 import org.pac4j.jee.filter.LogoutFilter
 import org.pac4j.jee.filter.SecurityFilter
 import org.pac4j.oidc.client.OidcClient
 import org.pac4j.oidc.config.OidcConfiguration
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -52,6 +62,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 
 import javax.servlet.DispatcherType
+import java.util.regex.Pattern
 
 import static org.pac4j.core.authorization.authorizer.IsAnonymousAuthorizer.isAnonymous
 import static org.pac4j.core.authorization.authorizer.IsAuthenticatedAuthorizer.isAuthenticated
@@ -73,6 +84,12 @@ class AuthPac4jPluginConfig {
     static final String EXCLUDE_PATHS = "excludePaths"
     public static final String CALLBACK_URI = "/callback"
     public static final String NOT_BOT_MATCHER = "notBotMatcher"
+
+    @Value('${info.app.name:Unknown-App}')
+    String name
+
+    @Value('${info.app.version:1}')
+    String version
 
     @Autowired
     CasClientProperties casClientProperties
@@ -125,6 +142,15 @@ class AuthPac4jPluginConfig {
         if (logoutHandler) {
             config.logoutHandler = logoutHandler
         }
+        if (oidcClientProperties.logoutUrl) {
+            config.logoutUrl = oidcClientProperties.logoutUrl
+        }
+
+        def resourceRetriever = new DefaultResourceRetriever(oidcClientProperties.connectTimeout, oidcClientProperties.readTimeout)
+        String userAgent = "$name/$version"
+        resourceRetriever.headers = [(HttpHeaders.USER_AGENT): [userAgent]]
+        config.resourceRetriever = resourceRetriever
+
         // select display mode: page, popup, touch, and wap
 //        config.addCustomParam("display", "popup");
         // select prompt mode: none, consent, select_account
@@ -136,12 +162,9 @@ class AuthPac4jPluginConfig {
     @Bean
     @Primary
     OidcClient oidcClient(OidcConfiguration oidcConfiguration) {
-        def client = new OidcClient(oidcConfiguration)
-        client.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator([coreAuthProperties.roleAttribute ?: casClientProperties.roleAttribute],coreAuthProperties.permissionAttributes))
-        client.addAuthorizationGenerator(new DefaultRolesPermissionsAuthorizationGenerator(['ROLE_USER'] , []))
-        client.setUrlResolver(new DefaultUrlResolver(true))
+        def client = createOidcClientFromConfig(oidcConfiguration)
         client.setName(DEFAULT_CLIENT)
-        client
+        return client
     }
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
@@ -150,11 +173,21 @@ class AuthPac4jPluginConfig {
         def config = generateBaseOidcClientConfiguration(oidcLogoutHandler)
         // select prompt mode: none, consent, select_account
         config.addCustomParam("prompt", "none")
-        def client = new OidcClient(config)
+        def client = createOidcClientFromConfig(config)
+        client.setName(PROMPT_NONE_CLIENT)
+        return client
+    }
+
+    private OidcClient createOidcClientFromConfig(OidcConfiguration oidcConfiguration) {
+        def client = new OidcClient(oidcConfiguration)
         client.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator([coreAuthProperties.roleAttribute ?: casClientProperties.roleAttribute],coreAuthProperties.permissionAttributes))
         client.addAuthorizationGenerator(new DefaultRolesPermissionsAuthorizationGenerator(['ROLE_USER'] , []))
         client.setUrlResolver(new DefaultUrlResolver(true))
-        client.setName(PROMPT_NONE_CLIENT)
+        def logoutActionBuilder = oidcClientProperties.logoutAction.getLogoutActionBuilder(oidcConfiguration)
+        if (logoutActionBuilder != null) {
+            client.logoutActionBuilder = logoutActionBuilder
+        }
+
         return client
     }
 
@@ -174,6 +207,12 @@ class AuthPac4jPluginConfig {
     @Bean
     SessionStore sessionStore() {
         JEESessionStore.INSTANCE
+    }
+
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
+    @Bean
+    SessionStoreFactory sessionStoreFactory() {
+        JEESessionStoreFactory.INSTANCE
     }
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
@@ -200,11 +239,12 @@ class AuthPac4jPluginConfig {
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    Config pac4jConfig(List<Client> clientBeans, SessionStore sessionStore, WebContextFactory webContextFactory, UserAgentFilterService userAgentFilterService, SecurityLogic securityLogic) {
+    Config pac4jConfig(List<Client> clientBeans, SessionStore sessionStore, SessionStoreFactory sessionStoreFactory, WebContextFactory webContextFactory, UserAgentFilterService userAgentFilterService, SecurityLogic securityLogic) {
         Clients clients = new Clients(linkGenerator.link(absolute: true, uri: CALLBACK_URI), clientBeans)
 
         Config config = new Config(clients)
         config.sessionStore = sessionStore
+        config.sessionStoreFactory = sessionStoreFactory
         config.webContextFactory = webContextFactory
         config.securityLogic = securityLogic
         config.addAuthorizer(IS_AUTHENTICATED, isAuthenticated())
@@ -226,18 +266,64 @@ class AuthPac4jPluginConfig {
     }
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
+    @ConditionalOnMissingBean(name = 'defaultLogoutLogic')
+    @Bean('defaultLogoutLogic')
+    LogoutLogic defaultLogoutLogic() {
+        return new DefaultLogoutLogic() {
+            @Override
+            protected String enhanceRedirectUrl(Config config, Client client, WebContext context, SessionStore sessionStore, String redirectUrl) {
+                def redirectUri = URI.create(redirectUrl)
+                if (!redirectUri.isAbsolute()) {
+                    return URI.create(context.requestURL).resolve(redirectUri).toString()
+                } else {
+                    return redirectUrl
+                }
+            }
+        }
+    }
+
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    FilterRegistrationBean pac4jLogoutFilter(Config pac4jConfig) {
+    FilterRegistrationBean pac4jLogoutFilter(Config pac4jConfig, @Qualifier('defaultLogoutLogic') LogoutLogic defaultLogoutLogic) {
         final name = 'Pac4j Logout Filter'
         def frb = new FilterRegistrationBean()
         frb.name = name
         // Redirect must be absolute for indirect client aka OIDC logout
         def redirectUrl = linkGenerator.link(absolute: true, uri: coreAuthProperties.defaultLogoutRedirectUri)
+        def baseUrl = linkGenerator.serverBaseURL
+        // Is this necessary?
+        if (baseUrl.endsWith('/')) {
+            baseUrl.substring(0, baseUrl.length() - 1)
+        }
         LogoutFilter logoutFilter = new LogoutFilter(pac4jConfig, redirectUrl)
-        logoutFilter.setLogoutUrlPattern(coreAuthProperties.logoutUrlPattern)
+        if (coreAuthProperties.logoutUrlPattern) {
+            logoutFilter.setLogoutUrlPattern(coreAuthProperties.logoutUrlPattern)
+        } else {
+            // default logout url pattern is the PAC4j url pattern with an optional base url pre-pended
+            def pac4jDefaultLogoutUrlPatternValue = Pac4jConstants.DEFAULT_LOGOUT_URL_PATTERN_VALUE
+            boolean startsWith = false
+            boolean endsWith = false
+            if (pac4jDefaultLogoutUrlPatternValue.startsWith('^')) {
+                startsWith = true
+                pac4jDefaultLogoutUrlPatternValue = pac4jDefaultLogoutUrlPatternValue.substring(1)
+            }
+            if (pac4jDefaultLogoutUrlPatternValue.endsWith('$')) {
+                endsWith = true
+                pac4jDefaultLogoutUrlPatternValue = pac4jDefaultLogoutUrlPatternValue.substring(0, pac4jDefaultLogoutUrlPatternValue.length() -1)
+            }
+            def pattern = "(${Pattern.quote(baseUrl)})?${pac4jDefaultLogoutUrlPatternValue}"
+            if (startsWith) {
+                pattern = '^' + pattern
+            }
+            if (endsWith) {
+                pattern = pattern + '$'
+            }
+            logoutFilter.setLogoutUrlPattern(pattern)
+        }
         logoutFilter.setCentralLogout(coreAuthProperties.centralLogout)
         logoutFilter.setDestroySession(coreAuthProperties.destroySession)
         logoutFilter.setLocalLogout(coreAuthProperties.localLogout)
+        logoutFilter.setLogoutLogic(defaultLogoutLogic)
         frb.filter = logoutFilter
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = AuthPluginConfig.filterOrder()

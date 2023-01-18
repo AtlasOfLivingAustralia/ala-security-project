@@ -82,9 +82,9 @@ dependencies {
 
     implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
 
-    compile 'org.pac4j:pac4j-oidc:5.4.3'
-    compile 'org.pac4j:pac4j-javaee:5.4.3'
-    compile 'org.pac4j:javaee-pac4j:7.0.0'
+    compile 'org.pac4j:pac4j-oidc:5.7.0'
+    compile 'org.pac4j:pac4j-javaee:5.7.0'
+    compile 'org.pac4j:javaee-pac4j:7.1.0'
 
     // Not required but this plugin can react to the presence of Spring Session
     compileOnly 'org.springframework.session:spring-session-core'

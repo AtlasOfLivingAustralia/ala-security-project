@@ -13,7 +13,7 @@ class LogoutController {
      */
     def logout() {
         session.invalidate()
-        def appUrl = URLEncoder.encode(validateAppUrl(params.appUrl), "UTF-8")
+        def appUrl = URLEncoder.encode(validateAppUrl(params.url ?: params.appUrl), "UTF-8")
         def casUrl = grailsApplication.config.getProperty('security.cas.logoutUrl')
         redirect(url:"${casUrl}?url=${appUrl}")
     }
@@ -25,14 +25,20 @@ class LogoutController {
      * @return The appUrl if it's a valid URL for this app or this app's / URI
      */
     private String validateAppUrl(String appUrl) {
-        def baseUrl = g.createLink(absolute: true, uri: '/')
-        def retVal
-        if (appUrl?.startsWith(baseUrl)) {
-            retVal = appUrl
+        def uri = appUrl.toURI()
+        if (uri.isAbsolute()) {
+            def baseUrl = g.createLink(absolute: true, uri: '/')
+            def retVal
+            if (appUrl?.startsWith(baseUrl)) {
+                retVal = appUrl
+            } else {
+                retVal = baseUrl
+            }
+            return retVal
         } else {
-            retVal = baseUrl
+            return request.requestURL.toURI().resolve(appUrl).toString()
         }
-        return retVal
+
     }
 
     /**
