@@ -10,7 +10,11 @@ import au.org.ala.ws.security.client.AlaIpWhitelistClient;
 import au.org.ala.ws.security.client.AlaOidcClient;
 import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor;
 import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor;
+import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jose.util.DefaultResourceRetriever;
+import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator;
 import org.pac4j.core.client.Client;
@@ -22,17 +26,20 @@ import org.pac4j.jee.context.JEEContextFactory;
 import org.pac4j.jee.context.session.JEESessionStore;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Configuration
@@ -46,6 +53,11 @@ public class AlaWsSecurityConfiguration {
     private ApiKeyProperties apiKeyProperties;
     @Autowired
     private IpWhitelistProperties ipWhitelistProperties;
+
+    @Value("${info.app.name:Unknown-App}")
+    String name;
+    @Value("${info.app.version:1}")
+    String version;
 
     @Bean
     @ConditionalOnMissingBean
@@ -70,9 +82,18 @@ public class AlaWsSecurityConfiguration {
     }
 
     @Bean
+    @ConditionalOnProperty(prefix = "security.jwt", name="enabled")
+    public ResourceRetriever jwtResourceRetriever() {
+        DefaultResourceRetriever resourceRetriever = new DefaultResourceRetriever(jwtProperties.getConnectTimeoutMs(), jwtProperties.getReadTimeoutMs());
+        String userAgent = name+"/"+version;
+        resourceRetriever.setHeaders(Map.of(HttpHeaders.USER_AGENT, List.of(userAgent)));
+        return resourceRetriever;
+    }
+
+    @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "security.jwt", name = "enabled")
-    public OidcConfiguration oidcConfiguration() {
+    public OidcConfiguration oidcConfiguration(ResourceRetriever jwtResourceRetriever) {
 
         OidcConfiguration oidcConfig = new OidcConfiguration();
         oidcConfig.setDiscoveryURI(jwtProperties.getDiscoveryUri());
@@ -80,13 +101,27 @@ public class AlaWsSecurityConfiguration {
         oidcConfig.setConnectTimeout(jwtProperties.getConnectTimeoutMs());
         oidcConfig.setReadTimeout(jwtProperties.getReadTimeoutMs());
 
+        oidcConfig.setResourceRetriever(jwtResourceRetriever);
+
         return oidcConfig;
+    }
+
+    @Bean
+    JWKSource<SecurityContext> jwkSource(OidcConfiguration oidcConfiguration) {
+        OIDCProviderMetadata providerMetadata = oidcConfiguration.findProviderMetadata();
+        URL keySourceUrl;
+        try {
+            keySourceUrl = providerMetadata.getJWKSetURI().toURL();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("shouldn't happen", e);
+        }
+        return new RemoteJWKSet<>(keySourceUrl, oidcConfiguration.findResourceRetriever());
     }
 
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty("security.jwt.enabled")
-    public AlaOidcClient getAlaOidcClient(OidcConfiguration oidcConfiguration) {
+    public AlaOidcClient getAlaOidcClient(OidcConfiguration oidcConfiguration, JWKSource<SecurityContext> jwkSource) {
 
         AlaOidcCredentialsExtractor credentialsExtractor = new AlaOidcCredentialsExtractor();
 
@@ -94,13 +129,8 @@ public class AlaWsSecurityConfiguration {
         OIDCProviderMetadata providerMetadata = oidcConfiguration.findProviderMetadata();
         authenticator.setIssuer(providerMetadata.getIssuer());
         authenticator.setExpectedJWSAlgs(Set.copyOf(providerMetadata.getIDTokenJWSAlgs()));
-        URL keySourceUrl;
-        try {
-            keySourceUrl = providerMetadata.getJWKSetURI().toURL();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("shouldn't happen", e);
-        }
-        authenticator.setKeySource(new RemoteJWKSet<>(keySourceUrl, oidcConfiguration.findResourceRetriever()));
+
+        authenticator.setKeySource(jwkSource);
         authenticator.setAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.getRoleAttributes(), jwtProperties.getPermissionAttributes()));
 
         authenticator.setRequiredClaims(jwtProperties.getRequiredClaims());

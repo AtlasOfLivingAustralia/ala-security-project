@@ -41,11 +41,11 @@ dependencies {
 
     implementation 'com.github.seancfoley:ipaddress:5.3.4'
 
-    api 'org.pac4j:pac4j-oidc:5.4.3'
-    api 'org.pac4j:pac4j-jwt:5.4.3'
-    api 'org.pac4j:pac4j-http:5.4.3'
-    api 'org.pac4j:pac4j-javaee:5.4.3'
-    api 'org.pac4j:javaee-pac4j:7.0.0'
+    api 'org.pac4j:pac4j-oidc:5.7.0'
+    api 'org.pac4j:pac4j-jwt:5.7.0'
+    api 'org.pac4j:pac4j-http:5.7.0'
+    api 'org.pac4j:pac4j-javaee:5.7.0'
+    api 'org.pac4j:javaee-pac4j:7.1.0'
 
     // mandatory dependencies for using Spock
 //    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
