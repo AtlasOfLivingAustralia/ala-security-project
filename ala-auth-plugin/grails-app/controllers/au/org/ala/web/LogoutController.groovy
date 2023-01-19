@@ -25,8 +25,13 @@ class LogoutController {
      * @return The appUrl if it's a valid URL for this app or this app's / URI
      */
     private String validateAppUrl(String appUrl) {
-        def uri = appUrl.toURI()
-        if (uri.isAbsolute()) {
+        def uri
+        try {
+            uri = appUrl.toURI()
+        } catch (URISyntaxException e) {
+            uri = null
+        }
+        if (uri == null || uri.isAbsolute()) {
             def baseUrl = g.createLink(absolute: true, uri: '/')
             def retVal
             if (appUrl?.startsWith(baseUrl)) {
