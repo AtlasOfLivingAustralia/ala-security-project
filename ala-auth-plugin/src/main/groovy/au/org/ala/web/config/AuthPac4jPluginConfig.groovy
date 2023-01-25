@@ -130,9 +130,6 @@ class AuthPac4jPluginConfig {
         config.setScope(oidcClientProperties.scope)
         config.setWithState(oidcClientProperties.withState)
         config.customParams.putAll(oidcClientProperties.customParams)
-        if (oidcClientProperties.logoutUrl) {
-            config.setLogoutUrl(oidcClientProperties.logoutUrl)
-        }
         if (oidcClientProperties.clientAuthenticationMethod) {
             config.setClientAuthenticationMethodAsString(oidcClientProperties.clientAuthenticationMethod)
         }
@@ -318,7 +315,7 @@ class AuthPac4jPluginConfig {
             if (endsWith) {
                 pattern = pattern + '$'
             }
-            logoutFilter.setLogoutUrlPattern(pattern)
+            logoutFilter.setLogoutUrlPattern(pattern.toString())
         }
         logoutFilter.setCentralLogout(coreAuthProperties.centralLogout)
         logoutFilter.setDestroySession(coreAuthProperties.destroySession)

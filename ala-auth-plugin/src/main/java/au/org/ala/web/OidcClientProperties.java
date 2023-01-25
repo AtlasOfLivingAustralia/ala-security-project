@@ -21,7 +21,6 @@ public class OidcClientProperties {
     private boolean useAnonymousClient = true;
     private int connectTimeout = HttpConstants.DEFAULT_CONNECT_TIMEOUT;
     private int readTimeout = HttpConstants.DEFAULT_READ_TIMEOUT;
-    private String logoutUrl;
 
     /**
      * Only set this if the OIDC provider doesn't set the end_session_url in the discovery document
