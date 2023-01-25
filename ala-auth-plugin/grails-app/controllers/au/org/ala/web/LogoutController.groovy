@@ -42,24 +42,37 @@ class LogoutController {
         // For an absolute URI, make sure it's allowed by the pattern *OR* that it starts with
         // our current base URI and the relative part matches the pattern
         // For a relative URI, make sure it's allowed
-        if (uri == null || uri.isAbsolute()) {
+        if (uri == null) {
+            retVal = coreAuthProperties.defaultLogoutRedirectUri
+        } else if (uri.isAbsolute()) {
             def baseUrl = g.createLink(absolute: true, uri: '/').toString()
             if (appUrl.matches(logoutPattern)) {
                 retVal = appUrl
-            } else if (appUrl?.startsWith(baseUrl) && uri.toString().substring(baseUrl.length()).matches(logoutPattern)) {
+            } else if (appUrl.startsWith(baseUrl) && getRelativeComponent(uri).matches(logoutPattern)) {
                 retVal = appUrl
             } else {
                 retVal = coreAuthProperties.defaultLogoutRedirectUri
             }
         } else {
-
             if (appUrl.matches(logoutPattern)) {
+                // Could be g.createLink(absolute: true, uri: appUrl)?
                 retVal = request.requestURL.toURI().resolve(appUrl).toString()
             } else {
                 retVal = coreAuthProperties.defaultLogoutRedirectUri
             }
         }
         return retVal
+    }
+
+    private String getRelativeComponent(URI uri) {
+        def path = uri.normalize().path
+        if (uri.query) {
+            path += '?' + uri.query
+        }
+        if (uri.fragment) {
+            path += '#' + uri.fragment
+        }
+        return path
     }
 
     /**
