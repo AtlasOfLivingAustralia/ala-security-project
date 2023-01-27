@@ -1,6 +1,7 @@
 package au.org.ala.ws.security.authenticator
 
 import au.org.ala.ws.security.profile.AlaOidcUserProfile
+import au.org.ala.ws.security.profile.AlaUserProfile
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.common.Json
 import com.nimbusds.jose.JWSAlgorithm
@@ -82,6 +83,44 @@ class AlaOidcAuthenticatorSpec extends Specification {
         ce.message == 'access_token with scope \'test/scope\' is missing required scopes [required/scope]'
     }
 
+    def 'validate access_token with userId'() {
+
+        setup:
+        OidcConfiguration oidcConfiguration = Mock()
+
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        alaOidcAuthenticator.issuer = new Issuer('http://localhost')
+        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+        alaOidcAuthenticator.requiredClaims = []
+        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
+
+        alaOidcAuthenticator.userIdClaim = 'username'
+
+        OidcCredentials oidcCredentials = new OidcCredentials()
+        JWTClaimsSet jwtClaims = new JWTClaimsSet.Builder()
+                .subject('sub')
+                .issuer(alaOidcAuthenticator.issuer.value)
+                .notBeforeTime(new Date())
+                .expirationTime(use(TimeCategory) { new Date() + 1.minute })
+                .audience('aud')
+                .issueTime(new Date())
+                .claim('username', 'user-id')
+                .build()
+
+        oidcCredentials.accessToken = new BearerAccessToken(generateJwt(jwkSet, jwtClaims))
+
+        WebContext context = Mock()
+        SessionStore sessionStore = Mock()
+
+        when:
+        alaOidcAuthenticator.validate(oidcCredentials, context, sessionStore)
+
+        then:
+        oidcCredentials.userProfile instanceof AlaUserProfile
+        oidcCredentials.userProfile.userId == 'user-id'
+    }
+
+
     def 'validate access_token with roles'() {
 
         setup:
@@ -93,6 +132,7 @@ class AlaOidcAuthenticatorSpec extends Specification {
         alaOidcAuthenticator.requiredClaims = []
         alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
 
+        alaOidcAuthenticator.userIdClaim = 'username'
         alaOidcAuthenticator.rolesFromAccessToken = true
         alaOidcAuthenticator.accessTokenRoleClaims = [ 'roles' ]
         alaOidcAuthenticator.rolePrefix = 'ROLE_'
@@ -105,6 +145,7 @@ class AlaOidcAuthenticatorSpec extends Specification {
                 .expirationTime(use(TimeCategory) { new Date() + 1.minute })
                 .audience('aud')
                 .issueTime(new Date())
+                .claim('username', 'user-id')
                 .claim('roles', [ 'user', 'admin' ])
                 .build()
 

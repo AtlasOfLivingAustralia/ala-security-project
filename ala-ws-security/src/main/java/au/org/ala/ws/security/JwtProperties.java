@@ -16,12 +16,13 @@ public class JwtProperties {
     private int connectTimeoutMs = HttpConstants.DEFAULT_CONNECT_TIMEOUT;;
     private int readTimeoutMs = HttpConstants.DEFAULT_READ_TIMEOUT;
 
-    private boolean rolesFromAccessToken = false;
+    private boolean rolesFromAccessToken = true;
     private String rolePrefix = "ROLE_";
     private boolean roleToUppercase = true;
-    private List<String> roleAttributes = List.of("role");
-    private List<String> permissionAttributes = List.of("scope","scp", "scopes");
+    private List<String> roleClaims = List.of("role");
+    private List<String> permissionClaims = List.of("scope","scp", "scopes");
 
+    private String userIdClaim = "userid";
     private List<String> requiredClaims = List.of("sub", "iat", "exp", "client_id", "jti", "iss");
     private List<String> requiredScopes = List.of();
     private List<String> urlPatterns = List.of(); // hard coded paths to apply JWT authentication to
@@ -114,20 +115,38 @@ public class JwtProperties {
         this.roleToUppercase = roleToUppercase;
     }
 
-    public List<String> getRoleAttributes() {
-        return roleAttributes;
+    public List<String> getRoleClaims() {
+        return roleClaims;
     }
 
-    public void setRoleAttributes(List<String> roleAttributes) {
-        this.roleAttributes = roleAttributes;
+    @Deprecated
+    public void setRoleAttributes(List<String> roleClaims) {
+        this.roleClaims = roleClaims;
     }
 
-    public List<String> getPermissionAttributes() {
-        return permissionAttributes;
+    public void setRoleClaims(List<String> roleClaims) {
+        this.roleClaims = roleClaims;
     }
 
-    public void setPermissionAttributes(List<String> permissionAttributes) {
-        this.permissionAttributes = permissionAttributes;
+    public List<String> getPermissionClaims() {
+        return permissionClaims;
+    }
+
+    public void setPermissionAttibutes(List<String> permissionClaims) {
+        this.permissionClaims = permissionClaims;
+    }
+
+    @Deprecated
+    public void setPermissionClaims(List<String> permissionClaims) {
+        this.permissionClaims = permissionClaims;
+    }
+
+    public String getUserIdClaim() {
+        return userIdClaim;
+    }
+
+    public void setUserIdClaim(String userIdClaim) {
+        this.userIdClaim = userIdClaim;
     }
 
     public List<String> getRequiredClaims() {

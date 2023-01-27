@@ -19,6 +19,7 @@ import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
+import com.nimbusds.openid.connect.sdk.OIDCScopeValue;
 import org.pac4j.core.authorization.generator.AuthorizationGenerator;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
@@ -106,11 +107,13 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         // TODO externalise the required claims
         jwtProcessor.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier(new JWTClaimsSet.Builder().issuer(issuer.getValue()).build(), Set.copyOf(requiredClaims)));
 
+        String userId = null;
         Collection<String> accessTokenRoles;
 
         try {
 
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
+            userId = (String) claimsSet.getClaim(userIdClaim);
 
             accessTokenRoles = getRoles(claimsSet);
 
@@ -145,7 +148,8 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         }
 
         var accessTokenScope = credentials.getAccessToken().getScope();
-        if (accessTokenScope != null && accessTokenScope.contains("profile")) {
+
+        if (accessTokenScope != null && accessTokenScope.contains(OIDCScopeValue.PROFILE)) {
 
             TokenCredentials tokenCredentials = new TokenCredentials(accessToken);
             super.validate(tokenCredentials, context, sessionStore);
@@ -153,30 +157,33 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
             UserProfile profile = tokenCredentials.getUserProfile();
 
             if (authorizationGenerator != null) {
+                final String finalUserId = userId;
                 cred.setUserProfile(
                         authorizationGenerator.generate(context, sessionStore, profile)
-                                .map(this::generateAlaUserProfile).get());
+                                .map( userProfile -> this.generateAlaUserProfile(finalUserId, userProfile) ).get());
             } else {
-                cred.setUserProfile(generateAlaUserProfile(profile));
+                cred.setUserProfile(generateAlaUserProfile(userId, profile));
             }
 
             if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
                 cred.getUserProfile().addRoles(accessTokenRoles);
             }
 
-        } else if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
+        } else if (userId != null && !userId.isEmpty()) {
 
-            AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile();
-            alaOidcUserProfile.addRoles(accessTokenRoles);
+            AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile(userId);
+            if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
+                alaOidcUserProfile.addRoles(accessTokenRoles);
+            }
 
             cred.setUserProfile(alaOidcUserProfile);
         }
 
     }
 
-    public AlaUserProfile generateAlaUserProfile(UserProfile profile) {
+    public AlaUserProfile generateAlaUserProfile(String userId, UserProfile profile) {
 
-        AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile();
+        AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile(userId);
         alaOidcUserProfile.addAttributes(profile.getAttributes());
         alaOidcUserProfile.setRoles(profile.getRoles());
         alaOidcUserProfile.setPermissions(profile.getPermissions());
@@ -209,7 +216,7 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
                 });
 
         if (this.rolePrefix != null && !this.rolePrefix.trim().isEmpty()) {
-            roles = roles.map( role -> this.rolePrefix + role );
+            roles = roles.map( role -> role.startsWith(this.rolePrefix) ? role : this.rolePrefix + role );
         }
 
         if (this.roleToUppercase) {
@@ -265,6 +272,14 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         this.authorizationGenerator = authorizationGenerator;
     }
 
+    public String getUserIdClaim() {
+        return userIdClaim;
+    }
+
+    public void setUserIdClaim(String userIdClaim) {
+        this.userIdClaim = userIdClaim;
+    }
+
     public List<String> getRequiredClaims() {
         return requiredClaims;
     }
@@ -317,6 +332,7 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
     private Set<JWSAlgorithm> expectedJWSAlgs;
     private JWKSource<SecurityContext> keySource;
     private AuthorizationGenerator authorizationGenerator;
+    private String userIdClaim;
     private List<String> requiredClaims;
     private List<String> requiredScopes;
     List<String> accessTokenRoleClaims;
