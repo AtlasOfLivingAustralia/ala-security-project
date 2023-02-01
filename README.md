@@ -6,7 +6,8 @@ Web service specific security code, e.g. API Key filters
 
 ## Usage
 ```
-compile "org.grails.plugins:ala-ws-security-plugin:4.2.0-SNAPSHOT"
+compile "org.grails.plugins:ala-ws-security-plugin:4.4.0-SNAPSHOT" // Grails
+compile "au.org.ala.ala-ws-spring-security:4.4.0-SNAPSHOT" // Spring Boot w/ Spring Security
 ```
 
 ### JWT Usage
@@ -55,6 +56,8 @@ On the server side, annotate protected controllers (either the class or individu
 - ```security.ip.whitelist``` - comma separated list of IP Addresses that are exempt from the API key security check. If the property is not defined then IP whitelisting is disabled.
 
 ## Changelog
+- ** Version 4.4.0 **
+  - Spring Boot Support
 - **Version 4.0.0**
   - Grails 4 version
   - Add JWT support
