@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+au.org.ala.ws.security.AlaWsSecurityRetrofitConfiguration,\
+au.org.ala.ws.security.AlaWsSecurityConfiguration

@@ -1,0 +1,110 @@
+plugins {
+    id("org.springframework.boot") version "2.7.0" apply false
+    id("io.spring.dependency-management") version "1.0.13.RELEASE"
+
+    id 'groovy'
+    id 'java-library'
+
+    id 'maven-publish'
+}
+
+
+group "au.org.ala"
+
+dependencyManagement {
+    imports {
+        mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+    }
+}
+
+repositories {
+    mavenLocal()
+    maven { url "https://nexus.ala.org.au/content/groups/public/" }
+    mavenCentral()
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+dependencies {
+
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor"
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'org.springframework:spring-web'
+//    compileOnly 'org.springframework.boot:spring-boot-starter-security'
+    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+
+    api 'au.org.ala:userdetails-service-client:2.0.2'
+
+    implementation 'com.github.seancfoley:ipaddress:5.3.4'
+
+    api 'org.pac4j:pac4j-oidc:5.7.0'
+    api 'org.pac4j:pac4j-jwt:5.7.0'
+    api 'org.pac4j:pac4j-http:5.7.0'
+    api 'org.pac4j:pac4j-javaee:5.7.0'
+    api 'org.pac4j:javaee-pac4j:7.1.0'
+
+    // mandatory dependencies for using Spock
+//    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+//    implementation platform('org.apache.groovy:groovy-bom:4.0.5')
+//    implementation 'org.apache.groovy:groovy'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.codehaus.groovy:groovy-all:3.0.11'
+    testImplementation platform("org.spockframework:spock-bom:2.3-groovy-3.0")
+    testImplementation "org.spockframework:spock-core"
+    testImplementation "org.spockframework:spock-junit4"  // you can remove this if your code does not rely on old JUnit 4 rules
+
+    testImplementation "org.mockito:mockito-core:4.6.1"
+    testImplementation 'com.github.tomakehurst:wiremock-jre8:2.33.2'
+    testImplementation "co.infinum:retromock:1.1.1"
+    testImplementation 'com.squareup.retrofit2:retrofit-mock:2.9.0'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name 'Nexus'
+            url "https://nexus.ala.org.au/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
+            credentials {
+                username = System.getenv('TRAVIS_DEPLOY_USERNAME')
+                password = System.getenv('TRAVIS_DEPLOY_PASSWORD')
+            }
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            from components.java
+//            artifact sourcesJar
+//            artifact javadocJar
+
+            pom {
+                name = 'ALA WS Security Library'
+                description = 'Library to authenticate web service calls for ALA systems'
+                url = 'https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin'
+                licenses {
+                    license {
+                        name = 'MPL-1.1'
+                        url = 'https://www.mozilla.org/en-US/MPL/1.1/'
+                    }
+                }
+                developers {
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin.git'
+                    developerConnection = 'scm:git:ssh://github.com:AtlasOfLivingAustralia/ala-ws-security-plugin.git'
+                    url = 'https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin/tree/main'
+                }
+            }
+        }
+    }
+}
