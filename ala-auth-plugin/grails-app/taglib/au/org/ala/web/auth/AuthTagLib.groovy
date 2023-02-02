@@ -93,7 +93,7 @@ class AuthTagLib {
                 AuthenticationCookieUtils.cookieExists(request, AuthenticationCookieUtils.ALA_AUTH_COOKIE)) ||
                 request.userPrincipal) {
             return "<a href='${logoutUrl.encodeAsHTML()}" +
-                    "?appUrl=${logoutReturnToUrl.encodeAsHTML()}' " +
+                    "?url=${logoutReturnToUrl.encodeAsHTML()}' " +
                     "class='${attrs.cssClass.encodeAsHTML()}'>Logout</a>"
         } else {
             // currently logged out

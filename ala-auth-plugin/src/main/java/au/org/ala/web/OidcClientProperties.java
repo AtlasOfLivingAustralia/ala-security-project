@@ -21,7 +21,17 @@ public class OidcClientProperties {
     private boolean useAnonymousClient = true;
     private int connectTimeout = HttpConstants.DEFAULT_CONNECT_TIMEOUT;
     private int readTimeout = HttpConstants.DEFAULT_READ_TIMEOUT;
-    private String logoutUrl;
+
+    /**
+     * Only set this if the OIDC provider doesn't set the end_session_url in the discovery document
+     */
+    private String logoutUrl = null;
+
+    /**
+     * Only set this if the standard OIDC logout is not supported.
+     * Adding a new logout action type in the enum will require a
+     */
+    private LogoutActionType logoutAction = LogoutActionType.DEFAULT;
 
     public boolean isEnabled() {
         return enabled;
@@ -125,6 +135,14 @@ public class OidcClientProperties {
 
     public void setLogoutUrl(String logoutUrl) {
         this.logoutUrl = logoutUrl;
+    }
+
+    public LogoutActionType getLogoutAction() {
+        return logoutAction;
+    }
+
+    public void setLogoutAction(LogoutActionType logoutAction) {
+        this.logoutAction = logoutAction;
     }
 
 }
