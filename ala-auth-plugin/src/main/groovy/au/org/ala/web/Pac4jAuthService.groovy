@@ -38,23 +38,24 @@ class Pac4jAuthService implements IAuthService {
 
     static final String ATTR_USERID = 'userid'
 
-    @Autowired
     private final Config config
 
-    @Autowired
     private final Pac4jContextProvider pac4jContextProvider
 
-    @Autowired
     private final SessionStore sessionStore
 
-    @Autowired
     private final LinkGenerator grailsLinkGenerator
 
-    Pac4jAuthService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator) {
+    private final String rolePrefix
+    private boolean convertRolesToUpperCase
+
+    Pac4jAuthService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator, String rolePrefix, boolean convertRolesToUpperCase) {
         this.config = config
         this.pac4jContextProvider = pac4jContextProvider
         this.sessionStore = sessionStore
         this.grailsLinkGenerator = grailsLinkGenerator
+        this.rolePrefix = rolePrefix
+        this.convertRolesToUpperCase = convertRolesToUpperCase
     }
 
     ProfileManager getProfileManager() {
@@ -142,19 +143,24 @@ class Pac4jAuthService implements IAuthService {
         if (userProfile != null) {
             Object roles = userProfile.attributes.get(ATTR_ROLES) ?: userProfile.attributes.get(ATTR_ROLE)
             if (roles instanceof Collection) {
-                return new HashSet<String>((Collection)roles)
+                return new HashSet<String>((Collection)roles.collect(this.&convertProvidedRoleName))
             } else if (roles instanceof String) {
                 String rolesString = (String) roles
                 Set<String> retVal = new HashSet<String>()
                 if (rolesString) {
                     for (String role: rolesString.split(",")) {
-                        retVal.add(role.trim())
+                        retVal.add(convertProvidedRoleName(role.trim()))
                     }
                 }
                 return retVal;
             }
         }
         return Collections.emptySet()
+    }
+
+    private String convertProvidedRoleName(String role) {
+        def result = rolePrefix ? (rolePrefix + role) : role
+        return convertRolesToUpperCase ? result.toUpperCase() : result
     }
 
     @Override

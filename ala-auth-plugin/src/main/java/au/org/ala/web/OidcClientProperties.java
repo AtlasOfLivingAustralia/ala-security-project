@@ -33,6 +33,18 @@ public class OidcClientProperties {
      */
     private LogoutActionType logoutAction = LogoutActionType.DEFAULT;
 
+    /**
+     * A prefix to add to all incoming role names, e.g. cognito which might provide role names like "user" but
+     * the application code requires the role name to be "role_user"
+     */
+    private String rolePrefix = "";
+
+    /**
+     * Whether to convert all incoming role names to upper case, e.g. cognito which might provide role names like
+     * "user" but the application code requires the role name to be "USER"
+     */
+    private boolean convertRolesToUpperCase = true;
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -145,4 +157,19 @@ public class OidcClientProperties {
         this.logoutAction = logoutAction;
     }
 
+    public String getRolePrefix() {
+        return rolePrefix;
+    }
+
+    public void setRolePrefix(String rolePrefix) {
+        this.rolePrefix = rolePrefix;
+    }
+
+    public boolean isConvertRolesToUpperCase() {
+        return convertRolesToUpperCase;
+    }
+
+    public void setConvertRolesToUpperCase(boolean convertRolesToUpperCase) {
+        this.convertRolesToUpperCase = convertRolesToUpperCase;
+    }
 }
