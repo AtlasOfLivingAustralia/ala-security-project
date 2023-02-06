@@ -111,7 +111,7 @@ class AuthPac4jPluginConfig {
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     IAuthService delegateService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator) {
-        new Pac4jAuthService(config, pac4jContextProvider, sessionStore, grailsLinkGenerator, oidcClientProperties.rolePrefix, oidcClientProperties.convertRolesToUpperCase)
+        new Pac4jAuthService(config, pac4jContextProvider, sessionStore, grailsLinkGenerator)
     }
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')

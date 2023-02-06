@@ -46,16 +46,11 @@ class Pac4jAuthService implements IAuthService {
 
     private final LinkGenerator grailsLinkGenerator
 
-    private final String rolePrefix
-    private boolean convertRolesToUpperCase
-
-    Pac4jAuthService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator, String rolePrefix, boolean convertRolesToUpperCase) {
+    Pac4jAuthService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator) {
         this.config = config
         this.pac4jContextProvider = pac4jContextProvider
         this.sessionStore = sessionStore
         this.grailsLinkGenerator = grailsLinkGenerator
-        this.rolePrefix = rolePrefix
-        this.convertRolesToUpperCase = convertRolesToUpperCase
     }
 
     ProfileManager getProfileManager() {
@@ -139,28 +134,15 @@ class Pac4jAuthService implements IAuthService {
      */
     Set<String> getUserRoles() {
         def userProfile = userProfile
+        def retVal = Collections.<String>emptySet()
 
         if (userProfile != null) {
-            Object roles = userProfile.attributes.get(ATTR_ROLES) ?: userProfile.attributes.get(ATTR_ROLE)
-            if (roles instanceof Collection) {
-                return new HashSet<String>((Collection)roles.collect(this.&convertProvidedRoleName))
-            } else if (roles instanceof String) {
-                String rolesString = (String) roles
-                Set<String> retVal = new HashSet<String>()
-                if (rolesString) {
-                    for (String role: rolesString.split(",")) {
-                        retVal.add(convertProvidedRoleName(role.trim()))
-                    }
-                }
-                return retVal;
+            def roles = userProfile.roles
+            if (roles) {
+                retVal = roles
             }
         }
-        return Collections.emptySet()
-    }
-
-    private String convertProvidedRoleName(String role) {
-        def result = rolePrefix ? (rolePrefix + role) : role
-        return convertRolesToUpperCase ? result.toUpperCase() : result
+        return retVal
     }
 
     @Override
