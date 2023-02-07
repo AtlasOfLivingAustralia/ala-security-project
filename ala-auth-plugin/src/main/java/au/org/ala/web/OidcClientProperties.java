@@ -1,6 +1,7 @@
 package au.org.ala.web;
 
 import org.pac4j.core.context.HttpConstants;
+import org.pac4j.oidc.profile.OidcProfileDefinition;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.LinkedHashMap;
@@ -29,7 +30,6 @@ public class OidcClientProperties {
 
     /**
      * Only set this if the standard OIDC logout is not supported.
-     * Adding a new logout action type in the enum will require a
      */
     private LogoutActionType logoutAction = LogoutActionType.DEFAULT;
 
@@ -44,6 +44,22 @@ public class OidcClientProperties {
      * "user" but the application code requires the role name to be "USER"
      */
     private boolean convertRolesToUpperCase = true;
+
+    /**
+     * Set this to add a preferred claim name to retrieve the ala user id from
+     */
+    private String alaUseridClaim = null;
+
+    /**
+     * Set this to add a preferred claim name to retrieve the user name from
+     */
+    private String userNameClaim = null;
+
+    /**
+     * Set this to the claim name that contains the full display name for the user,
+     * set to null to calculate from first and last names.
+     */
+    private String displayNameClaim = OidcProfileDefinition.NAME;
 
     public boolean isEnabled() {
         return enabled;
@@ -171,5 +187,29 @@ public class OidcClientProperties {
 
     public void setConvertRolesToUpperCase(boolean convertRolesToUpperCase) {
         this.convertRolesToUpperCase = convertRolesToUpperCase;
+    }
+
+    public String getAlaUseridClaim() {
+        return alaUseridClaim;
+    }
+
+    public void setAlaUseridClaim(String alaUseridClaim) {
+        this.alaUseridClaim = alaUseridClaim;
+    }
+
+    public String getUserNameClaim() {
+        return userNameClaim;
+    }
+
+    public void setUserNameClaim(String userNameClaim) {
+        this.userNameClaim = userNameClaim;
+    }
+
+    public String getDisplayNameClaim() {
+        return displayNameClaim;
+    }
+
+    public void setDisplayNameClaim(String displayNameClaim) {
+        this.displayNameClaim = displayNameClaim;
     }
 }

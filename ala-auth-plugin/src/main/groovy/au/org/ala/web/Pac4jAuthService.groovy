@@ -7,9 +7,6 @@ import org.pac4j.core.config.Config
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
-import org.springframework.beans.factory.annotation.Autowired
-
-import java.nio.file.Paths
 
 class Pac4jAuthService implements IAuthService {
 
@@ -46,11 +43,20 @@ class Pac4jAuthService implements IAuthService {
 
     private final LinkGenerator grailsLinkGenerator
 
-    Pac4jAuthService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator) {
+    private final String alaUseridClaim
+
+    private final String userNameClaim
+
+    private final String displayNameClaim
+
+    Pac4jAuthService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator, String alaUseridClaim, String userNameClaim, String displayNameClaim) {
         this.config = config
         this.pac4jContextProvider = pac4jContextProvider
         this.sessionStore = sessionStore
         this.grailsLinkGenerator = grailsLinkGenerator
+        this.alaUseridClaim = alaUseridClaim
+        this.userNameClaim = userNameClaim
+        this.displayNameClaim = displayNameClaim
     }
 
     ProfileManager getProfileManager() {
@@ -93,17 +99,24 @@ class Pac4jAuthService implements IAuthService {
 
     @Override
     String getUserName() {
-        getAttribute { it.username ?: it.id }
+        getAttribute {
+            (userNameClaim ? it.getAttribute(userNameClaim) : null) ?: it.username ?: it.id
+        }
     }
 
     @Override
     String getUserId() {
-        getAttribute { it.getAttribute(ATTR_USERID) ?: it.id }
+        getAttribute {
+            (alaUseridClaim ? it.getAttribute(alaUseridClaim) : null) ?: it.getAttribute(ATTR_USERID) ?: it.id
+        }
     }
 
     @Override
     String getDisplayName() {
-        String displayName = getAttribute(ATTR_NAME)
+        String displayName = null
+        if (displayNameClaim) {
+            displayName = getAttribute(displayNameClaim)
+        }
         if (!displayName) {
             String firstname = getAttribute(ATTR_FIRST_NAME)
             String lastname = getAttribute(ATTR_LAST_NAME)

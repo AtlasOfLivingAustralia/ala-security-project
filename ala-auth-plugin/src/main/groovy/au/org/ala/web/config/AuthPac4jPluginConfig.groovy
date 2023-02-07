@@ -25,7 +25,6 @@ import grails.web.mapping.LinkGenerator
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.pac4j.core.authorization.generator.DefaultRolesPermissionsAuthorizationGenerator
-import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator
 import org.pac4j.core.client.Client
 import org.pac4j.core.client.Clients
 import org.pac4j.core.client.direct.AnonymousClient
@@ -111,7 +110,8 @@ class AuthPac4jPluginConfig {
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     IAuthService delegateService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator) {
-        new Pac4jAuthService(config, pac4jContextProvider, sessionStore, grailsLinkGenerator)
+        new Pac4jAuthService(config, pac4jContextProvider, sessionStore, grailsLinkGenerator,
+                oidcClientProperties.alaUseridClaim, oidcClientProperties.userNameClaim, oidcClientProperties.displayNameClaim)
     }
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
