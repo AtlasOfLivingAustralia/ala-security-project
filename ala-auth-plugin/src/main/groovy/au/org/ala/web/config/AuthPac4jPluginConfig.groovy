@@ -17,6 +17,7 @@ import au.org.ala.web.Pac4jHttpServletRequestWrapperFilter
 import au.org.ala.web.Pac4jSSOStrategy
 import au.org.ala.web.SSOStrategy
 import au.org.ala.web.UserAgentFilterService
+import au.org.ala.web.pac4j.ConvertingFromAttributesAuthorizationGenerator
 import com.nimbusds.jose.util.DefaultResourceRetriever
 import grails.core.GrailsApplication
 import grails.web.http.HttpHeaders
@@ -177,7 +178,7 @@ class AuthPac4jPluginConfig {
 
     private OidcClient createOidcClientFromConfig(OidcConfiguration oidcConfiguration) {
         def client = new OidcClient(oidcConfiguration)
-        client.addAuthorizationGenerator(new FromAttributesAuthorizationGenerator([coreAuthProperties.roleAttribute ?: casClientProperties.roleAttribute],coreAuthProperties.permissionAttributes))
+        client.addAuthorizationGenerator(new ConvertingFromAttributesAuthorizationGenerator([coreAuthProperties.roleAttribute ?: casClientProperties.roleAttribute],coreAuthProperties.permissionAttributes, oidcClientProperties.rolePrefix, oidcClientProperties.convertRolesToUpperCase))
         client.addAuthorizationGenerator(new DefaultRolesPermissionsAuthorizationGenerator(['ROLE_USER'] , []))
         client.setUrlResolver(new DefaultUrlResolver(true))
         def logoutActionBuilder = oidcClientProperties.logoutAction.getLogoutActionBuilder(oidcConfiguration)

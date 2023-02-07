@@ -38,16 +38,12 @@ class Pac4jAuthService implements IAuthService {
 
     static final String ATTR_USERID = 'userid'
 
-    @Autowired
     private final Config config
 
-    @Autowired
     private final Pac4jContextProvider pac4jContextProvider
 
-    @Autowired
     private final SessionStore sessionStore
 
-    @Autowired
     private final LinkGenerator grailsLinkGenerator
 
     Pac4jAuthService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator) {
@@ -138,23 +134,15 @@ class Pac4jAuthService implements IAuthService {
      */
     Set<String> getUserRoles() {
         def userProfile = userProfile
+        def retVal = Collections.<String>emptySet()
 
         if (userProfile != null) {
-            Object roles = userProfile.attributes.get(ATTR_ROLES) ?: userProfile.attributes.get(ATTR_ROLE)
-            if (roles instanceof Collection) {
-                return new HashSet<String>((Collection)roles)
-            } else if (roles instanceof String) {
-                String rolesString = (String) roles
-                Set<String> retVal = new HashSet<String>()
-                if (rolesString) {
-                    for (String role: rolesString.split(",")) {
-                        retVal.add(role.trim())
-                    }
-                }
-                return retVal;
+            def roles = userProfile.roles
+            if (roles) {
+                retVal = roles
             }
         }
-        return Collections.emptySet()
+        return retVal
     }
 
     @Override
