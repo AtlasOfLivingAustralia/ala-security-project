@@ -68,6 +68,9 @@ security:
     with-state: true // set to false to disable use of state parameter in login
     logout-action: DEFAULT // use COGNITO for cognito non-standard logout
     logout-url: // omit if OIDC provider has end_session_endpoint in discovery doc, otherwise provide here
+    ala-userid-claim: // add this if the legacy ala userid is in a custom claim
+    user-name-claim: // add this to prefer a non-standard claim for the user's username
+    display-name-claim: name // add this override using 'name' as the claim for the user's display name or set to null to calculate display name from first and last names
   core:
     default-logout-redirect-uri: '/' // App relative URI to redirect to after OIDC logout
     auth-cookie-name: 'ALA-Auth' // not supported with cognito
