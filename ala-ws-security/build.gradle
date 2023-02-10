@@ -34,6 +34,9 @@ dependencies {
     compileOnly "org.springframework.boot:spring-boot-configuration-processor"
     implementation 'org.springframework.boot:spring-boot-autoconfigure'
     implementation 'org.springframework:spring-web'
+    implementation 'org.springframework:spring-context-support'
+
+    implementation 'org.ehcache:ehcache'
 //    compileOnly 'org.springframework.boot:spring-boot-starter-security'
     compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
 

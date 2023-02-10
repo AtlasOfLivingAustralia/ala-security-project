@@ -1,5 +1,6 @@
 package au.org.ala.ws.security.authenticator;
 
+import au.org.ala.ws.security.client.AlaOidcClient;
 import au.org.ala.ws.security.profile.AlaOidcUserProfile;
 import au.org.ala.ws.security.profile.AlaUserProfile;
 import com.nimbusds.jose.JOSEException;
@@ -25,15 +26,24 @@ import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.TokenCredentials;
+import org.pac4j.core.credentials.authenticator.Authenticator;
 import org.pac4j.core.exception.CredentialsException;
 import org.pac4j.core.profile.UserProfile;
+import org.pac4j.core.profile.creator.ProfileCreator;
 import org.pac4j.core.util.CommonHelper;
+import org.pac4j.core.util.InitializableObject;
+import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.credentials.OidcCredentials;
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator;
 import org.pac4j.oidc.profile.OidcProfile;
+import org.pac4j.oidc.profile.creator.OidcProfileCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.cache.support.SimpleCacheManager;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -50,22 +60,35 @@ import java.util.stream.Stream;
  * The scope parameter of {@link AccessToken} from the {@link OidcCredentials} is updated with the scope from the validated JWT access_token.
  * The credentials.userProfile is set to an instance of {@link AlaOidcUserProfile} a wrapped {@link OidcProfile} from the OIDC UserInfo endpoint.
  */
-public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
+public class AlaOidcAuthenticator extends InitializableObject implements Authenticator {
 
     public static final Logger log = LoggerFactory.getLogger(AlaOidcAuthenticator.class);
 
-    public AlaOidcAuthenticator(final OidcConfiguration configuration) {
-        super(configuration);
+    final OidcConfiguration configuration;
+    final ProfileCreator profileCreator;
+
+    CacheManager cacheManager;
+
+    public AlaOidcAuthenticator(final OidcConfiguration configuration, final ProfileCreator profileCreator) {
+        this.configuration = configuration;
+        this.profileCreator = profileCreator;
     }
 
     @Override
     protected void internalInit(boolean forceReinit) {
 
-        super.internalInit(forceReinit);
-
+        CommonHelper.assertNotNull("configuration", configuration);
         CommonHelper.assertNotNull("issuer", issuer);
         CommonHelper.assertTrue(CommonHelper.isNotEmpty(expectedJWSAlgs), "expectedJWSAlgs cannot be empty");
         CommonHelper.assertNotNull("keySource", keySource);
+    }
+
+    public CacheManager getCacheManager() {
+        return cacheManager;
+    }
+
+    public void setCacheManager(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -81,7 +104,6 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         } catch (ParseException e) {
             throw new CredentialsException("Cannot decrypt / verify JWT", e);
         }
-
 
         // Create a JWT processor for the access tokens
         ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<SecurityContext>();
@@ -151,10 +173,15 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
         if (accessTokenScope != null && accessTokenScope.contains(OIDCScopeValue.PROFILE)) {
 
-            TokenCredentials tokenCredentials = new TokenCredentials(accessToken);
-            super.validate(tokenCredentials, context, sessionStore);
+            if (cacheManager != null) {
 
-            UserProfile profile = tokenCredentials.getUserProfile();
+                Cache cache = cacheManager.getCache("user-profile");
+                cache.get(accessToken);
+            }
+
+            // TokenCredentials tokenCredentials = new TokenCredentials(accessToken);
+
+            UserProfile profile = profileCreator.create(new TokenCredentials(accessToken), context, sessionStore).get();
 
             if (authorizationGenerator != null) {
                 final String finalUserId = userId;

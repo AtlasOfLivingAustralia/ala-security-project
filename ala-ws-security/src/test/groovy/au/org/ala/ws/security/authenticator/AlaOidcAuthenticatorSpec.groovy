@@ -168,7 +168,7 @@ class AlaOidcAuthenticatorSpec extends Specification {
         wm.start()
 
         OIDCProviderMetadata oidcProviderMetadata = Mock() {
-            1 * getUserInfoEndpointURI() >> new URI("http://localhost:${wm.port()}/userInfo")
+            _ * getUserInfoEndpointURI() >> new URI("http://localhost:${wm.port()}/userInfo")
         }
 
         OidcConfiguration oidcConfiguration = Mock() {
