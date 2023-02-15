@@ -16,6 +16,7 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.oauth2.sdk.Scope;
+import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -148,6 +150,10 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         }
 
         var accessTokenScope = credentials.getAccessToken().getScope();
+        var accessTokenScopeSet = accessTokenScope != null ?
+                accessTokenScope.stream().map(Identifier::getValue).collect(Collectors.toSet()) :
+                Collections.<String>emptySet();
+
 
         if (accessTokenScope != null && accessTokenScope.contains(OIDCScopeValue.PROFILE)) {
 
@@ -160,9 +166,9 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
                 final String finalUserId = userId;
                 cred.setUserProfile(
                         authorizationGenerator.generate(context, sessionStore, profile)
-                                .map( userProfile -> this.generateAlaUserProfile(finalUserId, userProfile) ).get());
+                                .map( userProfile -> this.generateAlaUserProfile(finalUserId, userProfile, accessTokenScopeSet) ).get());
             } else {
-                cred.setUserProfile(generateAlaUserProfile(userId, profile));
+                cred.setUserProfile(generateAlaUserProfile(userId, profile, accessTokenScopeSet));
             }
 
             if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
@@ -175,18 +181,20 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
             if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
                 alaOidcUserProfile.addRoles(accessTokenRoles);
             }
+            alaOidcUserProfile.addPermissions(accessTokenScopeSet);
 
             cred.setUserProfile(alaOidcUserProfile);
         }
 
     }
 
-    public AlaUserProfile generateAlaUserProfile(String userId, UserProfile profile) {
+    public AlaUserProfile generateAlaUserProfile(String userId, UserProfile profile, Set<String> accessTokenScopeSet) {
 
         AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile(userId);
         alaOidcUserProfile.addAttributes(profile.getAttributes());
         alaOidcUserProfile.setRoles(profile.getRoles());
         alaOidcUserProfile.setPermissions(profile.getPermissions());
+        alaOidcUserProfile.addPermissions(accessTokenScopeSet);
 
         return alaOidcUserProfile;
     }
