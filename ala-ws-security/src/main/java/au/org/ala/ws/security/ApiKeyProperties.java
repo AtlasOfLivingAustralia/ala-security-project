@@ -62,7 +62,7 @@ public class ApiKeyProperties {
 
     public class WebServiceProperties {
 
-        private String serviceUrl;
+        private String serviceUrl = "https://auth.ala.org.au/apikey/";
 
         public String getServiceUrl() {
             return serviceUrl;
