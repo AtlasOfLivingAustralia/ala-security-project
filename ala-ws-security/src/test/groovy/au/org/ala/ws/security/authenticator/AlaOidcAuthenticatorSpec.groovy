@@ -19,6 +19,7 @@ import org.pac4j.core.profile.creator.ProfileCreator
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.profile.OidcProfile
+
 import spock.lang.Specification
 
 import static au.org.ala.ws.security.JwtUtils.*
@@ -119,6 +120,50 @@ class AlaOidcAuthenticatorSpec extends Specification {
         oidcCredentials.userProfile instanceof AlaUserProfile
         oidcCredentials.userProfile.userId == 'user-id'
     }
+
+    def 'validate access_token with scopes'() {
+
+        setup:
+        OidcConfiguration oidcConfiguration = Mock()
+        ProfileCreator profileCreator = Mock()
+
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator)
+        alaOidcAuthenticator.issuer = new Issuer('http://localhost')
+        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+        alaOidcAuthenticator.requiredClaims = []
+        alaOidcAuthenticator.requiredScopes = ['some:test']
+        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
+
+        alaOidcAuthenticator.userIdClaim = 'username'
+
+        OidcCredentials oidcCredentials = new OidcCredentials()
+        JWTClaimsSet jwtClaims = new JWTClaimsSet.Builder()
+                .subject('sub')
+                .issuer(alaOidcAuthenticator.issuer.value)
+                .notBeforeTime(new Date())
+                .expirationTime(use(TimeCategory) { new Date() + 1.minute })
+                .audience('aud')
+                .issueTime(new Date())
+                .claim('username', 'user-id')
+                .claim('scope', ['oidc','some:test'])
+                .build()
+
+        oidcCredentials.accessToken = new BearerAccessToken(generateJwt(jwkSet, jwtClaims))
+
+        WebContext context = Mock()
+        SessionStore sessionStore = Mock()
+
+        when:
+        alaOidcAuthenticator.validate(oidcCredentials, context, sessionStore)
+
+        then:
+        oidcCredentials.userProfile instanceof AlaOidcUserProfile
+        oidcCredentials.userProfile.userId == 'user-id'
+        oidcCredentials.userProfile.permissions.containsAll(['oidc','some:test'])
+        oidcCredentials.userProfile.accessToken.scope.contains('oidc')
+        oidcCredentials.userProfile.accessToken.scope.contains('some:test')
+    }
+
 
 
     def 'validate access_token with roles'() {

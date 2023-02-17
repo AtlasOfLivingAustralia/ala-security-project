@@ -16,6 +16,7 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.oauth2.sdk.Scope;
+import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
@@ -42,6 +43,7 @@ import org.springframework.cache.CacheManager;
 
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -175,8 +177,10 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
             }
         }
 
-
         var accessTokenScope = credentials.getAccessToken().getScope();
+        var accessTokenScopeSet = accessTokenScope != null ?
+                accessTokenScope.stream().map(Identifier::getValue).collect(Collectors.toSet()) :
+                Collections.<String>emptySet();
         AlaOidcUserProfile alaOidcUserProfile = null;
 
         // if the access-token contains the 'profile' scope then create a user profile
@@ -200,9 +204,10 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
 
                     final String finalUserId = userId;
                     alaOidcUserProfile = authorizationGenerator.generate(context, sessionStore, userProfile)
-                                    .map( userProf -> this.generateAlaUserProfile(finalUserId, userProf) ).get();
+                                    .map( userProf -> this.generateAlaUserProfile(finalUserId, userProf, accessTokenScopeSet) ).get();
+
                 } else {
-                    alaOidcUserProfile = generateAlaUserProfile(userId, userProfile);
+                    alaOidcUserProfile = generateAlaUserProfile(userId, userProfile, accessTokenScopeSet);
                 }
 
                 if (cache != null) {
@@ -223,17 +228,20 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
             if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
                 alaOidcUserProfile.addRoles(accessTokenRoles);
             }
+            alaOidcUserProfile.addPermissions(accessTokenScopeSet);
 
             cred.setUserProfile(alaOidcUserProfile);
         }
     }
 
-    public AlaOidcUserProfile generateAlaUserProfile(String userId, UserProfile profile) {
+    public AlaOidcUserProfile generateAlaUserProfile(String userId, UserProfile profile, Set<String> accessTokenScopeSet) {
+
 
         AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile(userId);
         alaOidcUserProfile.addAttributes(profile.getAttributes());
         alaOidcUserProfile.setRoles(profile.getRoles());
         alaOidcUserProfile.setPermissions(profile.getPermissions());
+        alaOidcUserProfile.addPermissions(accessTokenScopeSet);
 
         return alaOidcUserProfile;
     }
