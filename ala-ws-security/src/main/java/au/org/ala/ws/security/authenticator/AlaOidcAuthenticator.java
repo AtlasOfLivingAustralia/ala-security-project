@@ -1,6 +1,5 @@
 package au.org.ala.ws.security.authenticator;
 
-import au.org.ala.ws.security.client.AlaOidcClient;
 import au.org.ala.ws.security.profile.AlaOidcUserProfile;
 import au.org.ala.ws.security.profile.AlaUserProfile;
 import com.nimbusds.jose.JOSEException;
@@ -32,18 +31,14 @@ import org.pac4j.core.profile.UserProfile;
 import org.pac4j.core.profile.creator.ProfileCreator;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.core.util.InitializableObject;
-import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.credentials.OidcCredentials;
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator;
 import org.pac4j.oidc.profile.OidcProfile;
-import org.pac4j.oidc.profile.creator.OidcProfileCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
-import org.springframework.cache.support.SimpleCacheManager;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -68,6 +63,7 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
     final ProfileCreator profileCreator;
 
     CacheManager cacheManager;
+    Cache cache;
 
     public AlaOidcAuthenticator(final OidcConfiguration configuration, final ProfileCreator profileCreator) {
         this.configuration = configuration;
@@ -81,6 +77,16 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
         CommonHelper.assertNotNull("issuer", issuer);
         CommonHelper.assertTrue(CommonHelper.isNotEmpty(expectedJWSAlgs), "expectedJWSAlgs cannot be empty");
         CommonHelper.assertNotNull("keySource", keySource);
+
+        if (cacheManager != null) {
+
+            cache = cacheManager.getCache("user-profile");
+        }
+
+        if (cache != null) {
+
+            log.warn("no 'user-profile' caching configured.");
+        }
     }
 
     public CacheManager getCacheManager() {
@@ -169,46 +175,57 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
             }
         }
 
-        var accessTokenScope = credentials.getAccessToken().getScope();
 
+        var accessTokenScope = credentials.getAccessToken().getScope();
+        AlaOidcUserProfile alaOidcUserProfile = null;
+
+        // if the access-token contains the 'profile' scope then create a user profile
         if (accessTokenScope != null && accessTokenScope.contains(OIDCScopeValue.PROFILE)) {
 
-            if (cacheManager != null) {
+            // if a cache of
+            if (cache != null) {
 
-                Cache cache = cacheManager.getCache("user-profile");
-                cache.get(accessToken);
+                Cache.ValueWrapper cachedProfile = cache.get(accessToken);
+
+                if (cachedProfile != null) {
+                    alaOidcUserProfile = (AlaOidcUserProfile) cachedProfile.get();
+                }
             }
 
-            // TokenCredentials tokenCredentials = new TokenCredentials(accessToken);
+            if (alaOidcUserProfile == null) {
 
-            UserProfile profile = profileCreator.create(new TokenCredentials(accessToken), context, sessionStore).get();
+                UserProfile userProfile = profileCreator.create(new TokenCredentials(accessToken), context, sessionStore).get();
 
-            if (authorizationGenerator != null) {
-                final String finalUserId = userId;
-                cred.setUserProfile(
-                        authorizationGenerator.generate(context, sessionStore, profile)
-                                .map( userProfile -> this.generateAlaUserProfile(finalUserId, userProfile) ).get());
-            } else {
-                cred.setUserProfile(generateAlaUserProfile(userId, profile));
-            }
+                if (authorizationGenerator != null) {
 
-            if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
-                cred.getUserProfile().addRoles(accessTokenRoles);
+                    final String finalUserId = userId;
+                    alaOidcUserProfile = authorizationGenerator.generate(context, sessionStore, userProfile)
+                                    .map( userProf -> this.generateAlaUserProfile(finalUserId, userProf) ).get();
+                } else {
+                    alaOidcUserProfile = generateAlaUserProfile(userId, userProfile);
+                }
+
+                if (cache != null) {
+
+                    cache.put(accessToken, alaOidcUserProfile);
+                }
             }
 
         } else if (userId != null && !userId.isEmpty()) {
 
-            AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile(userId);
-            if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
-                alaOidcUserProfile.addRoles(accessTokenRoles);
-            }
-
-            cred.setUserProfile(alaOidcUserProfile);
+            alaOidcUserProfile = new AlaOidcUserProfile(userId);
         }
 
+        alaOidcUserProfile.setAccessToken(credentials.getAccessToken());
+
+        if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
+            alaOidcUserProfile.addRoles(accessTokenRoles);
+        }
+
+        cred.setUserProfile(alaOidcUserProfile);
     }
 
-    public AlaUserProfile generateAlaUserProfile(String userId, UserProfile profile) {
+    public AlaOidcUserProfile generateAlaUserProfile(String userId, UserProfile profile) {
 
         AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile(userId);
         alaOidcUserProfile.addAttributes(profile.getAttributes());

@@ -74,24 +74,6 @@ public class AlaWsSecurityConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public CacheManager cacheManager() {
-
-        org.ehcache.CacheManager ehCacheManager = CacheManagerBuilder
-                .newCacheManagerBuilder().build();
-        ehCacheManager.init();
-
-        CacheConfiguration cacheConfiguration = CacheConfigurationBuilder
-                .newCacheConfigurationBuilder(String.class, String.class, ResourcePoolsBuilder.heap(100))
-                .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(10)))
-                .build();
-
-        ehCacheManager.createCache("user-profile", cacheConfiguration);
-
-        return new JCacheCacheManager((javax.cache.CacheManager) ehCacheManager);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
     public SessionStore sessionStore() {
         return JEESessionStore.INSTANCE;
     }
