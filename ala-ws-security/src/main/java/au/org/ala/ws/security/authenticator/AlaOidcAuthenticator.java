@@ -216,13 +216,16 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
             alaOidcUserProfile = new AlaOidcUserProfile(userId);
         }
 
-        alaOidcUserProfile.setAccessToken(credentials.getAccessToken());
+        if (alaOidcUserProfile != null) {
 
-        if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
-            alaOidcUserProfile.addRoles(accessTokenRoles);
+            alaOidcUserProfile.setAccessToken(credentials.getAccessToken());
+
+            if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
+                alaOidcUserProfile.addRoles(accessTokenRoles);
+            }
+
+            cred.setUserProfile(alaOidcUserProfile);
         }
-
-        cred.setUserProfile(alaOidcUserProfile);
     }
 
     public AlaOidcUserProfile generateAlaUserProfile(String userId, UserProfile profile) {

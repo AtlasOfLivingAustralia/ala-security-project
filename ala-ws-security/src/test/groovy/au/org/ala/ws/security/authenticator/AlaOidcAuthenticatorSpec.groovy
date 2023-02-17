@@ -2,8 +2,6 @@ package au.org.ala.ws.security.authenticator
 
 import au.org.ala.ws.security.profile.AlaOidcUserProfile
 import au.org.ala.ws.security.profile.AlaUserProfile
-import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.common.Json
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
@@ -17,14 +15,13 @@ import groovy.time.TimeCategory
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.exception.CredentialsException
+import org.pac4j.core.profile.creator.ProfileCreator
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
+import org.pac4j.oidc.profile.OidcProfile
 import spock.lang.Specification
 
 import static au.org.ala.ws.security.JwtUtils.*
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 
 class AlaOidcAuthenticatorSpec extends Specification {
 
@@ -34,8 +31,9 @@ class AlaOidcAuthenticatorSpec extends Specification {
 
         setup:
         OidcConfiguration oidcConfiguration = Mock()
+        ProfileCreator profileCreator = Mock()
 
-        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator)
         alaOidcAuthenticator.issuer = new Issuer('http://localhost')
         alaOidcAuthenticator.requiredClaims = []
         alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
@@ -60,8 +58,9 @@ class AlaOidcAuthenticatorSpec extends Specification {
 
         setup:
         OidcConfiguration oidcConfiguration = Mock()
+        ProfileCreator profileCreator = Mock()
 
-        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator)
         alaOidcAuthenticator.issuer = new Issuer('http://localhost')
         alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
         alaOidcAuthenticator.requiredClaims = []
@@ -87,8 +86,9 @@ class AlaOidcAuthenticatorSpec extends Specification {
 
         setup:
         OidcConfiguration oidcConfiguration = Mock()
+        ProfileCreator profileCreator = Mock()
 
-        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator)
         alaOidcAuthenticator.issuer = new Issuer('http://localhost')
         alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
         alaOidcAuthenticator.requiredClaims = []
@@ -125,8 +125,9 @@ class AlaOidcAuthenticatorSpec extends Specification {
 
         setup:
         OidcConfiguration oidcConfiguration = Mock()
+        ProfileCreator profileCreator = Mock()
 
-        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator)
         alaOidcAuthenticator.issuer = new Issuer('http://localhost')
         alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
         alaOidcAuthenticator.requiredClaims = []
@@ -164,11 +165,9 @@ class AlaOidcAuthenticatorSpec extends Specification {
     def 'validate access_token with user profile'() {
 
         setup:
-        WireMockServer wm = new WireMockServer(wireMockConfig().dynamicPort())
-        wm.start()
 
         OIDCProviderMetadata oidcProviderMetadata = Mock() {
-            _ * getUserInfoEndpointURI() >> new URI("http://localhost:${wm.port()}/userInfo")
+            _ * getUserInfoEndpointURI() >> new URI("http://localhost/userInfo")
         }
 
         OidcConfiguration oidcConfiguration = Mock() {
@@ -176,17 +175,21 @@ class AlaOidcAuthenticatorSpec extends Specification {
             _ * getMappedClaims() >> [:]
         }
 
-        wm.stubFor(
-                get(urlEqualTo('/userInfo'))
-                .willReturn(okJson(Json.write([
-                        sub: 'subject',
-                        given_name: 'given_name',
-                        family_name: 'family_name',
-                        email: 'email@test.com'
-                ])))
-        )
+        ProfileCreator profileCreator = Mock() {
+            1 * create(_, _, _) >> Optional.of(new OidcProfile() {
+                @Override
+                Map<String, Object> getAttributes() {
+                    return [
+                            sub: 'subject',
+                            given_name: 'given_name',
+                            family_name: 'family_name',
+                            email: 'email@test.com'
+                    ]
+                }
+            })
+        }
 
-        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator)
         alaOidcAuthenticator.issuer = new Issuer('http://localhost')
         alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
         alaOidcAuthenticator.requiredClaims = []
@@ -211,8 +214,5 @@ class AlaOidcAuthenticatorSpec extends Specification {
         oidcCredentials.userProfile.givenName == 'given_name'
         oidcCredentials.userProfile.familyName == 'family_name'
         oidcCredentials.userProfile.email == 'email@test.com'
-
-        cleanup:
-        wm.shutdown()
     }
 }
