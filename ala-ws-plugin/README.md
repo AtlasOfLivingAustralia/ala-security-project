@@ -109,6 +109,8 @@ In addition to the JavaEE 6 core constraints, this plugin provides a number of c
 # External configuration properties
 
 * ```webservice.jwt``` Set to true if using OIDC login and you want to use the access token as a bearer token instead of sending a legacy apikey
+* ```webservice.client-id``` Set the client id when requesting a client credentials grant JWT from the OIDC provider. This only applies to client credentials grants.
+* ```webservice.client-secret``` Set the client secret when requesting a client credentials grant JWT from the OIDC provider. This only applies to client credentials grants.
 * ```webservice.jwt-scopes``` Set to a space separated list of scopes to request when requesting a client credentials grant JWT from the OIDC provider.  This only applies to client credentials grants.  If there is already a user profile in the session, the scopes that apply to their access token will apply instead.
 * ```webservice.jwt-include-legacy-headers``` Set to true to send legacy apikey headers in addition to JWTs, requires `webservice.jwt` is true.  Defaults to true.
 * ```webservice.cache-tokens``` Set to true to cache and re-use client credential tokens and refresh tokens.  Set to false to request a new client credentials token each time.  Defaults to true.

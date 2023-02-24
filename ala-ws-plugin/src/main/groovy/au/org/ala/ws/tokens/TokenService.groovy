@@ -27,6 +27,9 @@ class TokenService {
 
     final boolean cacheTokens
 
+    final String clientId
+    final String clientSecret
+
     final String oidcScopes
     final String jwtScopes
     final List<String> finalScopes
@@ -42,7 +45,7 @@ class TokenService {
     private final TokenClient tokenClient
 
     TokenService(Config config, OidcConfiguration oidcConfiguration, Pac4jContextProvider pac4jContextProvider,
-                 SessionStore sessionStore, TokenClient tokenClient, String oidcScopes, String jwtScopes,
+                 SessionStore sessionStore, TokenClient tokenClient, String oidcScopes, String clientId, String clientSecret, String jwtScopes,
                  boolean cacheTokens) {
         this.cacheTokens = cacheTokens
         this.config = config
@@ -50,7 +53,9 @@ class TokenService {
         this.pac4jContextProvider = pac4jContextProvider
         this.sessionStore = sessionStore
         this.tokenClient = tokenClient
-        this.oidcScopes = oidcScopes
+
+        this.clientId = clientId
+        this.clientSecret = clientSecret
         this.jwtScopes = jwtScopes
         this.finalScopes = (oidcScopes.tokenize(' ') + jwtScopes.tokenize(' ')).findAll().toSet().toList()
     }
@@ -132,9 +137,10 @@ class TokenService {
     }
 
     private OidcCredentials clientCredentialsToken() {
+
         def tokenRequest = new TokenRequest(
                 oidcConfiguration.findProviderMetadata().getTokenEndpointURI(),
-                new ClientSecretBasic(new ClientID(oidcConfiguration.clientId), new Secret(oidcConfiguration.secret)),
+                new ClientSecretBasic(new ClientID(clientId), new Secret(clientSecret)),
                 new ClientCredentialsGrant(),
                 new Scope(*finalScopes)
         )
@@ -145,7 +151,7 @@ class TokenService {
     private OidcCredentials refreshToken(RefreshToken refreshToken) {
         def tokenRequest = new TokenRequest(
                 oidcConfiguration.findProviderMetadata().getTokenEndpointURI(),
-                new ClientSecretBasic(new ClientID(oidcConfiguration.clientId), new Secret(oidcConfiguration.secret)),
+                new ClientSecretBasic(new ClientID(clientId), new Secret(clientSecret)),
                 new RefreshTokenGrant(refreshToken),
                 new Scope(*finalScopes)
         )

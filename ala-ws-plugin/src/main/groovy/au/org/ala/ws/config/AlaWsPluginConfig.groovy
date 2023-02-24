@@ -21,6 +21,12 @@ class AlaWsPluginConfig {
     @Value('${security.oidc.scopes:openid}')
     String oidcScopes
 
+    @Value('${webservice.client-id}')
+    String clientId
+
+    @Value('${webservice.client-secret}')
+    String clientSecret
+
     @Value('${webservice.jwt-scopes:openid}')
     String jwtScopes
 
@@ -43,7 +49,7 @@ class AlaWsPluginConfig {
             @Autowired TokenClient tokenClient
     ) {
         new TokenService(config, oidcConfiguration, pac4jContextProvider,
-                sessionStore, tokenClient, oidcScopes, jwtScopes, cacheTokens)
+                sessionStore, tokenClient, oidcScopes, clientId, clientSecret, jwtScopes, cacheTokens)
     }
 
     /**
