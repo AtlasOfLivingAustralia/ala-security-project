@@ -18,16 +18,13 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class AlaWsPluginConfig {
 
-    @Value('${security.oidc.scopes:openid}')
-    String oidcScopes
-
     @Value('${webservice.client-id}')
     String clientId
 
     @Value('${webservice.client-secret}')
     String clientSecret
 
-    @Value('${webservice.jwt-scopes:openid}')
+    @Value('${webservice.jwt-scopes}')
     String jwtScopes
 
     @Value('${webservices.cache-tokens:true}')
@@ -49,7 +46,7 @@ class AlaWsPluginConfig {
             @Autowired TokenClient tokenClient
     ) {
         new TokenService(config, oidcConfiguration, pac4jContextProvider,
-                sessionStore, tokenClient, oidcScopes, clientId, clientSecret, jwtScopes, cacheTokens)
+                sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
     }
 
     /**

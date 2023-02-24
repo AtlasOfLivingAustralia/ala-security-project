@@ -51,7 +51,7 @@ class TokenServiceSpec extends Specification {
         }
         sessionStore = JEESessionStore.INSTANCE
         tokenClient = Mock(TokenClient)
-        tokenService = new TokenService(config, oidcConfiguration, pac4jContextProvider, sessionStore, tokenClient, 'openid profile', 'client-id', 'client-secret', 'openid ala:internal users:read', false)
+        tokenService = new TokenService(config, oidcConfiguration, pac4jContextProvider, sessionStore, tokenClient, 'client-id', 'client-secret', 'openid ala:internal users:read', false)
     }
 
 
@@ -82,7 +82,7 @@ class TokenServiceSpec extends Specification {
     def 'test token service requireUser false with cache'() {
         setup:
         def tokenService = new TokenService(config, oidcConfiguration, pac4jContextProvider, sessionStore, tokenClient,
-                'openid profile', 'client-id', 'client-secret', 'openid ala:internal users:read', true)
+                'client-id', 'client-secret', 'openid ala:internal users:read', true)
 
         def oidcCredentials = new OidcCredentials().tap {
             it.accessToken = new BearerAccessToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c', 2l, null)

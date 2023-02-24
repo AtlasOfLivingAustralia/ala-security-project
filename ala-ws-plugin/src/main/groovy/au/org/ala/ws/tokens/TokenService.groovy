@@ -30,7 +30,6 @@ class TokenService {
     final String clientId
     final String clientSecret
 
-    final String oidcScopes
     final String jwtScopes
     final List<String> finalScopes
 
@@ -45,7 +44,7 @@ class TokenService {
     private final TokenClient tokenClient
 
     TokenService(Config config, OidcConfiguration oidcConfiguration, Pac4jContextProvider pac4jContextProvider,
-                 SessionStore sessionStore, TokenClient tokenClient, String oidcScopes, String clientId, String clientSecret, String jwtScopes,
+                 SessionStore sessionStore, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
                  boolean cacheTokens) {
         this.cacheTokens = cacheTokens
         this.config = config
@@ -57,7 +56,9 @@ class TokenService {
         this.clientId = clientId
         this.clientSecret = clientSecret
         this.jwtScopes = jwtScopes
-        this.finalScopes = (oidcScopes.tokenize(' ') + jwtScopes.tokenize(' ')).findAll().toSet().toList()
+        if (jwtScopes) {
+            this.finalScopes = jwtScopes.tokenize(' ').findAll().toSet().toList()
+        }
     }
 
     ProfileManager getProfileManager() {
@@ -142,7 +143,7 @@ class TokenService {
                 oidcConfiguration.findProviderMetadata().getTokenEndpointURI(),
                 new ClientSecretBasic(new ClientID(clientId), new Secret(clientSecret)),
                 new ClientCredentialsGrant(),
-                new Scope(*finalScopes)
+                finalScopes ? new Scope(*finalScopes) : new Scope()
         )
         return tokenClient.executeTokenRequest(tokenRequest)
     }
