@@ -3,9 +3,8 @@ package au.org.ala.ws.security.authenticator
 import au.org.ala.userdetails.UserDetailsClient
 import au.org.ala.web.UserDetails
 import au.org.ala.ws.security.ApiKeyClient
+import au.org.ala.ws.security.CheckApiKeyResult
 import au.org.ala.ws.security.profile.AlaApiUserProfile
-import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.common.Json
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import okhttp3.OkHttpClient
@@ -18,29 +17,29 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.mock.Calls
 import spock.lang.Specification
 
-import static com.github.tomakehurst.wiremock.client.WireMock.get
-import static com.github.tomakehurst.wiremock.client.WireMock.post
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
-
 class AlaApiKeyAuthenticatorSpec extends Specification {
 
     def 'validate apikey'() {
 
         setup:
-        WireMockServer wm = new WireMockServer(wireMockConfig().dynamicPort())
-        wm.start()
 
-        Moshi moshi = new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build()
+        ApiKeyClient apiKeyClient = Stub()
+        apiKeyClient.checkApiKey('testkey') >> Calls.response(new CheckApiKeyResult() {
+            @Override
+            boolean getValid() {
+                return true
+            }
 
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
-        ApiKeyClient apiKeyClient = new Retrofit.Builder()
-                .baseUrl("http://localhost:${wm.port()}/apikey/")
-                .addConverterFactory(MoshiConverterFactory.create(moshi))
-                .client(httpClient.build())
-                .build()
-                .create(ApiKeyClient)
+            @Override
+            String getUserId() {
+                return '0'
+            }
+
+            @Override
+            String getEmail() {
+                return 'email@test.com'
+            }
+        })
 
         UserDetailsClient userDetailsClient = Stub()
         userDetailsClient.getUserDetails('0', true) >>
@@ -56,15 +55,6 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         WebContext context = Mock()
         SessionStore sessionStore = Mock()
 
-        wm.stubFor(
-                get(urlEqualTo('/apikey/ws/check?apikey=testkey'))
-                        .willReturn(okJson(Json.write([
-                                valid: true,
-                                userId: "0",
-                                email: "email@test.com"
-                        ])))
-        )
-
         when:
         alaApiKeyAuthenticator.validate(alaApiKeyCredentials, context, sessionStore)
 
@@ -78,18 +68,13 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
     def 'invalid apikey'() {
 
         setup:
-        WireMockServer wm = new WireMockServer(wireMockConfig().dynamicPort())
-        wm.start()
-
-        Moshi moshi = new Moshi.Builder().add(Date.class, new Rfc3339DateJsonAdapter().nullSafe()).build()
-
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
-        ApiKeyClient apiKeyClient = new Retrofit.Builder()
-                .baseUrl("http://localhost:${wm.port()}/apikey/")
-                .addConverterFactory(MoshiConverterFactory.create(moshi))
-                .client(httpClient.build())
-                .build()
-                .create(ApiKeyClient)
+        ApiKeyClient apiKeyClient = Stub()
+        apiKeyClient.checkApiKey('testkey') >> Calls.response(new CheckApiKeyResult() {
+            @Override
+            boolean getValid() {
+                return false
+            }
+        })
 
         UserDetailsClient userDetailsClient = Stub()
 
@@ -102,12 +87,12 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         WebContext context = Mock()
         SessionStore sessionStore = Mock()
 
-        wm.stubFor(
-                get(urlEqualTo('/apikey/ws/check?apikey=testkey'))
-                        .willReturn(okJson(Json.write([
-                                valid: false
-                        ])))
-        )
+//        wm.stubFor(
+//                get(urlEqualTo('/apikey/ws/check?apikey=testkey'))
+//                        .willReturn(okJson(Json.write([
+//                                valid: false
+//                        ])))
+//        )
 
         when:
         alaApiKeyAuthenticator.validate(alaApiKeyCredentials, context, sessionStore)

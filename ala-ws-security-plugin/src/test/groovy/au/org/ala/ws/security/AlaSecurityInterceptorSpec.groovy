@@ -25,6 +25,7 @@ import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.util.GrailsApplicationAttributes
 import org.pac4j.core.config.Config
 import org.pac4j.core.exception.CredentialsException
+import org.pac4j.core.profile.creator.ProfileCreator
 import org.pac4j.http.credentials.extractor.IpExtractor
 import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.oidc.config.OidcConfiguration
@@ -59,7 +60,9 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         GroovyMock(RemoteJWKSet, global: true)
         new RemoteJWKSet(_, _) >> new ImmutableJWKSet<SecurityContext>(jwkSet('test.jwks'))
 
-        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration)
+        ProfileCreator profileCreator = Mock()
+
+        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator)
         alaOidcAuthenticator.issuer = new Issuer('http://localhost')
         alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
         alaOidcAuthenticator.requiredClaims = []

@@ -14,6 +14,9 @@ grails:
             # Whether to translate GORM events into Reactor events
             # Disabled by default for performance reasons
             events: false
+    cache:
+        ehcache:
+            ehcacheXmlLocation: 'classpath:ehcache3.xml'
 info:
     app:
         name: '@info.app.name@'
