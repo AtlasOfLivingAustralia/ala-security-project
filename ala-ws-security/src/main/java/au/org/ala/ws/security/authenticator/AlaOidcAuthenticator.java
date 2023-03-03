@@ -26,15 +26,20 @@ import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.TokenCredentials;
+import org.pac4j.core.credentials.authenticator.Authenticator;
 import org.pac4j.core.exception.CredentialsException;
 import org.pac4j.core.profile.UserProfile;
+import org.pac4j.core.profile.creator.ProfileCreator;
 import org.pac4j.core.util.CommonHelper;
+import org.pac4j.core.util.InitializableObject;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.credentials.OidcCredentials;
 import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator;
 import org.pac4j.oidc.profile.OidcProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -52,22 +57,46 @@ import java.util.stream.Stream;
  * The scope parameter of {@link AccessToken} from the {@link OidcCredentials} is updated with the scope from the validated JWT access_token.
  * The credentials.userProfile is set to an instance of {@link AlaOidcUserProfile} a wrapped {@link OidcProfile} from the OIDC UserInfo endpoint.
  */
-public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
+public class AlaOidcAuthenticator extends InitializableObject implements Authenticator {
 
     public static final Logger log = LoggerFactory.getLogger(AlaOidcAuthenticator.class);
 
-    public AlaOidcAuthenticator(final OidcConfiguration configuration) {
-        super(configuration);
+    final OidcConfiguration configuration;
+    final ProfileCreator profileCreator;
+
+    CacheManager cacheManager;
+    Cache cache;
+
+    public AlaOidcAuthenticator(final OidcConfiguration configuration, final ProfileCreator profileCreator) {
+        this.configuration = configuration;
+        this.profileCreator = profileCreator;
     }
 
     @Override
     protected void internalInit(boolean forceReinit) {
 
-        super.internalInit(forceReinit);
-
+        CommonHelper.assertNotNull("configuration", configuration);
         CommonHelper.assertNotNull("issuer", issuer);
         CommonHelper.assertTrue(CommonHelper.isNotEmpty(expectedJWSAlgs), "expectedJWSAlgs cannot be empty");
         CommonHelper.assertNotNull("keySource", keySource);
+
+        if (cacheManager != null) {
+
+            cache = cacheManager.getCache("user-profile");
+        }
+
+        if (cache != null) {
+
+            log.warn("no 'user-profile' caching configured.");
+        }
+    }
+
+    public CacheManager getCacheManager() {
+        return cacheManager;
+    }
+
+    public void setCacheManager(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -83,7 +112,6 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         } catch (ParseException e) {
             throw new CredentialsException("Cannot decrypt / verify JWT", e);
         }
-
 
         // Create a JWT processor for the access tokens
         ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<SecurityContext>();
@@ -153,31 +181,50 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
         var accessTokenScopeSet = accessTokenScope != null ?
                 accessTokenScope.stream().map(Identifier::getValue).collect(Collectors.toSet()) :
                 Collections.<String>emptySet();
+        AlaOidcUserProfile alaOidcUserProfile = null;
 
-
+        // if the access-token contains the 'profile' scope then create a user profile
         if (accessTokenScope != null && accessTokenScope.contains(OIDCScopeValue.PROFILE)) {
 
-            TokenCredentials tokenCredentials = new TokenCredentials(accessToken);
-            super.validate(tokenCredentials, context, sessionStore);
+            // if a cache of
+            if (cache != null) {
 
-            UserProfile profile = tokenCredentials.getUserProfile();
+                Cache.ValueWrapper cachedProfile = cache.get(accessToken);
 
-            if (authorizationGenerator != null) {
-                final String finalUserId = userId;
-                cred.setUserProfile(
-                        authorizationGenerator.generate(context, sessionStore, profile)
-                                .map( userProfile -> this.generateAlaUserProfile(finalUserId, userProfile, accessTokenScopeSet) ).get());
-            } else {
-                cred.setUserProfile(generateAlaUserProfile(userId, profile, accessTokenScopeSet));
+                if (cachedProfile != null) {
+                    alaOidcUserProfile = (AlaOidcUserProfile) cachedProfile.get();
+                }
             }
 
-            if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
-                cred.getUserProfile().addRoles(accessTokenRoles);
+            if (alaOidcUserProfile == null) {
+
+                UserProfile userProfile = profileCreator.create(new TokenCredentials(accessToken), context, sessionStore).get();
+
+                if (authorizationGenerator != null) {
+
+                    final String finalUserId = userId;
+                    alaOidcUserProfile = authorizationGenerator.generate(context, sessionStore, userProfile)
+                                    .map( userProf -> this.generateAlaUserProfile(finalUserId, userProf, accessTokenScopeSet) ).get();
+
+                } else {
+                    alaOidcUserProfile = generateAlaUserProfile(userId, userProfile, accessTokenScopeSet);
+                }
+
+                if (cache != null) {
+
+                    cache.put(accessToken, alaOidcUserProfile);
+                }
             }
 
         } else if (userId != null && !userId.isEmpty()) {
 
-            AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile(userId);
+            alaOidcUserProfile = new AlaOidcUserProfile(userId);
+        }
+
+        if (alaOidcUserProfile != null) {
+
+            alaOidcUserProfile.setAccessToken(credentials.getAccessToken());
+
             if (accessTokenRoles != null && !accessTokenRoles.isEmpty()) {
                 alaOidcUserProfile.addRoles(accessTokenRoles);
             }
@@ -185,10 +232,10 @@ public class AlaOidcAuthenticator extends UserInfoOidcAuthenticator {
 
             cred.setUserProfile(alaOidcUserProfile);
         }
-
     }
 
-    public AlaUserProfile generateAlaUserProfile(String userId, UserProfile profile, Set<String> accessTokenScopeSet) {
+    public AlaOidcUserProfile generateAlaUserProfile(String userId, UserProfile profile, Set<String> accessTokenScopeSet) {
+
 
         AlaOidcUserProfile alaOidcUserProfile = new AlaOidcUserProfile(userId);
         alaOidcUserProfile.addAttributes(profile.getAttributes());
