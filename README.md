@@ -46,7 +46,7 @@ On the server side, annotate protected controllers (either the class or individu
 - ```security.apikey.enabled``` - Defaults to false. True indicated the plugin should check for apikey on incoming requests.
 
 #### Mandatory
-- ```security.apikey.check.serviceUrl``` - **NOTE:  Changed** URL of the API Key service endpoint, up to the context path. E.g. https://auth.ala.org.au/apikey/
+- ```security.apikey.auth.serviceUrl``` - **NOTE:  Changed** URL of the API Key service endpoint, up to the context path. E.g. https://auth.ala.org.au/apikey/
 - ```security.apikey.userdetails.serviceUrl``` - URL of the userdetails service endpoint. E.g. https://auth.ala.org.au/userdetails/
 #### Optional
 - ```security.apikey.header.override``` - override the default request header name (apiKey) to use a different name.
