@@ -47,7 +47,7 @@ On the server side, annotate protected controllers (either the class or individu
 
 #### Mandatory
 - ```security.apikey.check.serviceUrl``` - **NOTE:  Changed** URL of the API Key service endpoint, up to the context path. E.g. https://auth.ala.org.au/apikey/
-- ```security.apikey.userdetails.serviceUrl``` - URL of the userdetails service endpoint. E.g. https://auth.ala.org.au/userdetails/getUserDetails/
+- ```security.apikey.userdetails.serviceUrl``` - URL of the userdetails service endpoint. E.g. https://auth.ala.org.au/userdetails/
 #### Optional
 - ```security.apikey.header.override``` - override the default request header name (apiKey) to use a different name.
 - ```security.apikey.header.alternatives``` - alternate request header names to check if the default request header (`apiKey`) is not found
