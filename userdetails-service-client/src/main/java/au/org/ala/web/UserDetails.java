@@ -32,7 +32,8 @@ public class UserDetails implements Serializable {
 
     private String firstName;
     private String lastName;
-    private String userName;    // email
+    private String userName;    // may not be email in cognito
+    private String email;
     private String userId;      // numeric id
     private Boolean locked;
     private Boolean activated;
@@ -41,7 +42,15 @@ public class UserDetails implements Serializable {
 
     private Set<String> roles = new HashSet<String>();
 
+    @ConstructorProperties({"id", "firstName", "lastName", "userName", "email", "userId", "locked", "activated", "roles"})
+    public UserDetails(Long id, String firstName, String lastName, String userName, String email, String userId, Boolean locked, Boolean activated, Set<String> roles) {
+        this(id, firstName, lastName, userName, userId, locked, roles);
+        this.email = email;
+        this.activated = activated;
+    }
+
     @ConstructorProperties({"id", "firstName", "lastName", "userName", "userId", "locked", "roles"})
+    @Deprecated
     public UserDetails(Long id, String firstName, String lastName, String userName, String userId, Boolean locked, Set<String> roles) {
         this.id = id;
         this.firstName = firstName;
@@ -53,6 +62,7 @@ public class UserDetails implements Serializable {
     }
 
     @ConstructorProperties({"id", "firstName", "lastName", "userName", "userId", "locked", "primaryUserType", "secondaryUserType", "organisation", "city", "state", "telephone", "roles"})
+    @Deprecated
     public UserDetails(Long id, String firstName, String lastName, String userName, String userId, Boolean locked, @Deprecated String primaryUserType, @Deprecated String secondaryUserType, String organisation, String city, String state, @Deprecated String telephone, Set<String> roles) {
         this(id, firstName, lastName, userName, userId, locked, roles);
         setPrimaryUserType(primaryUserType);
@@ -64,6 +74,7 @@ public class UserDetails implements Serializable {
     }
 
     @ConstructorProperties({"id", "firstName", "lastName", "userName", "userId", "locked", "organisation", "city", "state", "country", "roles"})
+    @Deprecated
     public UserDetails(Long id, String firstName, String lastName, String userName, String userId, Boolean locked, String organisation, String city, String state, String country, Set<String> roles) {
         this(id, firstName, lastName, userName, userId, locked, roles);
         setOrganisation(organisation);
@@ -72,16 +83,17 @@ public class UserDetails implements Serializable {
         setCountry(country);
     }
 
+    @ConstructorProperties({"id", "firstName", "lastName", "userName", "email", "userId", "locked", "activated", "organisation", "city", "state", "country", "roles"})
+    public UserDetails(Long id, String firstName, String lastName, String userName, String email, String userId, Boolean locked, Boolean activated, String organisation, String city, String state, String country, Set<String> roles) {
+        this(id, firstName, lastName, userName, email, userId, locked, activated, roles);
+        setOrganisation(organisation);
+        setCity(city);
+        setState(state);
+        setCountry(country);
+    }
+
     public String getUserId() {
         return userId != null ? userId : id != null ? String.valueOf(id) : null;
-    }
-
-    public String getEmail() {
-        return userName;
-    }
-
-    public void setEmail(String email) {
-        this.userName = email;
     }
 
     public String getDisplayName() {

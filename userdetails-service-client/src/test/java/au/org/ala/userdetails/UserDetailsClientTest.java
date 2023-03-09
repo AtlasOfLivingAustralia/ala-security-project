@@ -30,7 +30,7 @@ public class UserDetailsClientTest {
     Moshi moshi;
     UserDetailsClient userDetailsClient;
 
-    static final UserDetails test = new UserDetails(1l, "Test", "Tester", "test@test.com", "1", false, "Test Org", "City of Test", "TST", "country", newHashSet("ROLE_POTATO"));
+    static final UserDetails test = new UserDetails(1l, "Test", "Tester", "test@test.com", "test@test.com", "1", false, true, "Test Org", "City of Test", "TST", "country", newHashSet("ROLE_POTATO"));
 
     @Before
     public void setup() throws IOException {
@@ -85,9 +85,8 @@ public class UserDetailsClientTest {
                 } catch (Exception e) {
                     e.printStackTrace();
                     response.setResponseCode(500).setBody(e.getMessage());
-                } finally {
-                    return response;
                 }
+                return response;
             }
         };
         mockWebServer.setDispatcher(dispatcher);
