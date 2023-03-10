@@ -1,20 +1,19 @@
-# ala-auth-plugin [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-auth-plugin)
+# ala-auth-plugin
 ## Usage
 ```
-compile "org.grails.plugins:ala-auth:5.1.1"
+compile "org.grails.plugins:ala-auth:6.0.0-SNAPSHOT"
 ```
 
 ## Description
-ALA authentication/authorization Grails 4 plugin interface to CAS.  
-The Grails 3 version of this plugin can be found under the 3.x branches.  
-The Grails 2 version of this plugin can be found on the grails2 branch.
+ALA authentication/authorization Grails 5 plugin interface to CAS.  
+The Grails 3 version of this plugin can be found under the 3.x branches in the [ala-auth-plugin](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin) repository .  
+The Grails 2 version of this plugin can be found on the grails2 branch in the [ala-auth-plugin](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin) repository.
 
 ### Upgrade notes
 
 Grails 4 version of the plugin now provides a OpenID Connect option for authenticating users.
 
 *NOTE*: This plugin currently requires JDK11 due to the use of PAC4j, which itself requires JDK11.  
-A JDK8 version using the last version of PAC4j that supports JDK8 may be possible if required.
 
 To enable it, you must disable CAS and enable OpenID Connect like so:
 
@@ -222,6 +221,8 @@ is also used, then this step is performed automatically.
 See [this page](https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/wiki/1.x-Migration-Guide) on the wiki for steps to upgrade from 1.x.
 
 ## Changelog
+- **Version 6.0.0**
+  - Update to Grails 5 base
 - **Version 5.1.1**(5/08/2022):
   - Fix login controller storing redirect URL
 - **Version 5.1.0**(25/07/2022):
