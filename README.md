@@ -16,9 +16,9 @@ alaSecurityLibsVersion=6.0.0-SNAPSHOT
 
 ```build.gradle
 dependencies {
-  implementation 'org.grails.plugins:ala-auth-plugin:$alaSecurityLibsVersion"
-  implementation 'org.grails.plugins:ala-ws-plugin:$alaSecurityLibsVersion"
-  implementation 'org.grails.plugins:ala-ws-security-plugin:$alaSecurityLibsVersion"
+  implementation "org.grails.plugins:ala-auth-plugin:$alaSecurityLibsVersion"
+  implementation "org.grails.plugins:ala-ws-plugin:$alaSecurityLibsVersion"
+  implementation "org.grails.plugins:ala-ws-security-plugin:$alaSecurityLibsVersion"
 }
 ```
 
