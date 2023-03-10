@@ -1,0 +1,88 @@
+plugins {
+    id( 'java-library' )
+    id( 'maven-publish' )
+}
+
+group 'au.org.ala'
+version '2.1.0-SNAPSHOT'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+repositories {
+//    mavenLocal()
+    maven { url "https://nexus.ala.org.au/nexus/content/groups/public" }
+    mavenCentral()
+}
+
+sourceSets {
+    integrationTest {
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+        java.srcDir file('src/integration-test/java')
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+dependencies {
+    compileOnly group: 'org.projectlombok', name:'lombok', version: '1.16.12'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    api group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.9.0'
+    api group: 'com.squareup.retrofit2', name: 'converter-moshi', version: '2.9.0'
+    api group: 'com.squareup.moshi', name: 'moshi', version: '1.8.0'
+    api group: 'com.squareup.moshi', name: 'moshi-adapters', version: '1.8.0'
+
+    testImplementation group: 'com.google.guava', name: 'guava', version: '20.0'
+    testImplementation group: 'com.squareup.okhttp3', name: 'logging-interceptor', version: '3.14.9'
+    testImplementation group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.14.9'
+    testImplementation group: 'junit', name: 'junit', version: '4.11'
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: '2.6.0'
+}
+
+task integrationTest(type: Test) {
+    mustRunAfter test
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    outputs.upToDateWhen { false }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+publishing {
+    repositories {
+        maven {
+            name 'Nexus'
+            url "https://nexus.ala.org.au/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
+            credentials {
+                username = System.getenv('TRAVIS_DEPLOY_USERNAME')
+                password = System.getenv('TRAVIS_DEPLOY_PASSWORD')
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+        }
+    }
+}
