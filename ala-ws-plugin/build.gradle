@@ -73,7 +73,7 @@ dependencies {
         exclude module: "commons-logging"
         exclude module: "groovy"
     }
-    implementation project(':ala-auth-plugin')
+    implementation project(':ala-auth')
     implementation project(':userdetails-service-client')
     implementation(pac4j.oidc)
     implementation(pac4j.jee)
