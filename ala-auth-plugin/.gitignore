@@ -1,0 +1,12 @@
+.DS_Store
+*.zip
+*.xml
+*.iml
+*.sha1
+*.tld
+
+.gradle/
+.idea/
+target/
+build/
+out/
