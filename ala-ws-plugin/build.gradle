@@ -75,8 +75,8 @@ dependencies {
     }
     implementation project(':ala-auth-plugin')
     implementation project(':userdetails-service-client')
-    implementation 'org.pac4j:pac4j-oidc:5.7.0'
-    implementation 'org.pac4j:pac4j-javaee:5.7.0'
+    implementation(pac4j.oidc)
+    implementation(pac4j.jee)
 
     // Regular JAR dependencies
     implementation "org.apache.httpcomponents:httpmime:4.5.3"

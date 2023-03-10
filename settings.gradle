@@ -5,3 +5,17 @@ include 'ala-ws-security-plugin'
 include 'ala-ws-spring-security'
 include 'ala-auth-plugin'
 include 'ala-ws-plugin'
+
+// in gradle 7.5+ this syntax will change
+enableFeaturePreview('VERSION_CATALOGS')
+dependencyResolutionManagement {
+    versionCatalogs {
+        pac4j {
+            alias('oidc').to('org.pac4j:pac4j-oidc:5.7.0')
+            alias('jwt').to('org.pac4j:pac4j-jwt:5.7.0')
+            alias('http').to('org.pac4j:pac4j-http:5.7.0')
+            alias('jee').to('org.pac4j:pac4j-javaee:5.7.0')
+            alias('jee-support').to('org.pac4j:javaee-pac4j:7.1.0')
+        }
+    }
+}
