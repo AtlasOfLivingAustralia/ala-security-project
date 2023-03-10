@@ -43,8 +43,8 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
 
         UserDetailsClient userDetailsClient = Stub()
         userDetailsClient.getUserDetails('0', true) >>
-                { Calls.response(new UserDetails(0l, "given_name", "family_name", "email@test.com", "0",
-                        false, true, Map.of(), Set.of('ROLE_USER'))) }
+                { Calls.response(new UserDetails(0l, "given_name", "family_name", "email@test.com", "email@test.com",
+                        "0", false, true, Map.of(), Set.of('ROLE_USER'))) }
 
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = new AlaApiKeyAuthenticator()
         alaApiKeyAuthenticator.apiKeyClient = apiKeyClient

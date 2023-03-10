@@ -80,6 +80,7 @@ class CasAuthService implements IAuthService {
             details = new UserDetails(
                     userId:attr?.userid?.toString(),
                     userName: attr?.email?.toString()?.toLowerCase(),
+                    email: attr?.email?.toString()?.toLowerCase(),
                     firstName: attr?.firstname?.toString() ?: "",
                     lastName: attr?.lastname?.toString() ?: "",
                     locked: attr?.locked?.toBoolean() ?: false,

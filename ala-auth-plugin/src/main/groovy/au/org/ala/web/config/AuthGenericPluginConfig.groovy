@@ -86,7 +86,7 @@ class AuthGenericPluginConfig {
     UserDetailsClient userDetailsClient(@Qualifier("userDetailsHttpClient") OkHttpClient userDetailsHttpClient,
                                         @Qualifier('userDetailsMoshi') Moshi moshi) {
         String baseUrl = userDetailsUrl
-        new UserDetailsClient.Builder(userDetailsHttpClient, baseUrl).moshi(moshi).build()
+        UserDetailsClient.Builder.from(userDetailsHttpClient, baseUrl).moshi(moshi).build()
     }
 
     @ConditionalOnMissingBean(name = "crawlerPatterns")

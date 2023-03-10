@@ -68,7 +68,7 @@ public class Pac4jJdkMongoSessionConverter extends JdkMongoSessionConverter {
     }
 
     @Override
-    protected String extractPrincipal(Session session) {
+    protected String extractPrincipal(MongoSession session) {
         return getProfile(session).map(profile -> profile.getUsername()).orElseGet(() -> super.extractPrincipal(session));
     }
 

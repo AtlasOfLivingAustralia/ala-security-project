@@ -1,4 +1,7 @@
-rootProject.name='ala-ws-security-project'
+rootProject.name='ala-security-project'
+include 'userdetails-service-client'
 include 'ala-ws-security'
 include 'ala-ws-security-plugin'
 include 'ala-ws-spring-security'
+include 'ala-auth-plugin'
+include 'ala-ws-plugin'

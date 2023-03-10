@@ -171,7 +171,8 @@ class Pac4jAuthService implements IAuthService {
         if (attr) {
             details = new UserDetails(
                     userId: userId?.toString(),
-                    userName: email?.toString()?.toLowerCase(),
+                    userName: userName?.toString(),
+                    email: email?.toString()?.toLowerCase(),
                     firstName: firstName?.toString() ?: "",
                     lastName: lastName?.toString() ?: "",
                     locked: attr?.locked?.toBoolean() ?: false,

@@ -4,7 +4,6 @@ plugins {
 }
 
 group 'au.org.ala'
-version '2.1.0-SNAPSHOT'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'

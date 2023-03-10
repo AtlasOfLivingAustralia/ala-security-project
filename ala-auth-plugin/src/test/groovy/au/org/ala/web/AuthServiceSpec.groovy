@@ -25,9 +25,9 @@ class AuthServiceSpec extends Specification implements ServiceUnitTest<AuthServi
         def mockUserDetailsClient = Stub(UserDetailsClient)
         def response = new UserDetailsFromIdListResponse()
         response.users = [
-                '546': new UserDetails(userId: "546", userName: "user1@gmail.com", firstName: "Jimmy-Bob", lastName: "Dursten"),
-                '4568': new UserDetails(userId: "4568", userName: "user2@hotmail.com", firstName: "James Robert", lastName: "Durden"),
-                '8744': new UserDetails(userId: "8744", userName: "user3@fake.edu.au", firstName: "Jim Rob", lastName: "Durpen")
+                '546': new UserDetails(userId: "546", userName: "user1@gmail.com", email: "user1@gmail.com", firstName: "Jimmy-Bob", lastName: "Dursten"),
+                '4568': new UserDetails(userId: "4568", userName: "user2@hotmail.com", email: "user2@hotmail.com", firstName: "James Robert", lastName: "Durden"),
+                '8744': new UserDetails(userId: "8744", userName: "user3@fake.edu.au", email: "user3@fake.edu.au", firstName: "Jim Rob", lastName: "Durpen")
         ]
         response.invalidIds = [ 575 ]
         response.success = true
@@ -62,7 +62,7 @@ class AuthServiceSpec extends Specification implements ServiceUnitTest<AuthServi
     def testGetUserForUserId() {
         setup:
         def mockUserDetailsClient = Stub(UserDetailsClient)
-        def response = new UserDetails(userId: "546", userName: "user1@gmail.com", firstName: "Jimmy-Bob", lastName: "Dursten")
+        def response = new UserDetails(userId: "546", userName: "user1@gmail.com", email: "user1@gmail.com", firstName: "Jimmy-Bob", lastName: "Dursten")
         mockUserDetailsClient.getUserDetails('546', true) >> Calls.response(response)
 
         service.userDetailsClient = mockUserDetailsClient
@@ -108,7 +108,7 @@ class AuthServiceSpec extends Specification implements ServiceUnitTest<AuthServi
     def testGetUserForEmailAddress() {
         setup:
         def mockUserDetailsClient = Stub(UserDetailsClient)
-        def response = new UserDetails(userId: "546", userName: "user1@gmail.com", firstName: "Jimmy-Bob", lastName: "Dursten")
+        def response = new UserDetails(userId: "546", userName: "user1@gmail.com", email: "user1@gmail.com", firstName: "Jimmy-Bob", lastName: "Dursten")
         mockUserDetailsClient.getUserDetails('user1@gmail.com', true) >> Calls.response(response)
 
         service.userDetailsClient = mockUserDetailsClient
