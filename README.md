@@ -27,7 +27,7 @@ Components
 
 This project contains all of the following previously separate ALA Grails plugins and libs:
 
-- [ala-auth-plugin](ala-auth-plugin) - For interactively authenticating users
+- [ala-auth-plugin](ala-auth) - For interactively authenticating users
 - [ala-ws-plugin](ala-ws-plugin) - For adding authenticated tokens to outgoing web service requests
 - [ala-ws-security-plugin](ala-ws-security-plugin) - For adding access token authentication for web services
 - [userdetails-service-client](userdetails-service-client) - For contacting userdetails web services
