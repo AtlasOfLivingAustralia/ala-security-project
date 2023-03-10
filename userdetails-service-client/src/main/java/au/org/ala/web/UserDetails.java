@@ -56,6 +56,7 @@ public class UserDetails implements Serializable {
         this.firstName = firstName;
         this.lastName = lastName;
         this.userName = userName;
+        this.email = userName; // to support older clients that don't add the email param, to be overridden
         this.userId = userId;
         this.locked = locked;
         this.roles = roles;
