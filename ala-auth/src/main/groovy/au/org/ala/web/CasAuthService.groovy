@@ -109,7 +109,7 @@ class CasAuthService implements IAuthService {
      * @return
      */
     private UserDetails getUserForEmailAddress(String email, boolean includeProps = true) {
-        if (!userId) return null // this would have failed anyway
+        if (!email) return null // this would have failed anyway
         def call = userDetailsClient.getUserDetails(userId, includeProps)
         try {
             def response = call.execute()
