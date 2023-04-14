@@ -89,7 +89,7 @@ class WebServiceSpec extends Specification implements ServiceUnitTest<WebService
             tokenService(InstanceFactoryBean, Stub(TokenService), TokenService)
         }
         service.authService = Mock(AuthService)
-        service.authService.userDetails() >> new UserDetails(userId: '1234', email: 'fred@bla.com')
+        service.authService.userDetails() >> new UserDetails(userId: '1234', userName: 'fred@bla.com', email: 'fred@bla.com')
 
         service.grailsApplication.config.merge([
                 webservice: [
