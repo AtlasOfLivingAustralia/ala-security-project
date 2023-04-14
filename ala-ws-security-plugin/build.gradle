@@ -1,0 +1,161 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url "https://nexus.ala.org.au/content/groups/public/" }
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+//        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.2"
+    }
+}
+
+group "org.grails.plugins"
+
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:'java-library'
+apply plugin:"org.grails.grails-plugin"
+apply plugin:"org.grails.grails-gsp"
+//apply plugin:"asset-pipeline"
+//apply plugin:"maven"
+apply plugin:"maven-publish"
+
+sourceCompatibility = 1.11
+targetCompatibility = 1.11
+
+repositories {
+    mavenLocal()
+    maven { url "https://nexus.ala.org.au/content/groups/public/" }
+    maven { url "https://repo.grails.org/grails/core" }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    resolutionStrategy.cacheDynamicVersionsFor 0, 'seconds'
+}
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
+dependencies {
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "org.grails:grails-core"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat"
+    implementation "org.grails:grails-web-boot"
+    implementation "org.grails:grails-logging"
+    implementation "org.grails:grails-plugin-rest"
+    implementation "org.grails:grails-plugin-databinding"
+    implementation "org.grails:grails-plugin-i18n"
+    implementation "org.grails:grails-plugin-services"
+    implementation "org.grails:grails-plugin-url-mappings"
+    implementation "org.grails:grails-plugin-interceptors"
+
+    implementation "org.grails.plugins:cache"
+    implementation 'org.grails.plugins:cache-ehcache:3.0.0'
+
+    implementation "org.grails.plugins:async"
+    implementation "org.grails.plugins:scaffolding"
+    implementation "org.grails.plugins:gsp"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
+    console "org.grails:grails-console"
+    profile "org.grails.profiles:web-plugin"
+//    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.0.10"
+    testImplementation "io.micronaut:micronaut-inject-groovy"
+    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.mockito:mockito-core:4.6.1"
+    testImplementation "org.grails:grails-web-testing-support"
+    testImplementation 'com.github.tomakehurst:wiremock-jre8:2.33.2'
+    testImplementation "co.infinum:retromock:1.1.1"
+//    testImplementation 'cglib:cglib-nodep:3.3.0'
+//    testImplementation 'org.objenesis:objenesis:3.3'
+//    testImplementation 'org.modelmapper:modelmapper:3.1.0'
+
+    implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
+//    testImplementation 'io.github.joke:spock-mockable:1.5.5'
+
+    api project(':ala-ws-security')
+
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor"
+
+}
+
+compileGroovy {
+    groovyOptions.javaAnnotationProcessing = true
+}
+
+tasks.withType(GroovyCompile) {
+    configure(groovyOptions) {
+        forkOptions.jvmArgs = ['-Xmx1024m']
+    }
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+compileJava.dependsOn(processResources)
+
+bootRun.enabled = false
+/*
+bootRun {
+    ignoreExitValue true
+    jvmArgs(
+            '-Dspring.output.ansi.enabled=always',
+            '-noverify',
+            '-XX:TieredStopAtLevel=1',
+            '-Xmx1024m')
+    sourceResources sourceSets.main
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
+}
+ */
+// enable if you wish to package this plugin as a standalone application
+bootJar.enabled = false
+
+publishing {
+    repositories {
+        maven {
+            name 'Nexus'
+            url "https://nexus.ala.org.au/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
+            credentials {
+                username = System.getenv('TRAVIS_DEPLOY_USERNAME')
+                password = System.getenv('TRAVIS_DEPLOY_PASSWORD')
+            }
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                name = 'ALA WS Security Plugin'
+                description = 'Plugin for authenticating web service calls for ALA systems'
+                url = 'https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin'
+                licenses {
+                    license {
+                        name = 'MPL-1.1'
+                        url = 'https://www.mozilla.org/en-US/MPL/1.1/'
+                    }
+                }
+                developers {
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin.git'
+                    developerConnection = 'scm:git:ssh://github.com:AtlasOfLivingAustralia/ala-ws-security-plugin.git'
+                    url = 'https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin/tree/main'
+                }
+            }
+        }
+    }
+}

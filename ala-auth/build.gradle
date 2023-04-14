@@ -1,0 +1,175 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url "https://nexus.ala.org.au/content/groups/public/" }
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+//        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:3.3.4"
+    }
+}
+
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:"org.grails.grails-plugin"
+//apply plugin:"asset-pipeline"
+apply plugin:"org.grails.grails-gsp"
+apply plugin: 'maven-publish'
+
+
+group 'org.grails.plugins'
+
+repositories {
+    mavenLocal()
+    maven { url "https://nexus.ala.org.au/content/groups/public/" }
+    maven { url "https://repo.grails.org/grails/core" }
+    mavenCentral()
+}
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+//dependencyManagement {
+//    imports {
+//        mavenBom "org.grails:grails-bom:$grailsVersion"
+//    }
+//    applyMavenExclusions false
+//}
+
+dependencies {
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "org.grails:grails-core"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat"
+    implementation "org.grails:grails-web-boot"
+    implementation "org.grails:grails-logging"
+    implementation "org.grails:grails-plugin-rest"
+    implementation "org.grails:grails-plugin-databinding"
+    implementation "org.grails:grails-plugin-i18n"
+    implementation "org.grails:grails-plugin-services"
+    implementation "org.grails:grails-plugin-url-mappings"
+    implementation "org.grails:grails-plugin-interceptors"
+
+    implementation "org.grails.plugins:cache"
+    implementation 'org.grails.plugins:cache-ehcache:3.0.0'
+
+    implementation "org.grails.plugins:async"
+    implementation "org.grails.plugins:scaffolding"
+    implementation "org.grails.plugins:gsp"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
+    console "org.grails:grails-console"
+    profile "org.grails.profiles:web-plugin"
+//    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.3.4"
+    testImplementation "io.micronaut:micronaut-inject-groovy"
+    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.grails:grails-web-testing-support"
+
+    implementation project(':userdetails-service-client')
+    testImplementation "com.squareup.retrofit2:retrofit-mock:2.9.0"
+
+    implementation 'au.org.ala:ala-cas-client:3.0.0'
+
+    implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
+
+    implementation(pac4j.oidc)
+    implementation(pac4j.jee)
+    implementation(pac4j.jee.support)
+
+    // Not required but this plugin can react to the presence of Spring Session
+    compileOnly 'org.springframework.session:spring-session-core'
+    compileOnly 'org.springframework.session:spring-session-data-mongodb'
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor"
+
+    implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '2.7.0'
+
+}
+
+compileGroovy {
+    groovyOptions.javaAnnotationProcessing = true
+}
+
+tasks.withType(GroovyCompile) {
+    configure(groovyOptions) {
+        forkOptions.jvmArgs = ['-Xmx1024m']
+    }
+}
+
+compileJava.dependsOn(processResources)
+
+bootRun {
+    ignoreExitValue true
+    jvmArgs(
+            '-Dspring.output.ansi.enabled=always',
+            '-noverify',
+            '-XX:TieredStopAtLevel=1',
+            '-Xmx1024m')
+    sourceResources sourceSets.main
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+// enable if you wish to package this plugin as a standalone application
+bootJar.enabled = false
+
+publishing {
+    repositories {
+        maven {
+            name 'Nexus'
+            url "https://nexus.ala.org.au/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
+            credentials {
+                username = System.getenv('TRAVIS_DEPLOY_USERNAME')
+                password = System.getenv('TRAVIS_DEPLOY_PASSWORD')
+            }
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                name = 'ALA Auth Plugin'
+                description = 'Authentication for ALA Apps'
+                url = 'https://github.com/AtlasOfLivingAustralia/ala-auth-plugin'
+                licenses {
+                    license {
+                        name = 'MPL-1.1'
+                        url = 'https://www.mozilla.org/en-US/MPL/1.1/'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'sbearcsiro'
+                        name = 'Simon Bear'
+                        email = 'simon.bear@csiro.au'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/AtlasOfLivingAustralia/ala-auth-plugin.git'
+                    developerConnection = 'scm:git:ssh://github.com:AtlasOfLivingAustralia/ala-auth-plugin.git'
+                    url = 'https://github.com/AtlasOfLivingAustralia/ala-auth-plugin/tree/main'
+                }
+            }
+
+        }
+    }
+}

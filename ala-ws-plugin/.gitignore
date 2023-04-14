@@ -1,0 +1,16 @@
+*.iml
+.classpath
+.idea/
+.project
+coverage/
+target/
+out/
+.DS_Store
+
+*.zip
+*.sha1
+plugin.xml
+web-app/
+
+.gradle/
+build/
