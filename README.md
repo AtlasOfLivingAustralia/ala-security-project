@@ -10,10 +10,12 @@ The current version of these libraries is: `6.0.0-SNAPSHOT`.
 To ensure that various plugins and libraries and self-consistent, a project should use the same version for
 each of the plugins and libraries that it consumes, eg for a Grails project:
 
+`gradle.properties`:
 ```gradle.properties
-alaSecurityLibsVersion=6.0.0-SNAPSHOT
+alaSecurityLibsVersion=6.0.0
 ```
 
+`build.gradle`:
 ```build.gradle
 dependencies {
   implementation "org.grails.plugins:ala-auth-plugin:$alaSecurityLibsVersion"
