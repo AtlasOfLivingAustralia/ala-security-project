@@ -110,17 +110,17 @@ class CasAuthService implements IAuthService {
      */
     private UserDetails getUserForEmailAddress(String email, boolean includeProps = true) {
         if (!email) return null // this would have failed anyway
-        def call = userDetailsClient.getUserDetails(userId, includeProps)
+        def call = userDetailsClient.getUserDetails(email, includeProps)
         try {
             def response = call.execute()
 
             if (response.successful) {
                 return response.body()
             } else {
-                log.warn("Failed to retrieve user details for userId: $userId, includeProps: $includeProps. Error was: ${response.message()}")
+                log.warn("Failed to retrieve user details for userId: $email, includeProps: $includeProps. Error was: ${response.message()}")
             }
         } catch (Exception ex) {
-            log.error("Exception caught trying get find user details for $userId.", ex)
+            log.error("Exception caught trying get find user details for $email.", ex)
         }
         return null
     }
