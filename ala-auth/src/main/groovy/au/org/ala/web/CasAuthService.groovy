@@ -103,24 +103,26 @@ class CasAuthService implements IAuthService {
     }
 
     /**
-     * XXX Simply copied here to prevent circular dependency.
-     * @param email Email
-     * @param includeProps Props
-     * @return
+     * Get user details by email address.
+     * Copied here to prevent circular dependency.
+     *
+     * @param email User email address.
+     * @param includeProps True to include extended properties.
+     * @return User details object.
      */
     private UserDetails getUserForEmailAddress(String email, boolean includeProps = true) {
         if (!email) return null // this would have failed anyway
-        def call = userDetailsClient.getUserDetails(userId, includeProps)
+        def call = userDetailsClient.getUserDetails(email, includeProps)
         try {
             def response = call.execute()
 
             if (response.successful) {
                 return response.body()
             } else {
-                log.warn("Failed to retrieve user details for userId: $userId, includeProps: $includeProps. Error was: ${response.message()}")
+                log.warn("Failed to retrieve user details for email: $email, includeProps: $includeProps. Error was: ${response.message()}")
             }
         } catch (Exception ex) {
-            log.error("Exception caught trying get find user details for $userId.", ex)
+            log.error("Exception caught trying get find user details for email: $email.", ex)
         }
         return null
     }
