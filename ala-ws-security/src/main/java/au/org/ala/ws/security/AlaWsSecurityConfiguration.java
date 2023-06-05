@@ -1,5 +1,6 @@
 package au.org.ala.ws.security;
 
+import au.org.ala.userdetails.UserDetailsClient;
 import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator;
 import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator;
 import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator;
@@ -167,7 +168,7 @@ public class AlaWsSecurityConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "security.apikey", name = "enabled")
-    public AlaApiKeyClient getAlaApiKeyClient(ApiKeyClient apiKeyClient) {
+    public AlaApiKeyClient getAlaApiKeyClient(ApiKeyClient apiKeyClient, UserDetailsClient userDetailsClient) {
 
         AlaApiKeyCredentialsExtractor credentialsExtractor = new AlaApiKeyCredentialsExtractor();
         credentialsExtractor.setHeaderName(apiKeyProperties.getHeader().getOverride());
@@ -175,6 +176,7 @@ public class AlaWsSecurityConfiguration {
 
         AlaApiKeyAuthenticator authenticator = new AlaApiKeyAuthenticator();
         authenticator.setApiKeyClient(apiKeyClient);
+        authenticator.setUserDetailsClient(userDetailsClient);
 
         return new AlaApiKeyClient(credentialsExtractor, authenticator);
     }
