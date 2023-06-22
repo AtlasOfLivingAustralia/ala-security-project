@@ -15,6 +15,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
+import javax.annotation.PostConstruct
+
 @Configuration
 class AlaWsPluginConfig {
 
@@ -39,14 +41,24 @@ class AlaWsPluginConfig {
 
     @Bean
     TokenService tokenService(
-            @Autowired(required = false) Config config,
             @Autowired(required = false) OidcConfiguration oidcConfiguration,
             @Autowired(required = false) Pac4jContextProvider pac4jContextProvider,
             @Autowired(required = false) SessionStore sessionStore,
             @Autowired TokenClient tokenClient
     ) {
-        new TokenService(config, oidcConfiguration, pac4jContextProvider,
+        // note not injecting PAC4j Config here due to potential circular dependency
+        new TokenService(oidcConfiguration, pac4jContextProvider,
                 sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
+    }
+
+    /**
+     * Injecting the PAC4j Config into the TokenService can cause a circular dependency.
+     * Since the Config isn't used in the construction of the TokenService, we inject
+     * it after construction instead.
+     */
+    @PostConstruct
+    void setConfigOnTokenService(TokenService tokenService, Config config) {
+        tokenService.config = config
     }
 
     /**

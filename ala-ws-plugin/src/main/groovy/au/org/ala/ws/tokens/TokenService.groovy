@@ -33,7 +33,8 @@ class TokenService {
     final String jwtScopes
     final List<String> finalScopes
 
-    private final Config config
+    // mutable to break circular spring dependency
+    Config config
 
     private final OidcConfiguration oidcConfiguration
 
@@ -44,6 +45,13 @@ class TokenService {
     private final TokenClient tokenClient
 
     TokenService(Config config, OidcConfiguration oidcConfiguration, Pac4jContextProvider pac4jContextProvider,
+                 SessionStore sessionStore, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
+                 boolean cacheTokens) {
+        this(oidcConfiguration, pac4jContextProvider, sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
+        this.config = config
+    }
+
+    TokenService(OidcConfiguration oidcConfiguration, Pac4jContextProvider pac4jContextProvider,
                  SessionStore sessionStore, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
                  boolean cacheTokens) {
         this.cacheTokens = cacheTokens
