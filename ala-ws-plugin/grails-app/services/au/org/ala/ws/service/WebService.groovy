@@ -309,7 +309,7 @@ class WebService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace()
+//            e.printStackTrace()
             log.error("Failed sending ${method} request to ${url}", e)
             result.statusCode = HttpStatus.SC_INTERNAL_SERVER_ERROR
             result.error = "Failed calling web service. ${e.getClass()} ${e.getMessage()} URL= ${url}, method ${method}."

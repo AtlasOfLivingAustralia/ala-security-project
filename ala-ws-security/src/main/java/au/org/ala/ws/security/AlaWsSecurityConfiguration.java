@@ -96,6 +96,7 @@ public class AlaWsSecurityConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "security.jwt", name="enabled")
     public ResourceRetriever jwtResourceRetriever() {
         DefaultResourceRetriever resourceRetriever = new DefaultResourceRetriever(jwtProperties.getConnectTimeoutMs(), jwtProperties.getReadTimeoutMs());
@@ -121,6 +122,8 @@ public class AlaWsSecurityConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "security.jwt", name = "enabled")
     JWKSource<SecurityContext> jwkSource(OidcConfiguration oidcConfiguration) {
         OIDCProviderMetadata providerMetadata = oidcConfiguration.findProviderMetadata();
         URL keySourceUrl;

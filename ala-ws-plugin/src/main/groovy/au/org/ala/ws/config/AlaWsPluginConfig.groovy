@@ -15,6 +15,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
+import javax.annotation.PostConstruct
+
 @Configuration
 class AlaWsPluginConfig {
 
@@ -39,15 +41,16 @@ class AlaWsPluginConfig {
 
     @Bean
     TokenService tokenService(
-            @Autowired(required = false) Config config,
             @Autowired(required = false) OidcConfiguration oidcConfiguration,
-            @Autowired(required = false) Pac4jContextProvider pac4jContextProvider,
             @Autowired(required = false) SessionStore sessionStore,
             @Autowired TokenClient tokenClient
     ) {
-        new TokenService(config, oidcConfiguration, pac4jContextProvider,
+        // note not injecting PAC4j Config here due to potential circular dependency
+        new TokenService(oidcConfiguration,
                 sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
     }
+
+
 
     /**
      * OK HTTP Interceptor that injects a client credentials Bearer token into a request
