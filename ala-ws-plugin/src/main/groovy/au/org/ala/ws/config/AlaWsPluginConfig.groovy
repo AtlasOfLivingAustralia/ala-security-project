@@ -42,24 +42,15 @@ class AlaWsPluginConfig {
     @Bean
     TokenService tokenService(
             @Autowired(required = false) OidcConfiguration oidcConfiguration,
-            @Autowired(required = false) Pac4jContextProvider pac4jContextProvider,
             @Autowired(required = false) SessionStore sessionStore,
             @Autowired TokenClient tokenClient
     ) {
         // note not injecting PAC4j Config here due to potential circular dependency
-        new TokenService(oidcConfiguration, pac4jContextProvider,
+        new TokenService(oidcConfiguration,
                 sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
     }
 
-    /**
-     * Injecting the PAC4j Config into the TokenService can cause a circular dependency.
-     * Since the Config isn't used in the construction of the TokenService, we inject
-     * it after construction instead.
-     */
-    @PostConstruct
-    void setConfigOnTokenService(TokenService tokenService, Config config) {
-        tokenService.config = config
-    }
+
 
     /**
      * OK HTTP Interceptor that injects a client credentials Bearer token into a request

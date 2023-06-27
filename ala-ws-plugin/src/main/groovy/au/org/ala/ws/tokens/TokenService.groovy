@@ -12,9 +12,14 @@ import com.nimbusds.oauth2.sdk.id.ClientID
 import com.nimbusds.oauth2.sdk.token.AccessToken
 import com.nimbusds.oauth2.sdk.token.RefreshToken
 import groovy.util.logging.Slf4j
+import org.grails.web.servlet.mvc.GrailsWebRequest
+import org.grails.web.util.WebUtils
 import org.pac4j.core.config.Config
+import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.profile.ProfileManager
+import org.pac4j.core.util.FindBest
+import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.profile.OidcProfile
@@ -54,10 +59,15 @@ class TokenService {
     TokenService(OidcConfiguration oidcConfiguration, Pac4jContextProvider pac4jContextProvider,
                  SessionStore sessionStore, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
                  boolean cacheTokens) {
+        this(oidcConfiguration, sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
+        this.pac4jContextProvider = pac4jContextProvider
+    }
+
+    TokenService(OidcConfiguration oidcConfiguration, SessionStore sessionStore, TokenClient tokenClient,
+                 String clientId, String clientSecret, String jwtScopes, boolean cacheTokens) {
         this.cacheTokens = cacheTokens
         this.config = config
         this.oidcConfiguration = oidcConfiguration
-        this.pac4jContextProvider = pac4jContextProvider
         this.sessionStore = sessionStore
         this.tokenClient = tokenClient
 
@@ -70,7 +80,15 @@ class TokenService {
     }
 
     ProfileManager getProfileManager() {
-        def context = pac4jContextProvider.webContext()
+        final WebContext context
+        if (pac4jContextProvider) {
+            context = pac4jContextProvider.webContext()
+        } else {
+            def gwr = WebUtils.retrieveGrailsWebRequest()
+            def request = gwr.request
+            def response = gwr.response
+            context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
+        }
         final ProfileManager manager = new ProfileManager(context, sessionStore)
         manager.config = config
         return manager
