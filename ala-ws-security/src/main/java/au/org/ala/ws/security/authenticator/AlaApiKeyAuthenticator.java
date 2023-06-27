@@ -44,7 +44,7 @@ public class AlaApiKeyAuthenticator extends InitializableObject implements Authe
             alaApiUserProfile = fetchUserProfile(alaApiKeyCredentials.getToken());
         } catch (IOException e) {
             log.warn("Couldn't fetch user profile", e);
-            throw new CredentialsException("Coudln't fetch user profile");
+            throw new CredentialsException("Couldn't fetch user profile");
         }
 
         if (alaApiUserProfile.isActivated() && !alaApiUserProfile.isLocked()) {

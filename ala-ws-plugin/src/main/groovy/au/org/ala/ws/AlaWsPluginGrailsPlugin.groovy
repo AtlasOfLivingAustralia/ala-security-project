@@ -1,6 +1,7 @@
 package au.org.ala.ws
 
 import au.org.ala.ws.config.AlaWsPluginConfig
+import au.org.ala.ws.config.AlaWsPluginTokenServiceConfig
 
 class AlaWsPluginGrailsPlugin {
     // the version or versions of Grails the plugin is designed for
@@ -29,6 +30,7 @@ class AlaWsPluginGrailsPlugin {
 
     def doWithSpring = {
         alaWsPluginConfg(AlaWsPluginConfig)
+        alaWsPluginTokenServiceConfig(AlaWsPluginTokenServiceConfig)
     }
 
     def doWithDynamicMethods = { ctx ->

@@ -5,20 +5,16 @@ import au.org.ala.web.UserDetails
 import au.org.ala.ws.tokens.TokenService
 import com.google.common.collect.ImmutableList
 import grails.converters.JSON
-import grails.testing.mixin.integration.Integration
 import grails.testing.services.ServiceUnitTest
-import grails.util.GrailsWebMockUtil
+import grails.testing.web.GrailsWebUnitTest
 import groovy.json.JsonSlurper
+import groovy.util.logging.Slf4j
 import org.apache.http.HttpStatus
 import org.apache.http.entity.ContentType
 import org.grails.spring.beans.factory.InstanceFactoryBean
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.context.WebApplicationContext
-import org.springframework.web.context.request.RequestContextHolder
 import ratpack.exec.Promise
 import ratpack.form.Form
 import ratpack.groovy.test.embed.GroovyEmbeddedApp
-import ratpack.http.Status
 import ratpack.http.TypedData
 import ratpack.test.embed.EmbeddedApp
 import spock.lang.Ignore
@@ -29,17 +25,14 @@ import uk.org.lidalia.slf4jtest.LoggingEvent
 import uk.org.lidalia.slf4jtest.TestLogger
 import uk.org.lidalia.slf4jtest.TestLoggerFactory
 
-@Integration
-class WebServiceSpec extends Specification implements ServiceUnitTest<WebService> {
+@Slf4j
+class WebServiceSpec extends Specification implements ServiceUnitTest<WebService>, GrailsWebUnitTest {
 
     @Shared
     EmbeddedApp server
 
     @Shared
     String url
-
-    @Autowired
-    WebApplicationContext ctx
 
     def setupSpec() {
         /* https://ratpack.io/manual/current/all.html */
@@ -98,7 +91,6 @@ class WebServiceSpec extends Specification implements ServiceUnitTest<WebService
                 ],
                 app       : []
         ])
-        GrailsWebMockUtil.bindMockWebRequest(ctx)
     }
 
     def cleanupSpec() {
@@ -106,18 +98,17 @@ class WebServiceSpec extends Specification implements ServiceUnitTest<WebService
     }
 
     def cleanup() {
-        RequestContextHolder.resetRequestAttributes()
     }
 
     def "a request that results in a connection exception should return a statusCode == 500 and an error message, and log the error"() {
         setup:
         TestLogger logger = TestLoggerFactory.getTestLogger("au.org.ala.ws.service.WebService")
 
-        when: "the call results in a 404 (i.e. there is no server running)"
+        when: "Requesting a URL on a non existant server"
         Map result = service.get("http://localhost:3123")
         ImmutableList<LoggingEvent> loggingEvents = logger.getLoggingEvents()
 
-        then:
+        then: "the call results in a 500 (i.e. there is no server running)"
         result.error != null
         result.statusCode == HttpStatus.SC_INTERNAL_SERVER_ERROR
 
