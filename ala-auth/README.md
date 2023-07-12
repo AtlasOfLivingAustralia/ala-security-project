@@ -101,6 +101,22 @@ The scopes available are:
 - `ala` contains ALA extended attributes
 - `roles` to get the user's roles.
 
+#### Auth Cookie support
+
+Some OIDC providers (ie cognito) do not provide sufficient customisation to be able to set a cookie once authentication has
+been established.  As a work around this plugin provides similar functionality, adding the `ALA-Auth` cookie on a 
+successful callback from the OIDC RP.  This function is disabled by default but can be configured via the following 
+configuration properties:
+
+```yaml
+security:
+  core:
+    auth-cookie-name: 'ALA-Auth' # Cookie name taken from this property
+  cookie:
+    enabled: false # Set to true to enable
+    domain: '.ala.org.au' # Should be changed for non ALA deployments
+```
+
 #### Register your OpenID Connect app
 
 Head to the CAS Management app and add an OpenID Connect Relying Party.  For local development, the dev and test environments
