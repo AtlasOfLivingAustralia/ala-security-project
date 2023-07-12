@@ -3,12 +3,14 @@ package au.org.ala.web;
 import au.org.ala.pac4j.core.logout.CognitoLogoutActionBuilder;
 import org.pac4j.core.logout.LogoutActionBuilder;
 import org.pac4j.oidc.config.OidcConfiguration;
+import org.pac4j.oidc.logout.OidcLogoutActionBuilder;
 
 public enum LogoutActionType {
 
     DEFAULT {
         public LogoutActionBuilder getLogoutActionBuilder(OidcConfiguration oidcConfiguration) {
-            return null;
+            // TODO this should always return the same as the default PAC4j oidcClient.logoutActionBuilder.
+            return new OidcLogoutActionBuilder(oidcConfiguration);
         }
     },
     COGNITO {
