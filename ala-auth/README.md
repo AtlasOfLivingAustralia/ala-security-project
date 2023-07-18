@@ -72,7 +72,7 @@ security:
     display-name-claim: name // add this override using 'name' as the claim for the user's display name or set to null to calculate display name from first and last names
   core:
     default-logout-redirect-uri: '/' // App relative URI to redirect to after OIDC logout
-    auth-cookie-name: 'ALA-Auth' // not supported with cognito
+    authCookieName: 'ALA-Auth' // use 'ALA-Auth-Test' for test, 'ALA-Auth-Dev' for dev
     uri-filter-pattern: ['/paths/*','/that','/require/*,'/auth/*'] // Java servlet filter style paths only
     authenticate-only-if-cookie-filter-pattern:  ['/optional-auth/*'] // Will force OIDC auth if the Auth Cookie is defined
     gateway-filter-pattern: ['/api/*'] // Use OIDC prompt=none
@@ -111,7 +111,7 @@ configuration properties:
 ```yaml
 security:
   core:
-    auth-cookie-name: 'ALA-Auth' # Cookie name taken from this property
+    authCookieName: 'ALA-Auth' # Cookie name taken from this property
   cookie:
     enabled: false # Set to true to enable
     domain: '.ala.org.au' # Should be changed for non ALA deployments
