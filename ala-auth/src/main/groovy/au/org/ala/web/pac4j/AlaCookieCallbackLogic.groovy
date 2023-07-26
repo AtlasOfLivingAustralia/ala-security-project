@@ -16,10 +16,9 @@ class AlaCookieCallbackLogic extends DefaultCallbackLogic {
 
     @Override
     protected HttpAction redirectToOriginallyRequestedUrl(WebContext context, SessionStore sessionStore, String defaultUrl) {
-        def profile = getProfileManager(context, sessionStore).getProfile()
-        profile.ifPresent {
+        getProfileManager(context, sessionStore).getProfile().ifPresent { profile ->
             // TODO Do we actually need to put the username in the cookie value?
-            this.cookieGenerator.addCookie(context, it.username)
+            this.cookieGenerator.addCookie(context, profile.username ?: profile.id ?: profile.typedId)
         }
         return super.redirectToOriginallyRequestedUrl(context, sessionStore, defaultUrl)
     }
