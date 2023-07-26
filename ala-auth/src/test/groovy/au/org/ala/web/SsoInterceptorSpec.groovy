@@ -12,10 +12,14 @@ import spock.lang.Specification
 class SsoInterceptorSpec extends Specification implements InterceptorUnitTest<SsoInterceptor> {
 
     SSOStrategy mockSsoStrategy = Mock(SSOStrategy)
+    CoreAuthProperties coreAuthProperties = new CoreAuthProperties()
+    CasClientProperties casClientProperties = new CasClientProperties()
 
     def setup() {
-        defineBeans{
+        defineBeans {
             ssoStrategy(InstanceFactoryBean, mockSsoStrategy, SSOStrategy)
+            coreAuthProperties(InstanceFactoryBean, coreAuthProperties, CoreAuthProperties)
+            casClientProperties(InstanceFactoryBean, casClientProperties, CasClientProperties)
         }
     }
 
