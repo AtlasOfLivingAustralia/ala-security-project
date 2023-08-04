@@ -1,8 +1,20 @@
 package au.org.ala.web
 
+import com.nimbusds.jwt.JWTParser
+import com.nimbusds.oauth2.sdk.Scope
+import com.nimbusds.oauth2.sdk.TokenIntrospectionRequest
+import com.nimbusds.oauth2.sdk.TokenIntrospectionResponse
+import com.nimbusds.oauth2.sdk.token.AccessToken
+import com.nimbusds.oauth2.sdk.token.AccessTokenUtils
+import com.nimbusds.oauth2.sdk.token.BearerAccessToken
+import com.nimbusds.oauth2.sdk.util.JSONObjectUtils
+import net.minidev.json.JSONObject
+import net.minidev.json.parser.JSONParser
+import net.minidev.json.parser.ParseException
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.profile.factory.ProfileManagerFactory
 import org.pac4j.core.util.FindBest
 import org.pac4j.jee.config.AbstractConfigFilter
@@ -41,7 +53,10 @@ class AffiliationSurveyFilter extends AbstractConfigFilter {
 
         profileManager.getProfile().ifPresent {profile ->
             if (profile instanceof OidcProfile) {
-                def scopeIncluded = requiredScopesForAffiliationCheck.any { requiredScope -> profile.accessToken.scope.contains(requiredScope) }
+                if (profile.accessToken.scope == null) {
+                    introspectAccessToken(profile)
+                }
+                def scopeIncluded = requiredScopesForAffiliationCheck.any { requiredScope -> profile.accessToken.scope?.contains(requiredScope) }
                 def missingAttribute = !profile.containsAttribute(affiliationAttribute) || !profile.getAttribute(affiliationAttribute, String)
                 if (scopeIncluded && missingAttribute) {
                     request.setAttribute('ala.affiliation-required', true)
@@ -50,4 +65,52 @@ class AffiliationSurveyFilter extends AbstractConfigFilter {
         }
     }
 
+    /**
+     * Inspect and replace the profile's access token with the introspected version
+     * @param profile
+     * @return
+     */
+    private introspectAccessToken(OidcProfile profile) {
+        // if JSON parse token
+        JSONObject jsonObject
+        try {
+            def jwtClaimSet = JWTParser.parse(profile.accessToken.value).JWTClaimsSet.toJSONObject()
+            jsonObject = new JSONObject(jwtClaimSet)
+            def lifetime = parseExpiry(jsonObject)
+            Scope scope = Scope.parse(JSONObjectUtils.getString(jsonObject, "scope", (String)null))
+            profile.accessToken = new BearerAccessToken(profile.accessToken.value, lifetime, scope, profile.accessToken.issuedTokenType)
+//            jsonObject = new JSONParser().parse(profile.accessToken.value)
+        } catch (java.text.ParseException | ParseException e) {
+            logger.debug('Could not parse access token')
+            TokenIntrospectionRequest tir = new TokenIntrospectionRequest(''.toURI(), profile.accessToken)
+            def tiResponse = TokenIntrospectionResponse.parse(tir.toHTTPRequest().send())
+            if (tiResponse.indicatesSuccess()) {
+                jsonObject = tiResponse.toSuccessResponse().toJSONObject()
+                def lifetime = parseExpiry(jsonObject)
+                Scope scope = Scope.parse(JSONObjectUtils.getString(jsonObject, "scope", (String)null))
+                def token = AccessToken.parse(jsonObject)
+                profile.accessToken = new BearerAccessToken(profile.accessToken.value, lifetime, scope, profile.accessToken.issuedTokenType)
+            } else {
+                logger.error('Failed to get token introspection', tiResponse.toErrorResponse().errorObject)
+            }
+        }
+    }
+
+    private parseExpiry(JSONObject object) {
+        long lifetime
+        if (object.containsKey("exp")) {
+            if (object.get("exp") instanceof Number) {
+                return JSONObjectUtils.getLong(object, "exp")
+            } else {
+                String lifetimeStr = JSONObjectUtils.getString(object, "exp")
+                try {
+                    return Long.parseLong(lifetimeStr)
+                } catch (NumberFormatException var3) {
+                    throw new java.text.ParseException("Invalid exp parameter, must be integer",0)
+                }
+            }
+        } else {
+            return 0L;
+        }
+    }
 }
