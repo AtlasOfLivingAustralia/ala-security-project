@@ -63,6 +63,7 @@ class AffiliationSurveyFilter extends AbstractConfigFilter {
                 }
             }
         }
+        chain.doFilter(request, response)
     }
 
     /**
@@ -110,7 +111,7 @@ class AffiliationSurveyFilter extends AbstractConfigFilter {
                 }
             }
         } else {
-            return 0L;
+            return 0L
         }
     }
 }
