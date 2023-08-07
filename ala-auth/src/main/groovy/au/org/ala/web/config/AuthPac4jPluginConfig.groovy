@@ -507,13 +507,16 @@ class AuthPac4jPluginConfig {
         return frb
     }
 
-    @ConditionalOnProperty(prefix = 'security.oidc', name = 'enabled')
+    @ConditionalOnProperty(['security.oidc.enabled', 'security.core.affiliation-survey.enabled'])
     @Bean
     FilterRegistrationBean alaAffiliationFilter(Config pac4jConfig, SessionStore sessionStore, WebContextFactory webContextFactory) {
         final name = 'ALA Affiliation Survey Filter'
         def frb = new FilterRegistrationBean()
         frb.name = name
-        def filter = new AffiliationSurveyFilter(pac4jConfig, sessionStore, webContextFactory, ['ala', 'ala/attrs'].toSet(), 'affiliation')
+        def scopes = coreAuthProperties.affiliationSurvey.requiredScopes
+        def claim = coreAuthProperties.affiliationSurvey.affiliationClaim
+        def countryClaim = coreAuthProperties.affiliationSurvey.countryClaim
+        def filter = new AffiliationSurveyFilter(pac4jConfig, sessionStore, webContextFactory, scopes, claim, countryClaim)
         frb.filter = filter
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = AuthPluginConfig.filterOrder() + 6

@@ -5,16 +5,13 @@ import com.nimbusds.oauth2.sdk.Scope
 import com.nimbusds.oauth2.sdk.TokenIntrospectionRequest
 import com.nimbusds.oauth2.sdk.TokenIntrospectionResponse
 import com.nimbusds.oauth2.sdk.token.AccessToken
-import com.nimbusds.oauth2.sdk.token.AccessTokenUtils
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils
 import net.minidev.json.JSONObject
-import net.minidev.json.parser.JSONParser
 import net.minidev.json.parser.ParseException
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
-import org.pac4j.core.profile.UserProfile
 import org.pac4j.core.profile.factory.ProfileManagerFactory
 import org.pac4j.core.util.FindBest
 import org.pac4j.jee.config.AbstractConfigFilter
@@ -35,13 +32,15 @@ class AffiliationSurveyFilter extends AbstractConfigFilter {
 
     final Set<String> requiredScopesForAffiliationCheck// = ['ala', 'ala/attrs']
     final String affiliationAttribute// = 'affiliation'
+    final String countryAttribute
 
-    AffiliationSurveyFilter(Config config, SessionStore sessionStore, WebContextFactory webContextFactory, Set<String> requiredScopesForAffiliationCheck, String affiliationAttribute) {
+    AffiliationSurveyFilter(Config config, SessionStore sessionStore, WebContextFactory webContextFactory, Set<String> requiredScopesForAffiliationCheck, String affiliationAttribute, String countryAttribute) {
         this.config = config
         this.sessionStore = sessionStore
         this.webContextFactory = webContextFactory
         this.requiredScopesForAffiliationCheck = requiredScopesForAffiliationCheck
         this.affiliationAttribute = affiliationAttribute
+        this.countryAttribute = countryAttribute
     }
 
     @Override
@@ -57,8 +56,9 @@ class AffiliationSurveyFilter extends AbstractConfigFilter {
                     introspectAccessToken(profile)
                 }
                 def scopeIncluded = requiredScopesForAffiliationCheck.any { requiredScope -> profile.accessToken.scope?.contains(requiredScope) }
-                def missingAttribute = !profile.containsAttribute(affiliationAttribute) || !profile.getAttribute(affiliationAttribute, String)
-                if (scopeIncluded && missingAttribute) {
+                def missingAffiliationAttribute = !profile.containsAttribute(affiliationAttribute) || !profile.getAttribute(affiliationAttribute, String)
+                def missingCountryAttribute = !profile.containsAttribute(countryAttribute) || !profile.getAttribute(countryAttribute, String)
+                if (scopeIncluded && (missingAffiliationAttribute || missingCountryAttribute)) {
                     request.setAttribute('ala.affiliation-required', true)
                 }
             }
@@ -68,6 +68,7 @@ class AffiliationSurveyFilter extends AbstractConfigFilter {
 
     /**
      * Inspect and replace the profile's access token with the introspected version
+     * // TODO Extract this somewhere more generically useful
      * @param profile
      * @return
      */
