@@ -1,6 +1,7 @@
 package au.org.ala.web.config
 
 import au.org.ala.pac4j.core.logout.RemoveCookieLogoutActionBuilder
+import au.org.ala.web.AffiliationSurveyFilter
 import au.org.ala.web.AuthCookieProperties
 import au.org.ala.web.CasClientProperties
 import au.org.ala.web.CookieFilterWrapper
@@ -246,7 +247,7 @@ class AuthPac4jPluginConfig {
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    Config pac4jConfig(List<Client> clientBeans, SessionStore sessionStore, SessionStoreFactory sessionStoreFactory, WebContextFactory webContextFactory, UserAgentFilterService userAgentFilterService, SecurityLogic securityLogic) {
+    Config pac4jConfig(List<Client> clientBeans, SessionStore sessionStore, SessionStoreFactory sessionStoreFactory, WebContextFactory webContextFactory, UserAgentFilterService userAgentFilterService, SecurityLogic securityLogic, CallbackLogic callbackLogic) {
         Clients clients = new Clients(linkGenerator.link(absolute: true, uri: CALLBACK_URI), clientBeans)
 
         Config config = new Config(clients)
@@ -269,6 +270,7 @@ class AuthPac4jPluginConfig {
             excludeMatcher.excludeRegex(it)
         }
         config.addMatcher(EXCLUDE_PATHS, excludeMatcher)
+        config.callbackLogic = callbackLogic
         config
     }
 
@@ -498,6 +500,26 @@ class AuthPac4jPluginConfig {
         frb.filter = pac4jFilter
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = AuthPluginConfig.filterOrder() + 5
+        frb.urlPatterns = ['/*']
+        frb.enabled = !frb.urlPatterns.empty
+        frb.asyncSupported = true
+        logFilter(name, frb)
+        return frb
+    }
+
+    @ConditionalOnProperty(['security.oidc.enabled', 'security.core.affiliation-survey.enabled'])
+    @Bean
+    FilterRegistrationBean alaAffiliationFilter(Config pac4jConfig, SessionStore sessionStore, WebContextFactory webContextFactory) {
+        final name = 'ALA Affiliation Survey Filter'
+        def frb = new FilterRegistrationBean()
+        frb.name = name
+        def scopes = coreAuthProperties.affiliationSurvey.requiredScopes
+        def claim = coreAuthProperties.affiliationSurvey.affiliationClaim
+        def countryClaim = coreAuthProperties.affiliationSurvey.countryClaim
+        def filter = new AffiliationSurveyFilter(pac4jConfig, sessionStore, webContextFactory, scopes, claim, countryClaim)
+        frb.filter = filter
+        frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
+        frb.order = AuthPluginConfig.filterOrder() + 6
         frb.urlPatterns = ['/*']
         frb.enabled = !frb.urlPatterns.empty
         frb.asyncSupported = true

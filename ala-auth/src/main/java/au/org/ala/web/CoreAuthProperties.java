@@ -1,9 +1,11 @@
 package au.org.ala.web;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @ConfigurationProperties(value = "security.core")
 public class CoreAuthProperties {
@@ -19,6 +21,9 @@ public class CoreAuthProperties {
     private boolean centralLogout = true;
     private boolean destroySession = true;
     private boolean localLogout = true;
+
+    @NestedConfigurationProperty
+    private AffiliationSurvey affiliationSurvey = new AffiliationSurvey();
 
     public List<String> getUriFilterPattern() {
         return uriFilterPattern;
@@ -106,5 +111,56 @@ public class CoreAuthProperties {
 
     public void setLogoutUrlPattern(String logoutUrlPattern) {
         this.logoutUrlPattern = logoutUrlPattern;
+    }
+
+    public AffiliationSurvey getAffiliationSurvey() {
+        return affiliationSurvey;
+    }
+
+    public void setAffiliationSurvey(AffiliationSurvey affiliationSurvey) {
+        this.affiliationSurvey = affiliationSurvey;
+    }
+
+    public static class AffiliationSurvey {
+
+        private boolean enabled = false;
+
+        private Set<String> requiredScopes = Set.of("ala/attrs");
+
+        private String affiliationClaim = "custom:affiliation";
+
+        private String countryClaim = "custom:country";
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public Set<String> getRequiredScopes() {
+            return requiredScopes;
+        }
+
+        public void setRequiredScopes(Set<String> requiredScopes) {
+            this.requiredScopes = requiredScopes;
+        }
+
+        public String getAffiliationClaim() {
+            return affiliationClaim;
+        }
+
+        public void setAffiliationClaim(String affiliationClaim) {
+            this.affiliationClaim = affiliationClaim;
+        }
+
+        public String getCountryClaim() {
+            return countryClaim;
+        }
+
+        public void setCountryClaim(String countryClaim) {
+            this.countryClaim = countryClaim;
+        }
     }
 }

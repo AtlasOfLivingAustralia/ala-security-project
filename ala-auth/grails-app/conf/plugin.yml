@@ -8,6 +8,12 @@ security:
   core:
     permissionsAttributes: ['scopes']
     authCookieName: ${security.cas.authCookieName}
+    affiliation-survey:
+      enabled: false
+      required-scopes:
+        - ala/attrs
+      affiliation-claim: 'custom:affiliation'
+      country-claim: 'custom:country'
   oidc:
     enabled: false
     clientId: 'ChangeMe'
