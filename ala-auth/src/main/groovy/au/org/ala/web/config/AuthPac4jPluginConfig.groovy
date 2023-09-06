@@ -1,6 +1,8 @@
 package au.org.ala.web.config
 
-
+import au.org.ala.pac4j.core.logout.RemoveCookieLogoutActionBuilder
+import au.org.ala.web.AffiliationSurveyFilter
+import au.org.ala.web.AuthCookieProperties
 import au.org.ala.web.CasClientProperties
 import au.org.ala.web.CookieFilterWrapper
 import au.org.ala.web.CookieMatcher
@@ -17,7 +19,9 @@ import au.org.ala.web.Pac4jHttpServletRequestWrapperFilter
 import au.org.ala.web.Pac4jSSOStrategy
 import au.org.ala.web.SSOStrategy
 import au.org.ala.web.UserAgentFilterService
+import au.org.ala.web.pac4j.AlaCookieCallbackLogic
 import au.org.ala.web.pac4j.ConvertingFromAttributesAuthorizationGenerator
+import au.org.ala.pac4j.core.CookieGenerator
 import com.nimbusds.jose.util.DefaultResourceRetriever
 import grails.core.GrailsApplication
 import grails.web.http.HttpHeaders
@@ -33,6 +37,7 @@ import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.context.session.SessionStoreFactory
+import org.pac4j.core.engine.CallbackLogic
 import org.pac4j.core.engine.DefaultLogoutLogic
 import org.pac4j.core.engine.DefaultSecurityLogic
 import org.pac4j.core.engine.LogoutLogic
@@ -70,7 +75,7 @@ import static org.pac4j.core.authorization.authorizer.OrAuthorizer.or
 
 @CompileStatic
 @Configuration("authPac4jPluginConfiguration")
-@EnableConfigurationProperties([CasClientProperties, OidcClientProperties, CoreAuthProperties])
+@EnableConfigurationProperties([CasClientProperties, OidcClientProperties, CoreAuthProperties, AuthCookieProperties])
 @Slf4j
 class AuthPac4jPluginConfig {
 
@@ -97,6 +102,8 @@ class AuthPac4jPluginConfig {
     CoreAuthProperties coreAuthProperties
     @Autowired
     OidcClientProperties oidcClientProperties
+    @Autowired
+    AuthCookieProperties authCookieProperties
 
     @Autowired
     LinkGenerator linkGenerator
@@ -159,30 +166,33 @@ class AuthPac4jPluginConfig {
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     @Primary
-    OidcClient oidcClient(OidcConfiguration oidcConfiguration) {
-        def client = createOidcClientFromConfig(oidcConfiguration)
+    OidcClient oidcClient(OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator) {
+        def client = createOidcClientFromConfig(oidcConfiguration, authCookieGenerator)
         client.setName(DEFAULT_CLIENT)
         return client
     }
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    OidcClient oidcPromptNoneClient() {
+    OidcClient oidcPromptNoneClient(CookieGenerator authCookieGenerator) {
         def config = generateBaseOidcClientConfiguration(oidcLogoutHandler)
         // select prompt mode: none, consent, select_account
         config.addCustomParam("prompt", "none")
-        def client = createOidcClientFromConfig(config)
+        def client = createOidcClientFromConfig(config, authCookieGenerator)
         client.setName(PROMPT_NONE_CLIENT)
         return client
     }
 
-    private OidcClient createOidcClientFromConfig(OidcConfiguration oidcConfiguration) {
+    private OidcClient createOidcClientFromConfig(OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator) {
         def client = new OidcClient(oidcConfiguration)
         client.addAuthorizationGenerator(new ConvertingFromAttributesAuthorizationGenerator([coreAuthProperties.roleAttribute ?: casClientProperties.roleAttribute],coreAuthProperties.permissionAttributes, oidcClientProperties.rolePrefix, oidcClientProperties.convertRolesToUpperCase))
         client.addAuthorizationGenerator(new DefaultRolesPermissionsAuthorizationGenerator(['ROLE_USER'] , []))
         client.setUrlResolver(new DefaultUrlResolver(true))
         def logoutActionBuilder = oidcClientProperties.logoutAction.getLogoutActionBuilder(oidcConfiguration)
         if (logoutActionBuilder != null) {
+            if (authCookieProperties.enabled) {
+                logoutActionBuilder = new RemoveCookieLogoutActionBuilder(logoutActionBuilder, authCookieGenerator)
+            }
             client.logoutActionBuilder = logoutActionBuilder
         }
 
@@ -237,7 +247,7 @@ class AuthPac4jPluginConfig {
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    Config pac4jConfig(List<Client> clientBeans, SessionStore sessionStore, SessionStoreFactory sessionStoreFactory, WebContextFactory webContextFactory, UserAgentFilterService userAgentFilterService, SecurityLogic securityLogic) {
+    Config pac4jConfig(List<Client> clientBeans, SessionStore sessionStore, SessionStoreFactory sessionStoreFactory, WebContextFactory webContextFactory, UserAgentFilterService userAgentFilterService, SecurityLogic securityLogic, CallbackLogic callbackLogic) {
         Clients clients = new Clients(linkGenerator.link(absolute: true, uri: CALLBACK_URI), clientBeans)
 
         Config config = new Config(clients)
@@ -260,6 +270,7 @@ class AuthPac4jPluginConfig {
             excludeMatcher.excludeRegex(it)
         }
         config.addMatcher(EXCLUDE_PATHS, excludeMatcher)
+        config.callbackLogic = callbackLogic
         config
     }
 
@@ -278,6 +289,24 @@ class AuthPac4jPluginConfig {
                 }
             }
         }
+    }
+
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
+    @ConditionalOnMissingBean(name = 'authCookieGenerator')
+    @Bean('authCookieGenerator')
+    CookieGenerator authCookieGenerator() {
+        new CookieGenerator(authCookieProperties.enabled,
+                coreAuthProperties.authCookieName ?: casClientProperties.authCookieName,
+                authCookieProperties.domain,
+                authCookieProperties.path,
+                authCookieProperties.httpOnly,
+                authCookieProperties.secure,
+                authCookieProperties.maxAge,
+                authCookieProperties.securityPolicy,
+                authCookieProperties.comment,
+                authCookieProperties.quoteValue,
+                authCookieProperties.encodeValue
+        )
     }
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
@@ -334,12 +363,19 @@ class AuthPac4jPluginConfig {
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    FilterRegistrationBean pac4jCallbackFilter(Config pac4jConfig) {
+    CallbackLogic callbackLogic(CookieGenerator authCookieGenerator) {
+        new AlaCookieCallbackLogic(authCookieGenerator)
+    }
+
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
+    @Bean
+    FilterRegistrationBean pac4jCallbackFilter(Config pac4jConfig, CallbackLogic callbackLogic) {
         final name = 'Pac4j Callback Filter'
         def frb = new FilterRegistrationBean()
         frb.name = name
         // TODO Add config property for Default URI?
         CallbackFilter callbackFilter = new CallbackFilter(pac4jConfig, linkGenerator.link(uri: '/'))
+        callbackFilter.callbackLogic = callbackLogic
         callbackFilter.defaultClient = DEFAULT_CLIENT
         frb.filter = callbackFilter
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
@@ -464,6 +500,26 @@ class AuthPac4jPluginConfig {
         frb.filter = pac4jFilter
         frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
         frb.order = AuthPluginConfig.filterOrder() + 5
+        frb.urlPatterns = ['/*']
+        frb.enabled = !frb.urlPatterns.empty
+        frb.asyncSupported = true
+        logFilter(name, frb)
+        return frb
+    }
+
+    @ConditionalOnProperty(['security.oidc.enabled', 'security.core.affiliation-survey.enabled'])
+    @Bean
+    FilterRegistrationBean alaAffiliationFilter(Config pac4jConfig, SessionStore sessionStore, WebContextFactory webContextFactory) {
+        final name = 'ALA Affiliation Survey Filter'
+        def frb = new FilterRegistrationBean()
+        frb.name = name
+        def scopes = coreAuthProperties.affiliationSurvey.requiredScopes
+        def claim = coreAuthProperties.affiliationSurvey.affiliationClaim
+        def countryClaim = coreAuthProperties.affiliationSurvey.countryClaim
+        def filter = new AffiliationSurveyFilter(pac4jConfig, sessionStore, webContextFactory, scopes, claim, countryClaim)
+        frb.filter = filter
+        frb.dispatcherTypes = EnumSet.of(DispatcherType.REQUEST)
+        frb.order = AuthPluginConfig.filterOrder() + 6
         frb.urlPatterns = ['/*']
         frb.enabled = !frb.urlPatterns.empty
         frb.asyncSupported = true

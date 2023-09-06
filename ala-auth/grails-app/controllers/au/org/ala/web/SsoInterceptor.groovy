@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 import javax.annotation.PostConstruct
 import javax.servlet.http.Cookie
@@ -14,6 +15,7 @@ import javax.servlet.http.HttpServletRequest
 
 @CompileStatic
 @Slf4j
+@EnableConfigurationProperties([CasClientProperties, CoreAuthProperties])
 class SsoInterceptor {
 
     int order = HIGHEST_PRECEDENCE
@@ -24,8 +26,10 @@ class SsoInterceptor {
     @Value('${security.oidc.enabled:false}')
     boolean oidcEnabled
 
-    @Value('${security.cas.authCookieName:ALA-Auth}')
-    String authCookieName
+    @Autowired
+    CoreAuthProperties coreAuthProperties
+    @Autowired
+    CasClientProperties casClientProperties
 
     @Autowired
     UserAgentFilterService userAgentFilterService
@@ -81,6 +85,10 @@ class SsoInterceptor {
 
     protected boolean cookieExists(final HttpServletRequest request) {
         return request.cookies.any { Cookie cookie -> cookie.name == this.authCookieName && cookie.value}
+    }
+
+    private String getAuthCookieName() {
+        coreAuthProperties.authCookieName ?: casClientProperties.authCookieName
     }
 
 }
