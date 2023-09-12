@@ -1,7 +1,7 @@
 language: groovy
 sudo: false
 jdk:
-- openjdk11
+- openjdk17
 branches:
   only:
   - master
