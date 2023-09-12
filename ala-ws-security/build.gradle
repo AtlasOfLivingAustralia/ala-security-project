@@ -34,7 +34,7 @@ bootJar {
 
 jar {
     enabled = true
-    archiveClassifier = '' //use empty string
+    archiveClassifier = ''
 }
 
 dependencies {
