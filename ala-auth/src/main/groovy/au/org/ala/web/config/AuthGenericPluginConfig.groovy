@@ -39,8 +39,8 @@ class AuthGenericPluginConfig {
     @Value('${userDetails.readTimeout:10000}')
     Long userDetailsReadTimeout
 
-    @Value('${userDetails.url}')
-    String userDetailsUrl
+    @Value('${userdetails.api.url}')
+    String userDetailsApiUrl
 
     @Bean('userAgentInterceptor')
     @ConditionalOnMissingBean(name = 'userAgentInterceptor')
@@ -85,7 +85,7 @@ class AuthGenericPluginConfig {
     @Bean("userDetailsClient")
     UserDetailsClient userDetailsClient(@Qualifier("userDetailsHttpClient") OkHttpClient userDetailsHttpClient,
                                         @Qualifier('userDetailsMoshi') Moshi moshi) {
-        String baseUrl = userDetailsUrl
+        String baseUrl = userDetailsApiUrl
         UserDetailsClient.Builder.from(userDetailsHttpClient, baseUrl).moshi(moshi).build()
     }
 

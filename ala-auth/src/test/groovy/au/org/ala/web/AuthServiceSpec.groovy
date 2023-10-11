@@ -13,7 +13,7 @@ class AuthServiceSpec extends Specification implements ServiceUnitTest<AuthServi
 
     def setup() {
 
-        grailsApplication.config.userDetails.url = 'http://auth.ala.org.au/userdetails/'
+        grailsApplication.config.userdetails.api.url = 'http://auth.ala.org.au/userdetails/'
 
         defineBeans {
             linkGenerator(InstanceFactoryBean, Stub(LinkGenerator), LinkGenerator)
