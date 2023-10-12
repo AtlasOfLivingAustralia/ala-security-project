@@ -39,7 +39,7 @@ class AuthGenericPluginConfig {
     @Value('${userDetails.readTimeout:10000}')
     Long userDetailsReadTimeout
 
-    @Value('${userdetails.api.url}')
+    @Value('${userdetails.api.url:${userDetails.url}}')
     String userDetailsApiUrl
 
     @Bean('userAgentInterceptor')
