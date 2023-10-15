@@ -221,7 +221,7 @@ Grails actions.
 You can change the base address of the UserDetails web services by overriding the following config value:
 
 ```groovy
-userDetails.url = 'https://auth.ala.org.au/userdetails/'
+userdetails.api.url = 'https://api.ala.org.au/userdetails/'
 ```
 
 ### AuthService configuration
