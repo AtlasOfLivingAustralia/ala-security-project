@@ -12,7 +12,7 @@ each of the plugins and libraries that it consumes, eg for a Grails project:
 
 `gradle.properties`:
 ```gradle.properties
-alaSecurityLibsVersion=6.0.3
+alaSecurityLibsVersion=6.2.0
 ```
 
 `build.gradle`:
