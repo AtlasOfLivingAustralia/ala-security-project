@@ -5,7 +5,7 @@ ALA plugins
 Usage
 -----
 
-The current version of these libraries is: `6.0.3`.
+The current version of these libraries is: `6.2.0`.
 
 To ensure that various plugins and libraries and self-consistent, a project should use the same version for
 each of the plugins and libraries that it consumes, eg for a Grails project:
