@@ -82,8 +82,10 @@ class AuthService implements IAuthService {
                 return Optional.of(response.body())
             } else {
                 log.warn("Failed to retrieve user details for userId: $userId, includeProps: $includeProps. Error was: ${response.code()}")
-                log.debug("Error body: ${response.errorBody().string()}")
-                log.debug("Request to: ${response.raw().request().url()}")
+                if (log.debugEnabled) {
+                    log.debug("Error body: ${response.errorBody().string()}")
+                    log.debug("Error request URI: ${response.raw().request().url()}")
+                }
             }
         } catch (Exception ex) {
             log.error("Exception caught trying get find user details for $userId.", ex)
