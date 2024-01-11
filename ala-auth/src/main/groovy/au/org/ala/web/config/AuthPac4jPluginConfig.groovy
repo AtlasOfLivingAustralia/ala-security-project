@@ -1,6 +1,7 @@
 package au.org.ala.web.config
 
 import au.org.ala.pac4j.core.logout.RemoveCookieLogoutActionBuilder
+import au.org.ala.pac4j.oidc.credentials.extractor.CognitoOidcExtractor
 import au.org.ala.web.AffiliationSurveyFilter
 import au.org.ala.web.AuthCookieProperties
 import au.org.ala.web.CasClientProperties
@@ -169,6 +170,7 @@ class AuthPac4jPluginConfig {
     OidcClient oidcClient(OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator) {
         def client = createOidcClientFromConfig(oidcConfiguration, authCookieGenerator)
         client.setName(DEFAULT_CLIENT)
+        client.setCredentialsExtractor(new CognitoOidcExtractor(oidcConfiguration, client))
         return client
     }
 
