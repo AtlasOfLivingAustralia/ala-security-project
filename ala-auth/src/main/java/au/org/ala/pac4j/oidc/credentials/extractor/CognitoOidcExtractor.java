@@ -31,8 +31,7 @@ public class CognitoOidcExtractor extends OidcExtractor {
         } catch (TechnicalException te) {
 
             if (te.getMessage().equals("State cannot be determined")) {
-
-//                sessionStore.set(context, Pac4jConstants.REQUESTED_URL, requestedUrl);
+                
                 // redirect to the authentication page
                 throw client.getRedirectionAction(context, sessionStore).get();
             }
