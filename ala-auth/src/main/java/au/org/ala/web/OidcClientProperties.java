@@ -1,6 +1,7 @@
 package au.org.ala.web;
 
 import org.pac4j.core.context.HttpConstants;
+import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.profile.OidcProfileDefinition;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -60,6 +61,7 @@ public class OidcClientProperties {
      * set to null to calculate from first and last names.
      */
     private String displayNameClaim = OidcProfileDefinition.NAME;
+    private int maxClockSkew = OidcConfiguration.DEFAULT_MAX_CLOCK_SKEW;
 
     public boolean isEnabled() {
         return enabled;
@@ -211,5 +213,13 @@ public class OidcClientProperties {
 
     public void setDisplayNameClaim(String displayNameClaim) {
         this.displayNameClaim = displayNameClaim;
+    }
+
+    public int getMaxClockSkew() {
+        return maxClockSkew;
+    }
+
+    public void setMaxClockSkew(int maxClockSkew) {
+        this.maxClockSkew = maxClockSkew;
     }
 }
