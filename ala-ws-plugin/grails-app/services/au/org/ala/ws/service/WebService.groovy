@@ -79,7 +79,7 @@ class WebService {
      * The body map will be sent as the JSON body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
-     * @param body Map containing the data to be sent as the post body
+     * @param body Object containing the data to be sent as the post body. e.g. Map, Array
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
@@ -87,7 +87,7 @@ class WebService {
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map put(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+    Map put(String url, Object body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
         send(PUT, url, params, contentType, body, null, includeApiKey, includeUser, customHeaders)
     }
 
@@ -100,7 +100,7 @@ class WebService {
      * The body map will be sent as the body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
-     * @param body Map containing the data to be sent as the post body
+     * @param body Object containing the data to be sent as the post body. e.g. Map, Array
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
@@ -108,7 +108,7 @@ class WebService {
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map post(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+    Map post(String url, Object body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
         send(POST, url, params, contentType, body, null, includeApiKey, includeUser, customHeaders)
     }
 
@@ -131,7 +131,7 @@ class WebService {
      * </ul>
      *
      * @param url The url-encoded url to send the request to
-     * @param body Map containing the data to be sent as the post body
+     * @param body Object containing the data to be sent as the post body. e.g. Map, Array
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param files List of 0 or more files to be included in the multipart request (note: if files is null, then the request will NOT be multipart)
      * @param partContentType the desired content type for the request PARTS (the request itself will always be sent as multipart/form-data). Defaults to application/json. All non-file parts will have the same content type.
@@ -140,7 +140,7 @@ class WebService {
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map postMultipart(String url, Map body, Map params = [:], List files = [], ContentType partContentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+    Map postMultipart(String url, Object body, Map params = [:], List files = [], ContentType partContentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
         send(POST, url, params, partContentType, body, files, includeApiKey, includeUser, customHeaders)
     }
 
@@ -267,7 +267,7 @@ class WebService {
     }
 
     private Map send(Method method, String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON,
-                     Map body = null, List files = null, boolean includeApiKey = true, boolean includeUser = true,
+                     Object body = null, List files = null, boolean includeApiKey = true, boolean includeUser = true,
                      Map customHeaders = [:]) {
         log.debug("${method} request to ${url}")
 
@@ -280,7 +280,7 @@ class WebService {
 
             http.request(method, contentType) { request ->
                 configureRequestTimeouts(request)
-                configureRequestHeaders(headers, includeApiKey, includeUser, customHeaders)
+                configureRequestHeaders(delegate.headers, includeApiKey, includeUser, customHeaders)
 
                 if (files != null) {
                     // NOTE: order is important - Content-Type MUST be set BEFORE the body
@@ -390,13 +390,18 @@ class WebService {
         }
     }
 
-    private static HttpEntity constructMultiPartEntity(Map parts, List files, ContentType partContentType = ContentType.APPLICATION_JSON) {
+    private static HttpEntity constructMultiPartEntity(Object parts, List files, ContentType partContentType = ContentType.APPLICATION_JSON) {
         MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create()
         entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
 
-        parts?.each { key, value ->
-            def val = partContentType == ContentType.APPLICATION_JSON && !(value instanceof net.sf.json.JSON) ? value as JSON : value
-            entityBuilder.addPart(key?.toString(), new StringBody((val) as String, partContentType))
+        if (parts instanceof Map) {
+            parts?.each { key, value ->
+                def val = partContentType == ContentType.APPLICATION_JSON && !(value instanceof net.sf.json.JSON) ? value as JSON : value
+                entityBuilder.addPart(key?.toString(), new StringBody((val) as String, partContentType))
+            }
+        } else {
+            def val = partContentType == ContentType.APPLICATION_JSON && !(parts instanceof net.sf.json.JSON) ? parts as JSON : parts
+            entityBuilder.addTextBody("json", val as String, partContentType)
         }
 
         files.eachWithIndex { it, index ->
