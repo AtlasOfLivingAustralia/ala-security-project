@@ -20,14 +20,20 @@ import au.org.ala.web.Pac4jSSOStrategy
 import au.org.ala.web.SSOStrategy
 import au.org.ala.web.UserAgentFilterService
 import au.org.ala.web.pac4j.AlaCookieCallbackLogic
+import au.org.ala.web.pac4j.CachingResourceRetriever
+import au.org.ala.web.pac4j.RetryResourceRetriever
 import au.org.ala.web.pac4j.ConvertingFromAttributesAuthorizationGenerator
 import au.org.ala.pac4j.core.CookieGenerator
 import com.nimbusds.jose.util.DefaultResourceRetriever
+import com.nimbusds.jose.util.ResourceRetriever
 import grails.core.GrailsApplication
 import grails.web.http.HttpHeaders
 import grails.web.mapping.LinkGenerator
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.github.resilience4j.core.IntervalFunction
+import io.github.resilience4j.retry.Retry
+import io.github.resilience4j.retry.RetryConfig
 import org.pac4j.core.authorization.generator.DefaultRolesPermissionsAuthorizationGenerator
 import org.pac4j.core.client.Client
 import org.pac4j.core.client.Clients
@@ -67,6 +73,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 
 import javax.servlet.DispatcherType
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 import static org.pac4j.core.authorization.authorizer.IsAnonymousAuthorizer.isAnonymous
@@ -123,12 +130,42 @@ class AuthPac4jPluginConfig {
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    OidcConfiguration oidcConfiguration() {
-        OidcConfiguration config = generateBaseOidcClientConfiguration(oidcLogoutHandler)
+    OidcConfiguration oidcConfiguration(ResourceRetriever resourceRetriever) {
+        OidcConfiguration config = generateBaseOidcClientConfiguration(oidcLogoutHandler, resourceRetriever)
         return config
     }
 
-    private OidcConfiguration generateBaseOidcClientConfiguration(LogoutHandler logoutHandler) {
+    @ConditionalOnProperty(prefix = 'security.oidc', name='enabled')
+    @Bean
+    Retry oidcRetry() {
+
+        RetryConfig config = RetryConfig.custom()
+            .maxAttempts(oidcClientProperties.maximumRetries)
+            .intervalFunction { IntervalFunction.ofExponentialRandomBackoff(oidcClientProperties.initialRetryInterval, 1.5d, oidcClientProperties.maximumRetryInterval) }
+            .retryExceptions(IOException)
+            .retryOnException { it.message.startsWith('HTTP 5') } // this is fragile but it's the only way to detect a 5xx response as pac4j currently throws an IOException with the message HTTP + statuscode + : + status message for HTTP errors
+        .build()
+
+        return Retry.of('oidc', config)
+    }
+
+    @ConditionalOnProperty(prefix = 'security.oidc', name='enabled')
+    @Bean
+    ResourceRetriever resourceRetriever(@Qualifier('oidcRetry') Retry oidcRetry) {
+        def resourceRetriever = new DefaultResourceRetriever(oidcClientProperties.connectTimeout, oidcClientProperties.readTimeout)
+        String userAgent = "$name/$version"
+        resourceRetriever.headers = [(HttpHeaders.USER_AGENT): [userAgent]]
+
+        def retryRetriever = new RetryResourceRetriever(resourceRetriever, oidcRetry)
+
+        if (oidcClientProperties.cacheLastDiscoveryDocument) {
+            return new CachingResourceRetriever(retryRetriever, Paths.get(oidcClientProperties.discoveryDocumentCache), { URL url -> oidcClientProperties.discoveryUri == url.toString() })
+        } else {
+            return retryRetriever
+        }
+    }
+
+    private OidcConfiguration generateBaseOidcClientConfiguration(LogoutHandler logoutHandler, ResourceRetriever resourceRetriever) {
         OidcConfiguration config = new OidcConfiguration()
         config.setClientId(oidcClientProperties.clientId)
         config.setSecret(oidcClientProperties.secret)
@@ -152,9 +189,6 @@ class AuthPac4jPluginConfig {
             config.logoutUrl = oidcClientProperties.logoutUrl
         }
 
-        def resourceRetriever = new DefaultResourceRetriever(oidcClientProperties.connectTimeout, oidcClientProperties.readTimeout)
-        String userAgent = "$name/$version"
-        resourceRetriever.headers = [(HttpHeaders.USER_AGENT): [userAgent]]
         config.resourceRetriever = resourceRetriever
 
         // select display mode: page, popup, touch, and wap
@@ -175,8 +209,8 @@ class AuthPac4jPluginConfig {
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    OidcClient oidcPromptNoneClient(CookieGenerator authCookieGenerator) {
-        def config = generateBaseOidcClientConfiguration(oidcLogoutHandler)
+    OidcClient oidcPromptNoneClient(CookieGenerator authCookieGenerator, ResourceRetriever resourceRetriever) {
+        def config = generateBaseOidcClientConfiguration(oidcLogoutHandler, resourceRetriever)
         // select prompt mode: none, consent, select_account
         config.addCustomParam("prompt", "none")
         def client = createOidcClientFromConfig(config, authCookieGenerator)
