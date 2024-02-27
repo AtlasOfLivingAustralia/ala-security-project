@@ -12,12 +12,13 @@ import io.github.resilience4j.retry.Retry
 class RetryResourceRetriever implements ResourceRetriever {
 
     private final ResourceRetriever other
-//    private final Random random = new Random()
     private final Retry retry
 
     RetryResourceRetriever(ResourceRetriever other, Retry retry) {
         this.other = other
         this.retry = retry
+
+        this.retry.eventPublisher.onRetry { log.debug("Retrying resource #{}, last error: {}", it.numberOfRetryAttempts, it.lastThrowable.message) }
     }
 
     @Override

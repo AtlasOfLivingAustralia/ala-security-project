@@ -66,7 +66,7 @@ public class OidcClientProperties {
     /**
      * Maximum number of times to retry internal OIDC HTTP calls.
      */
-    private int maximumRetries = 10;
+    private int maximumRetries = 15;
     /**
      * Initial delay before retrying an internal OIDC HTTP call.
      */

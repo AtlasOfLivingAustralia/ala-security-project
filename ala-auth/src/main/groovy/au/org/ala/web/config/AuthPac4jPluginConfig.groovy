@@ -141,10 +141,9 @@ class AuthPac4jPluginConfig {
 
         RetryConfig config = RetryConfig.custom()
             .maxAttempts(oidcClientProperties.maximumRetries)
-            .intervalFunction { IntervalFunction.ofExponentialRandomBackoff(oidcClientProperties.initialRetryInterval, 1.5d, oidcClientProperties.maximumRetryInterval) }
-            .retryExceptions(IOException)
-            .retryOnException { it.message.startsWith('HTTP 5') } // this is fragile but it's the only way to detect a 5xx response as pac4j currently throws an IOException with the message HTTP + statuscode + : + status message for HTTP errors
-        .build()
+            .intervalFunction(IntervalFunction.ofExponentialRandomBackoff(oidcClientProperties.initialRetryInterval, 1.5d, oidcClientProperties.maximumRetryInterval))
+            .retryOnException { it instanceof IOException && it.message.startsWith('HTTP 5') } // this is fragile but it's a way to detect a 5xx response as pac4j currently throws an IOException with the message HTTP + statuscode + : + status message for HTTP errors
+            .build()
 
         return Retry.of('oidc', config)
     }
