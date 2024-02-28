@@ -37,8 +37,6 @@ public class AlaSecurityCommonConfiguration {
     OidcClientProperties oidcClientProperties;
 
     @ConditionalOnExpression("'${security.oidc.enabled}' or '${security.jwt.enabled}'")
-//    @ConditionalOnProperty(prefix = "security.oidc", name="enabled")
-//    @ConditionalOnProperty({"security.oidc.enabled", "security.jwt.enabled"})
     @Bean
     public Retry oidcRetry() {
 
@@ -55,9 +53,6 @@ public class AlaSecurityCommonConfiguration {
     }
 
     @ConditionalOnExpression("'${security.oidc.enabled}' or '${security.jwt.enabled}'")
-//    @ConditionalOnProperty({"security.oidc.enabled", "security.jwt.enabled"})
-//    @ConditionalOnProperty(prefix = "security.oidc", name="enabled")
-//    @ConditionalOnMissingBean
     @Bean
     public ResourceRetriever oidcResourceRetriever(@Qualifier("oidcRetry") Retry oidcRetry) {
         DefaultResourceRetriever resourceRetriever = new DefaultResourceRetriever(oidcClientProperties.getConnectTimeout(), oidcClientProperties.getReadTimeout());
