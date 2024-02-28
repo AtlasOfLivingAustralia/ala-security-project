@@ -1,28 +1,46 @@
-package au.org.ala.web.pac4j
+package au.org.ala.web.pac4j;
 
-import com.nimbusds.jose.util.Resource
-import com.nimbusds.jose.util.ResourceRetriever
-import groovy.util.logging.Slf4j
-import io.github.resilience4j.retry.Retry
+import com.nimbusds.jose.util.Resource;
+import com.nimbusds.jose.util.ResourceRetriever;
+import io.github.resilience4j.retry.Retry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.URL;
 
 /**
  * Wraps a resource retriever with retry logic in case, eg, the OIDC .well-known end point is not available.
  */
-@Slf4j
-class RetryResourceRetriever implements ResourceRetriever {
+public class RetryResourceRetriever implements ResourceRetriever {
 
-    private final ResourceRetriever other
-    private final Retry retry
+    private static final Logger log = LoggerFactory.getLogger(RetryResourceRetriever.class);
 
-    RetryResourceRetriever(ResourceRetriever other, Retry retry) {
-        this.other = other
-        this.retry = retry
+    private final ResourceRetriever other;
+    private final Retry retry;
 
-        this.retry.eventPublisher.onRetry { log.debug("Retrying resource #{}, last error: {}", it.numberOfRetryAttempts, it.lastThrowable.message) }
+    public RetryResourceRetriever(ResourceRetriever other, Retry retry) {
+        this.other = other;
+        this.retry = retry;
+
+        this.retry.getEventPublisher().onRetry( it -> {
+            String message = it.getLastThrowable() == null ? "" : it.getLastThrowable().getMessage();
+
+            log.debug("Retrying resource #{}, last error: {}", it.getNumberOfRetryAttempts(), message);
+        } );
     }
 
     @Override
-    Resource retrieveResource(URL url) throws IOException {
-        return Retry.decorateCheckedFunction(retry, other::retrieveResource).apply(url)
+    public Resource retrieveResource(URL url) throws IOException {
+        try {
+            return Retry.decorateCheckedFunction(retry, other::retrieveResource).apply(url);
+        } catch (IOException e) {
+            throw e;
+        } catch (Throwable t) {
+            if (t instanceof RuntimeException) throw (RuntimeException) t;
+            else if (t instanceof Error) throw (Error) t;
+            else throw new RuntimeException("Unexpected exception", t);
+        }
     }
+
 }

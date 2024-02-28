@@ -83,6 +83,8 @@ dependencies {
 
     implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
 
+    implementation project(':ala-security-common')
+
     implementation(pac4j.oidc)
     implementation(pac4j.jee)
     implementation(pac4j.jee.support)
@@ -95,7 +97,6 @@ dependencies {
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
     compileOnly "org.springframework.boot:spring-boot-configuration-processor"
 
-    implementation group: 'io.github.resilience4j', name: 'resilience4j-retry', version: '1.7.1'
     implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '2.7.0'
 
 }

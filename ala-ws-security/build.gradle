@@ -45,6 +45,7 @@ dependencies {
 
     api project(':userdetails-service-client')
 
+    api project(':ala-security-common')
     implementation 'com.github.seancfoley:ipaddress:5.3.4'
 
     api(pac4j.oidc)
