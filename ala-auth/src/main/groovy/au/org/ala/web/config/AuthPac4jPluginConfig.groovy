@@ -89,12 +89,6 @@ class AuthPac4jPluginConfig {
     public static final String CALLBACK_URI = "/callback"
     public static final String NOT_BOT_MATCHER = "notBotMatcher"
 
-    @Value('${info.app.name:Unknown-App}')
-    String name
-
-    @Value('${info.app.version:1}')
-    String version
-
     @Autowired
     CasClientProperties casClientProperties
     @Autowired
