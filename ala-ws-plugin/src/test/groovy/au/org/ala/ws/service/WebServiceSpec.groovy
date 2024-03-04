@@ -206,13 +206,31 @@ class WebServiceSpec extends Specification implements ServiceUnitTest<WebService
         result.resp.query == 'a=%21&c=%26'
     }
 
-    def "The request's content type should match the specified type - JSON"() {
+    def "The request's content type should match the specified type - JSON Map"() {
         when:
         Map result = service.post("${url}/post", [foo: "bar"], [:], ContentType.APPLICATION_JSON)
 
         then:
         result.resp.contentType.toLowerCase() == ContentType.APPLICATION_JSON.toString()?.toLowerCase()
         result.resp.bodyText == '{"foo":"bar"}'
+    }
+
+    def "The request's content type should match the specified type - JSON Array"() {
+        when:
+        Map result = service.post("${url}/post", ["foo", "bar"], [:], ContentType.APPLICATION_JSON)
+
+        then:
+        result.resp.contentType.toLowerCase() == ContentType.APPLICATION_JSON.toString()?.toLowerCase()
+        result.resp.bodyText == '["foo","bar"]'
+    }
+
+    def "The request's content type should match the specified type - Text"() {
+        when:
+        def result = new JsonSlurper().parseText(service.post("${url}/post", "String", [:], ContentType.TEXT_PLAIN)?.resp?.toString())
+
+        then:
+        result.contentType.toLowerCase() == ContentType.TEXT_PLAIN.toString()?.toLowerCase()
+        result.bodyText == 'String'
     }
 
     def "The request's content type should match the specified type - HTML"() {

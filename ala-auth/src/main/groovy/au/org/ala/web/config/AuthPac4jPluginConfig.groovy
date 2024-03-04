@@ -137,6 +137,7 @@ class AuthPac4jPluginConfig {
         config.setReadTimeout(oidcClientProperties.readTimeout)
         config.setScope(oidcClientProperties.scope)
         config.setWithState(oidcClientProperties.withState)
+        config.setMaxClockSkew(oidcClientProperties.maxClockSkew)
         config.customParams.putAll(oidcClientProperties.customParams)
         if (oidcClientProperties.clientAuthenticationMethod) {
             config.setClientAuthenticationMethodAsString(oidcClientProperties.clientAuthenticationMethod)
