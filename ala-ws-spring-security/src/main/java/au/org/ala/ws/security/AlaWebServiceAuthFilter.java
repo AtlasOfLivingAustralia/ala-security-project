@@ -1,7 +1,6 @@
 package au.org.ala.ws.security;
 
 import au.org.ala.ws.security.client.AlaAuthClient;
-import au.org.ala.ws.security.profile.AlaUserProfile;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.credentials.Credentials;
@@ -10,7 +9,6 @@ import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
 import org.pac4j.core.util.FindBest;
 import org.pac4j.jee.context.JEEContextFactory;
-import org.pac4j.oidc.credentials.OidcCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -26,7 +24,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.Principal;
 import java.util.*;
 
 /**
@@ -68,165 +65,6 @@ public class AlaWebServiceAuthFilter extends OncePerRequestFilter {
                     ProfileManager profileManager = new ProfileManager(context, config.getSessionStore());
                     profileManager.setConfig(config);
 
-                    profileManager.save(alaAuthClient.getSaveProfileInSession(context, userProfile), userProfile, alaAuthClient.isMultiProfile(context, userProfile));
-                } else if (credentials instanceof OidcCredentials) {
-                    // This is a machine-to-machine request, create a UserProfile with userId:null and roles:scope
-                    final Set<String> scope = new HashSet<>(((OidcCredentials) credentials).getAccessToken().getScope().toStringList());
-                    UserProfile userProfile = new AlaUserProfile() {
-                        @Override
-                        public String getName() {
-                            return null;
-                        }
-
-                        @Override
-                        public String getUserId() {
-                            return null;
-                        }
-
-                        @Override
-                        public String getEmail() {
-                            return null;
-                        }
-
-                        @Override
-                        public String getGivenName() {
-                            return null;
-                        }
-
-                        @Override
-                        public String getFamilyName() {
-                            return null;
-                        }
-
-                        @Override
-                        public String getId() {
-                            return null;
-                        }
-
-                        @Override
-                        public void setId(String s) {
-
-                        }
-
-                        @Override
-                        public String getTypedId() {
-                            return null;
-                        }
-
-                        @Override
-                        public String getUsername() {
-                            return null;
-                        }
-
-                        @Override
-                        public Object getAttribute(String s) {
-                            return null;
-                        }
-
-                        @Override
-                        public Map<String, Object> getAttributes() {
-                            return null;
-                        }
-
-                        @Override
-                        public boolean containsAttribute(String s) {
-                            return false;
-                        }
-
-                        @Override
-                        public void addAttribute(String s, Object o) {
-
-                        }
-
-                        @Override
-                        public void removeAttribute(String s) {
-
-                        }
-
-                        @Override
-                        public void addAuthenticationAttribute(String s, Object o) {
-
-                        }
-
-                        @Override
-                        public void removeAuthenticationAttribute(String s) {
-
-                        }
-
-                        @Override
-                        public void addRole(String s) {
-
-                        }
-
-                        @Override
-                        public void addRoles(Collection<String> collection) {
-
-                        }
-
-                        @Override
-                        public Set<String> getRoles() {
-                            return scope;
-                        }
-
-                        @Override
-                        public void addPermission(String s) {
-
-                        }
-
-                        @Override
-                        public void addPermissions(Collection<String> collection) {
-
-                        }
-
-                        @Override
-                        public Set<String> getPermissions() {
-                            return null;
-                        }
-
-                        @Override
-                        public boolean isRemembered() {
-                            return false;
-                        }
-
-                        @Override
-                        public void setRemembered(boolean b) {
-
-                        }
-
-                        @Override
-                        public String getClientName() {
-                            return null;
-                        }
-
-                        @Override
-                        public void setClientName(String s) {
-
-                        }
-
-                        @Override
-                        public String getLinkedId() {
-                            return null;
-                        }
-
-                        @Override
-                        public void setLinkedId(String s) {
-
-                        }
-
-                        @Override
-                        public boolean isExpired() {
-                            return false;
-                        }
-
-                        @Override
-                        public Principal asPrincipal() {
-                            return null;
-                        }
-                    };
-
-                    setAuthenticatedUserAsPrincipal(userProfile);
-                    ProfileManager profileManager = new ProfileManager(context, config.getSessionStore());
-                    profileManager.setConfig(config);
                     profileManager.save(alaAuthClient.getSaveProfileInSession(context, userProfile), userProfile, alaAuthClient.isMultiProfile(context, userProfile));
                 }
             }

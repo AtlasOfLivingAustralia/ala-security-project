@@ -1,5 +1,6 @@
 package au.org.ala.ws.security.authenticator;
 
+import au.org.ala.ws.security.profile.AlaM2MUserProfile;
 import au.org.ala.ws.security.profile.AlaOidcUserProfile;
 import au.org.ala.ws.security.profile.AlaUserProfile;
 import com.nimbusds.jose.JOSEException;
@@ -137,6 +138,10 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
         // TODO externalise the required claims
         jwtProcessor.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier(new JWTClaimsSet.Builder().issuer(issuer.getValue()).build(), Set.copyOf(requiredClaims)));
 
+        String jwtId = null;
+        String clientId = null;
+        List<String> audience = null;
+        String issuer;
         String userId = null;
         Collection<String> accessTokenRoles;
 
@@ -144,6 +149,10 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
 
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
             userId = (String) claimsSet.getClaim(userIdClaim);
+            jwtId = claimsSet.getJWTID();
+            clientId = claimsSet.getSubject();
+            audience = claimsSet.getAudience();
+            issuer = claimsSet.getIssuer();
 
             accessTokenRoles = getRoles(claimsSet);
 
@@ -219,6 +228,13 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
         } else if (userId != null && !userId.isEmpty()) {
 
             alaOidcUserProfile = new AlaOidcUserProfile(userId);
+
+        } else {
+            // no user id or profile scope means this is a M2M token
+            alaOidcUserProfile = new AlaM2MUserProfile(clientId, issuer, audience);
+            alaOidcUserProfile.addRoles(accessTokenScopeSet); // add scopes to profiles roles for client credentials
+            alaOidcUserProfile.addPermissions(accessTokenScopeSet); // add scopes to permissions for consistency
+            alaOidcUserProfile.setAccessToken(credentials.getAccessToken());
         }
 
         if (alaOidcUserProfile != null) {
