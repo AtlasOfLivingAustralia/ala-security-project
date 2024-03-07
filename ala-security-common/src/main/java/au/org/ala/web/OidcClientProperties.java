@@ -5,6 +5,7 @@ import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.profile.OidcProfileDefinition;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -62,6 +63,23 @@ public class OidcClientProperties {
      */
     private String displayNameClaim = OidcProfileDefinition.NAME;
     private int maxClockSkew = OidcConfiguration.DEFAULT_MAX_CLOCK_SKEW;
+    /**
+     * Maximum number of times to retry internal OIDC HTTP calls.
+     */
+    private int maximumRetries = 15;
+    /**
+     * Initial delay before retrying an internal OIDC HTTP call.
+     */
+    private Duration initialRetryInterval = Duration.ofSeconds(1);
+    /**
+     * Maximum interval between internal OIDC HTTP calls.
+     *
+     * Retry interval will exponentially increase from the initial interval up to this value.
+     */
+    private Duration maximumRetryInterval = Duration.ofSeconds(30);
+
+    private boolean cacheLastDiscoveryDocument = false;
+    private String discoveryDocumentCache =  "/tmp/oidc-discovery-doc.json";
 
     public boolean isEnabled() {
         return enabled;
@@ -221,5 +239,45 @@ public class OidcClientProperties {
 
     public void setMaxClockSkew(int maxClockSkew) {
         this.maxClockSkew = maxClockSkew;
+    }
+
+    public int getMaximumRetries() {
+        return maximumRetries;
+    }
+
+    public void setMaximumRetries(int maximumRetries) {
+        this.maximumRetries = maximumRetries;
+    }
+
+    public Duration getInitialRetryInterval() {
+        return initialRetryInterval;
+    }
+
+    public void setInitialRetryInterval(Duration initialRetryInterval) {
+        this.initialRetryInterval = initialRetryInterval;
+    }
+
+    public Duration getMaximumRetryInterval() {
+        return maximumRetryInterval;
+    }
+
+    public void setMaximumRetryInterval(Duration maximumRetryInterval) {
+        this.maximumRetryInterval = maximumRetryInterval;
+    }
+
+    public boolean isCacheLastDiscoveryDocument() {
+        return cacheLastDiscoveryDocument;
+    }
+
+    public void setCacheLastDiscoveryDocument(boolean cacheLastDiscoveryDocument) {
+        this.cacheLastDiscoveryDocument = cacheLastDiscoveryDocument;
+    }
+
+    public String getDiscoveryDocumentCache() {
+        return discoveryDocumentCache;
+    }
+
+    public void setDiscoveryDocumentCache(String discoveryDocumentCache) {
+        this.discoveryDocumentCache = discoveryDocumentCache;
     }
 }

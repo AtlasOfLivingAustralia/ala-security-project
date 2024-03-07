@@ -39,14 +39,12 @@ dependencies {
     implementation 'org.springframework:spring-web'
     implementation 'org.springframework:spring-context-support'
 
-    implementation 'org.ehcache:ehcache'
 //    compileOnly 'org.springframework.boot:spring-boot-starter-security'
     compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
 
-    api project(':userdetails-service-client')
+//    api project(':userdetails-service-client')
 
-    api project(':ala-security-common')
-    implementation 'com.github.seancfoley:ipaddress:5.3.4'
+    implementation(resilience4j.retry)
 
     api(pac4j.oidc)
     api(pac4j.jwt)
@@ -95,8 +93,8 @@ publishing {
 //            artifact javadocJar
 
             pom {
-                name = 'ALA WS Security Library'
-                description = 'Library to authenticate web service calls for ALA systems'
+                name = 'ALA Security Common'
+                description = 'Library for common functions'
                 url = 'https://github.com/AtlasOfLivingAustralia/ala-ws-security-plugin'
                 licenses {
                     license {
