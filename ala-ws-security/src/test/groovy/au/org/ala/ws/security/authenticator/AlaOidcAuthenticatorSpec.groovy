@@ -1,5 +1,6 @@
 package au.org.ala.ws.security.authenticator
 
+import au.org.ala.ws.security.profile.AlaM2MUserProfile
 import au.org.ala.ws.security.profile.AlaOidcUserProfile
 import au.org.ala.ws.security.profile.AlaUserProfile
 import com.nimbusds.jose.JWSAlgorithm
@@ -52,7 +53,12 @@ class AlaOidcAuthenticatorSpec extends Specification {
 
         then:
         !oidcCredentials.accessToken.scope
-        !oidcCredentials.userProfile
+        oidcCredentials.userProfile instanceof AlaM2MUserProfile
+        oidcCredentials.userProfile.roles.empty
+        oidcCredentials.userProfile.permissions.empty
+        oidcCredentials.userProfile.clientId == 'sub'
+        oidcCredentials.userProfile.issuer == 'http://localhost'
+        oidcCredentials.userProfile.audience == ['some-aud']
     }
 
     def 'access_token missing required scope'() {

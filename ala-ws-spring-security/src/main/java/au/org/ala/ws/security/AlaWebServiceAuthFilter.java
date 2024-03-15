@@ -24,9 +24,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Spring based Webservice Authentication Filter. This filter supports 3 modes of authentication:
@@ -69,10 +67,7 @@ public class AlaWebServiceAuthFilter extends OncePerRequestFilter {
 
                     profileManager.save(alaAuthClient.getSaveProfileInSession(context, userProfile), userProfile, alaAuthClient.isMultiProfile(context, userProfile));
                 }
-
             }
-
-
         } catch (CredentialsException e) {
 
             log.info("authentication failed invalid credentials", e);
