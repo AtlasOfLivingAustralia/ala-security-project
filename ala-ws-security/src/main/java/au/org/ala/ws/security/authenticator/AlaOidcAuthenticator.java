@@ -139,7 +139,7 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
         jwtProcessor.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier(new JWTClaimsSet.Builder().issuer(issuer.getValue()).build(), Set.copyOf(requiredClaims)));
 
         String jwtId = null;
-        String clientId = null;
+        String subject = null;
         List<String> audience = null;
         String issuer;
         String userId = null;
@@ -150,7 +150,7 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
             userId = (String) claimsSet.getClaim(userIdClaim);
             jwtId = claimsSet.getJWTID();
-            clientId = claimsSet.getSubject();
+            subject = claimsSet.getSubject();
             audience = claimsSet.getAudience();
             issuer = claimsSet.getIssuer();
 
@@ -231,7 +231,7 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
 
         } else {
             // no user id or profile scope means this is a M2M token
-            alaOidcUserProfile = new AlaM2MUserProfile(clientId, issuer, audience);
+            alaOidcUserProfile = new AlaM2MUserProfile(subject, issuer, audience);
             alaOidcUserProfile.addRoles(accessTokenScopeSet); // add scopes to profiles roles for client credentials
             alaOidcUserProfile.addPermissions(accessTokenScopeSet); // add scopes to permissions for consistency
             alaOidcUserProfile.setAccessToken(credentials.getAccessToken());
