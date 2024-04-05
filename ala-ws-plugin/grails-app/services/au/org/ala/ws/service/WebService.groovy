@@ -79,7 +79,7 @@ class WebService {
      * The body map will be sent as the JSON body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
-     * @param body Map containing the data to be sent as the post body
+     * @param body Object containing the data to be sent as the post body. e.g. Map, Array
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
@@ -87,7 +87,7 @@ class WebService {
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map put(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+    Map put(String url, Object body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
         send(PUT, url, params, contentType, body, null, includeApiKey, includeUser, customHeaders)
     }
 
@@ -100,7 +100,7 @@ class WebService {
      * The body map will be sent as the body of the request (i.e. use request.getJSON() on the receiving end).
      *
      * @param url The url-encoded url to send the request to
-     * @param body Map containing the data to be sent as the post body
+     * @param body Object containing the data to be sent as the post body. e.g. Map, Array
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param contentType the desired content type for the request. Defaults to application/json
      * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
@@ -108,7 +108,7 @@ class WebService {
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map post(String url, Map body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+    Map post(String url, Object body, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
         send(POST, url, params, contentType, body, null, includeApiKey, includeUser, customHeaders)
     }
 
@@ -131,7 +131,7 @@ class WebService {
      * </ul>
      *
      * @param url The url-encoded url to send the request to
-     * @param body Map containing the data to be sent as the post body
+     * @param body Object containing the data to be sent as the post body. e.g. Map, Array
      * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
      * @param files List of 0 or more files to be included in the multipart request (note: if files is null, then the request will NOT be multipart)
      * @param partContentType the desired content type for the request PARTS (the request itself will always be sent as multipart/form-data). Defaults to application/json. All non-file parts will have the same content type.
@@ -140,7 +140,39 @@ class WebService {
      * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
      * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
      */
-    Map postMultipart(String url, Map body, Map params = [:], List files = [], ContentType partContentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+    Map postMultipart(String url, Object body, Map params = [:], List files = [], ContentType partContentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
+        send(POST, url, params, partContentType, body, files, includeApiKey, includeUser, customHeaders)
+    }
+
+    /**
+     * Sends a multipart HTTP POST request to the specified URL. The URL must already be URL-encoded (if necessary).
+     *
+     * Note: by default, the Accept header will be set to the same content type as the ContentType provided. To override
+     * this default behaviour, include an 'Accept' header in the 'customHeaders' parameter.
+     *
+     * Each item in the body map will be sent as a separate Part in the Multipart Request. To send the entire map as a
+     * single part, you will need too use the format [data: body].
+     *
+     * Files map is [String: Object] that can be one of the following types:
+     * <ul>
+     * <li>byte[]</li>
+     * <li>CommonsMultipartFile</li>
+     * <li>InputStream</li>
+     * <li>File</li>
+     * <li>Anything that supports the .bytes accessor</li>
+     * </ul>
+     *
+     * @param url The url-encoded url to send the request to
+     * @param body Object containing the data to be sent as the post body. e.g. Map, Array
+     * @param params Map of parameters to be appended to the query string. Parameters will be URL-encoded automatically.
+     * @param files Map of 0 or more names and files to be included in the multipart request (note: if files is null, then the request will NOT be multipart)
+     * @param partContentType the desired content type for the request PARTS (the request itself will always be sent as multipart/form-data). Defaults to application/json. All non-file parts will have the same content type.
+     * @param includeApiKey true to include the service's API Key in the request headers (uses property 'service.apiKey').  If using JWTs, instead sends a JWT Bearer tokens Default = true.
+     * @param includeUser true to include the userId and email in the request headers and the ALA-Auth cookie.  If using JWTs sends the current user's access token, if false only sends a ClientCredentials grant token for this apps client id Default = true.
+     * @param customHeaders Map of [headerName:value] for any extra HTTP headers to be sent with the request. Default = [:].
+     * @return [statusCode: int, resp: [:]] on success, or [statusCode: int, error: string] on error
+     */
+    Map postMultipart(String url, Object body, Map params, Map files, ContentType partContentType = ContentType.APPLICATION_JSON, boolean includeApiKey = true, boolean includeUser = true, Map customHeaders = [:]) {
         send(POST, url, params, partContentType, body, files, includeApiKey, includeUser, customHeaders)
     }
 
@@ -267,7 +299,7 @@ class WebService {
     }
 
     private Map send(Method method, String url, Map params = [:], ContentType contentType = ContentType.APPLICATION_JSON,
-                     Map body = null, List files = null, boolean includeApiKey = true, boolean includeUser = true,
+                     Object body = null, Object files = null, boolean includeApiKey = true, boolean includeUser = true,
                      Map customHeaders = [:]) {
         log.debug("${method} request to ${url}")
 
@@ -280,7 +312,7 @@ class WebService {
 
             http.request(method, contentType) { request ->
                 configureRequestTimeouts(request)
-                configureRequestHeaders(headers, includeApiKey, includeUser, customHeaders)
+                configureRequestHeaders(delegate.headers, includeApiKey, includeUser, customHeaders)
 
                 if (files != null) {
                     // NOTE: order is important - Content-Type MUST be set BEFORE the body
@@ -390,31 +422,59 @@ class WebService {
         }
     }
 
-    private static HttpEntity constructMultiPartEntity(Map parts, List files, ContentType partContentType = ContentType.APPLICATION_JSON) {
+    /**
+     * Files is a List<Object> or Map<String, Object>.
+      */
+    private static HttpEntity constructMultiPartEntity(Object parts, Object files, ContentType partContentType = ContentType.APPLICATION_JSON) {
         MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create()
         entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
 
-        parts?.each { key, value ->
-            def val = partContentType == ContentType.APPLICATION_JSON && !(value instanceof net.sf.json.JSON) ? value as JSON : value
-            entityBuilder.addPart(key?.toString(), new StringBody((val) as String, partContentType))
+        if (parts instanceof Map) {
+            parts?.each { key, value ->
+                def val = partContentType == ContentType.APPLICATION_JSON && !(value instanceof net.sf.json.JSON) ? value as JSON : value
+                entityBuilder.addPart(key?.toString(), new StringBody((val) as String, partContentType))
+            }
+        } else if (parts != null) {
+            def val = partContentType == ContentType.APPLICATION_JSON && !(parts instanceof net.sf.json.JSON) ? parts as JSON : parts
+            entityBuilder.addTextBody("json", val as String, partContentType)
         }
 
-        files.eachWithIndex { it, index ->
-            if (it instanceof byte[]) {
-                entityBuilder.addPart("file${index}", new ByteArrayBody(it, "file${index}"))
+        if (files instanceof List) {
+            files.eachWithIndex { it, index ->
+                if (it instanceof byte[]) {
+                    entityBuilder.addPart("file${index}", new ByteArrayBody(it, "file${index}"))
+                }
+                // Grails 3.3 multipart file is instance of org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
+                // But StandardMultipartFile and CommonMultipartFile are both inherited from MultipartFile
+                else if (it instanceof MultipartFile) {
+                    entityBuilder.addPart(it.originalFilename, new InputStreamBody(it.inputStream, it.contentType, it.originalFilename))
+                } else if (it instanceof InputStream) {
+                    entityBuilder.addPart("file${index}", new InputStreamBody(it, "file${index}"))
+                } else if (it instanceof File) {
+                    entityBuilder.addPart(it.getName(), new FileBody(it, it.getName()))
+                } else {
+                    entityBuilder.addPart("file${index}", new ByteArrayBody(it.bytes, "file${index}"))
+                }
             }
-            // Grails 3.3 multipart file is instance of org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
-            // But StandardMultipartFile and CommonMultipartFile are both inherited from MultipartFile
-            else if (it instanceof MultipartFile) {
-                entityBuilder.addPart(it.originalFilename, new InputStreamBody(it.inputStream, it.contentType, it.originalFilename))
-            } else if (it instanceof InputStream) {
-                entityBuilder.addPart("file${index}", new InputStreamBody(it, "file${index}"))
-            } else if (it instanceof File) {
-                entityBuilder.addPart(it.getName(), new FileBody(it, it.getName()))
-            } else {
-                entityBuilder.addPart("file${index}", new ByteArrayBody(it.bytes, "file${index}"))
+        } else if (files instanceof Map) {
+            files.eachWithIndex { it, index ->
+                if (it.value instanceof byte[]) {
+                    entityBuilder.addPart(it.key, new ByteArrayBody(it.value, "file${index}"))
+                }
+                // Grails 3.3 multipart file is instance of org.springframework.web.multipart.support.StandardMultipartHttpServletRequest.StandardMultipartFile
+                // But StandardMultipartFile and CommonMultipartFile are both inherited from MultipartFile
+                else if (it.value instanceof MultipartFile) {
+                    entityBuilder.addPart(it.key, new InputStreamBody(it.value.inputStream, it.value.contentType, it.value.originalFilename))
+                } else if (it.value instanceof InputStream) {
+                    entityBuilder.addPart(it.key, new InputStreamBody(it.value, "file${index}"))
+                } else if (it.value instanceof File) {
+                    entityBuilder.addPart(it.key, new FileBody(it.value, it.value.getName()))
+                } else {
+                    entityBuilder.addPart(it.key, new ByteArrayBody(it.value.bytes, "file${index}"))
+                }
             }
         }
+
         entityBuilder.build()
     }
 
