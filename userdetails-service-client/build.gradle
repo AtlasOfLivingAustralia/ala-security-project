@@ -5,8 +5,8 @@ plugins {
 
 group 'au.org.ala'
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+sourceCompatibility = '1.21'
+targetCompatibility = '1.21'
 
 repositories {
 //    mavenLocal()
@@ -29,13 +29,13 @@ configurations {
 }
 
 dependencies {
-    compileOnly group: 'org.projectlombok', name:'lombok', version: '1.16.12'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    compileOnly group: 'org.projectlombok', name:'lombok', version: '1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-    api group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.9.0'
-    api group: 'com.squareup.retrofit2', name: 'converter-moshi', version: '2.9.0'
-    api group: 'com.squareup.moshi', name: 'moshi', version: '1.8.0'
-    api group: 'com.squareup.moshi', name: 'moshi-adapters', version: '1.8.0'
+    api group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.11.0'
+    api group: 'com.squareup.retrofit2', name: 'converter-moshi', version: '2.11.0'
+    api group: 'com.squareup.moshi', name: 'moshi', version: '1.15.1'
+    api group: 'com.squareup.moshi', name: 'moshi-adapters', version: '1.15.1'
 
     testImplementation group: 'com.google.guava', name: 'guava', version: '20.0'
     testImplementation group: 'com.squareup.okhttp3', name: 'logging-interceptor', version: '3.14.9'
@@ -52,12 +52,12 @@ task integrationTest(type: Test) {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier.set('sources')
     from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
     from javadoc.destinationDir
 }
 
@@ -76,12 +76,12 @@ publishing {
         mavenJava(MavenPublication) {
             from components.java
 
-            artifact sourcesJar {
-                classifier "sources"
-            }
-            artifact javadocJar {
-                classifier "javadoc"
-            }
+//            artifact sourcesJar {
+//                classifier "sources"
+//            }
+//            artifact javadocJar {
+//                classifier "javadoc"
+//            }
         }
     }
 }
