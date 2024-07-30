@@ -4,6 +4,7 @@ import org.pac4j.core.context.HttpConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.List;
+import java.util.Set;
 
 @ConfigurationProperties(value = "security.jwt")
 public class JwtProperties {
@@ -24,8 +25,11 @@ public class JwtProperties {
 
     private String userIdClaim = "userid";
     private List<String> requiredClaims = List.of("sub", "iat", "exp", "client_id", "jti", "iss");
+    private List<String> prohibitedClaims = List.of();
     private List<String> requiredScopes = List.of();
     private List<String> urlPatterns = List.of(); // hard coded paths to apply JWT authentication to
+
+    private Set<String> acceptedAudiences = Set.of();
 
     public String getClientId() {
         return clientId;
@@ -171,5 +175,21 @@ public class JwtProperties {
 
     public void setUrlPatterns(List<String> urlPatterns) {
         this.urlPatterns = urlPatterns;
+    }
+
+    public Set<String> getAcceptedAudiences() {
+        return acceptedAudiences;
+    }
+
+    public void setAcceptedAudiences(Set<String> acceptedAudiences) {
+        this.acceptedAudiences = acceptedAudiences;
+    }
+
+    public List<String> getProhibitedClaims() {
+        return prohibitedClaims;
+    }
+
+    public void setProhibitedClaims(List<String> prohibitedClaims) {
+        this.prohibitedClaims = prohibitedClaims;
     }
 }
