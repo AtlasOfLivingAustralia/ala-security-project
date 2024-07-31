@@ -124,8 +124,11 @@ public class AlaWsSecurityConfiguration {
         authenticator.setKeySource(jwkSource);
         authenticator.setAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.getRoleClaims(), jwtProperties.getPermissionClaims()));
 
+        authenticator.setAcceptedAudiences(jwtProperties.getAcceptedAudiences());
+
         authenticator.setUserIdClaim(jwtProperties.getUserIdClaim());
         authenticator.setRequiredClaims(jwtProperties.getRequiredClaims());
+        authenticator.setProhibitedClaims(jwtProperties.getProhibitedClaims());
         authenticator.setRequiredScopes(jwtProperties.getRequiredScopes());
 
         authenticator.setRolesFromAccessToken(jwtProperties.isRolesFromAccessToken());

@@ -3,12 +3,16 @@ package au.org.ala.web
 import au.org.ala.userdetails.UserDetailsClient
 import au.org.ala.userdetails.UserDetailsFromIdListRequest
 import au.org.ala.userdetails.UserDetailsFromIdListResponse
+import grails.plugin.cache.CacheEvict
 import grails.plugin.cache.Cacheable
 import grails.web.mapping.LinkGenerator
+import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.CacheManager
 
 import javax.servlet.http.HttpServletRequest
 
+@Slf4j
 class AuthService implements IAuthService {
 
     static transactional = false
@@ -22,6 +26,9 @@ class AuthService implements IAuthService {
 
     @Autowired
     LinkGenerator linkGenerator
+
+    @Autowired(required = false)
+    CacheManager cacheManager
 
     String getEmail() {
         delegateService.getEmail()
@@ -69,6 +76,16 @@ class AuthService implements IAuthService {
 
     UserDetails getUserForUserId(String userId, boolean includeProps = true) {
         return getUserForUserIdInternal(userId, includeProps).orElse(null)
+    }
+
+    @CacheEvict(value='userDetailsCache', allEntries = true)
+    def clearUserDetailsCache() {
+        log.info("Clearing userDetailsCache")
+    }
+
+    @CacheEvict(value='userDetailsByIdCache', allEntries = true)
+    def clearUserDetailsByIdCache() {
+        log.info("Clearing userDetailsByIdCache")
     }
 
     @Cacheable("userDetailsCache")
