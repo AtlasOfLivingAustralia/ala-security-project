@@ -6,8 +6,8 @@ import org.pac4j.http.credentials.extractor.IpExtractor;
 public class AlaIpWhitelistClient extends AlaDirectClient {
     public AlaIpWhitelistClient(IpExtractor ipExtractor, AlaIpWhitelistAuthenticator alaIpWhitelistAuthenticator) {
 
-        defaultCredentialsExtractor(ipExtractor);
-        defaultAuthenticator(alaIpWhitelistAuthenticator);
+        setCredentialsExtractorIfUndefined(ipExtractor);
+        setAuthenticatorIfUndefined(alaIpWhitelistAuthenticator);
     }
 
     @Override

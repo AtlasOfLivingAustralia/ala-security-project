@@ -19,11 +19,9 @@ import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
-import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.openid.connect.sdk.OIDCScopeValue;
 import org.pac4j.core.authorization.generator.AuthorizationGenerator;
-import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.TokenCredentials;
 import org.pac4j.core.credentials.authenticator.Authenticator;
@@ -34,7 +32,6 @@ import org.pac4j.core.util.CommonHelper;
 import org.pac4j.core.util.InitializableObject;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.credentials.OidcCredentials;
-import org.pac4j.oidc.credentials.authenticator.UserInfoOidcAuthenticator;
 import org.pac4j.oidc.profile.OidcProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,14 +42,16 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Authenticator for JWT access_token based on the Pac4j {@link UserInfoOidcAuthenticator},
+ * Authenticator for JWT access_token based on the old Pac4j {@link UserInfoOidcAuthenticator},
  * But instead it of using the userInfo endpoint to validate the access_token it uses OIDC metadata to get key information to validate JWT.
  * The scope parameter of {@link AccessToken} from the {@link OidcCredentials} is updated with the scope from the validated JWT access_token.
  * The credentials.userProfile is set to an instance of {@link AlaOidcUserProfile} a wrapped {@link OidcProfile} from the OIDC UserInfo endpoint.
@@ -102,12 +101,13 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
     }
 
     @Override
-    public void validate(Credentials cred, WebContext context, SessionStore sessionStore) {
+    public Optional<Credentials> validate(CallContext callContext, Credentials cred) {
 
         init();
 
+
         final OidcCredentials credentials = (OidcCredentials) cred;
-        final String accessToken = credentials.getAccessToken().getValue();
+        final Map<String,?> accessToken = credentials.getAccessToken();
         final JWT jwt;
         try {
             jwt = JWTParser.parse(accessToken);
@@ -177,7 +177,7 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
             } else {
                 throw new CredentialsException("Internal error parsing token scopes: " + accessToken);
             }
-            credentials.setAccessToken(new BearerAccessToken(accessToken, 0L, scope));
+            credentials.setAccessToken(accessToken);
 
         } catch (BadJOSEException e) {
             throw new CredentialsException("JWT Verification failed: " + accessToken, e);

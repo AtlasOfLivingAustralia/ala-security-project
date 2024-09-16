@@ -9,14 +9,16 @@ import au.ala.org.ws.security.filter.RequireApiKeyFilter
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.pac4j.core.adapter.FrameworkAdapter
 import org.pac4j.core.config.Config
+import org.pac4j.core.context.CallContext
 import org.pac4j.core.context.WebContext
+import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.Credentials
 import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
-import org.pac4j.core.util.FindBest
-import org.pac4j.jee.context.JEEContextFactory
+import org.pac4j.jee.context.JEEFrameworkParameters
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -67,9 +69,14 @@ class AlaSecurityInterceptor {
 
             try {
 
-                WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
+                def params = new JEEFrameworkParameters(request, response)
 
-                Optional<Credentials> optCredentials = alaAuthClient.getCredentials(context, config.sessionStore)
+                FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config)
+                final WebContext context = config.getWebContextFactory().newContext(params)
+                final SessionStore sessionStore = config.sessionStoreFactory.newSessionStore(params)
+                final callContext = new CallContext(context, sessionStore, config.profileManagerFactory)
+
+                Optional<Credentials> optCredentials = alaAuthClient.getCredentials(context, sessionStore)
                 if (optCredentials.isPresent()) {
 
                     authenticated = true
@@ -84,7 +91,7 @@ class AlaSecurityInterceptor {
                             OidcCredentials oidcCredentials = credentials
 
                             authorised = requiredScopes.every { String requiredScope ->
-                                oidcCredentials.accessToken.scope.contains(requiredScope)
+                                scopeContains(oidcCredentials.accessToken.scope, requiredScope)
                             }
 
                             if (!authorised) {
@@ -104,12 +111,12 @@ class AlaSecurityInterceptor {
 
                     if (authorised) {
 
-                        Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(credentials, context, config.sessionStore)
+                        Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(callContext, credentials)
                         if (optProfile.isPresent()) {
 
                             UserProfile userProfile = optProfile.get()
 
-                            ProfileManager profileManager = new ProfileManager(context, config.sessionStore)
+                            ProfileManager profileManager = config.profileManagerFactory.apply(context, sessionStore)
                             profileManager.setConfig(config)
 
                             profileManager.save(
@@ -141,7 +148,7 @@ class AlaSecurityInterceptor {
 
             } catch (CredentialsException e) {
 
-                log.info "authentication failed invalid credentials", e
+                log.info("authentication failed invalid credentials", e)
                 authenticated = false
             }
 
@@ -183,4 +190,16 @@ class AlaSecurityInterceptor {
      * Executed after view rendering completes
      */
     void afterView() {}
+
+    boolean scopeContains(Object scopeObj, String requiredScope) {
+        if (scopeObj instanceof String) {
+            return scopeObj.trim() == requiredScope
+        } else if (scopeObj instanceof Collection) {
+            return scopeObj.contains(requiredScope)
+        } else if (scopeObj instanceof String[]) {
+            return scopeObj.contains(requiredScope)
+        } else {
+            return false
+        }
+    }
 }

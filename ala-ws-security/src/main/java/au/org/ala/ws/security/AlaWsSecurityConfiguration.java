@@ -20,11 +20,11 @@ import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerat
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.WebContextFactory;
-import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.context.session.SessionStoreFactory;
 import org.pac4j.core.profile.creator.ProfileCreator;
 import org.pac4j.http.credentials.extractor.IpExtractor;
 import org.pac4j.jee.context.JEEContextFactory;
-import org.pac4j.jee.context.session.JEESessionStore;
+import org.pac4j.jee.context.session.JEESessionStoreFactory;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.profile.creator.OidcProfileCreator;
@@ -58,8 +58,8 @@ public class AlaWsSecurityConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SessionStore sessionStore() {
-        return JEESessionStore.INSTANCE;
+    public SessionStoreFactory sessionStoreFactory() {
+        return JEESessionStoreFactory.INSTANCE;
     }
 
     @Bean
@@ -70,10 +70,10 @@ public class AlaWsSecurityConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public Config pac4jConfig(List<Client> clients, SessionStore sessionStore, WebContextFactory webContextFactory) {
+    public Config pac4jConfig(List<Client> clients, WebContextFactory webContextFactory, SessionStoreFactory sessionStoreFactory) {
         Config config = new Config(clients);
 
-        config.setSessionStore(sessionStore);
+        config.setSessionStoreFactory(sessionStoreFactory);
         config.setWebContextFactory(webContextFactory);
         return config;
     }
@@ -98,7 +98,8 @@ public class AlaWsSecurityConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "security.jwt", name = "enabled")
     JWKSource<SecurityContext> jwkSource(OidcConfiguration oidcConfiguration) {
-        OIDCProviderMetadata providerMetadata = oidcConfiguration.findProviderMetadata();
+        oidcConfiguration.getOpMetadataResolver();
+        OIDCProviderMetadata providerMetadata = oidcConfiguration.getOpMetadataResolver().load();
         URL keySourceUrl;
         try {
             keySourceUrl = providerMetadata.getJWKSetURI().toURL();
@@ -117,12 +118,12 @@ public class AlaWsSecurityConfiguration {
         ProfileCreator profileCreator = new OidcProfileCreator(oidcConfiguration, new OidcClient());
 
         AlaOidcAuthenticator authenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator);
-        OIDCProviderMetadata providerMetadata = oidcConfiguration.findProviderMetadata();
+        OIDCProviderMetadata providerMetadata = oidcConfiguration.getOpMetadataResolver().load();
         authenticator.setIssuer(providerMetadata.getIssuer());
         authenticator.setExpectedJWSAlgs(Set.copyOf(providerMetadata.getIDTokenJWSAlgs()));
 
         authenticator.setKeySource(jwkSource);
-        authenticator.setAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.getRoleClaims(), jwtProperties.getPermissionClaims()));
+        authenticator.setAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.getRoleClaims()));//, jwtProperties.getPermissionClaims()));
 
         authenticator.setAcceptedAudiences(jwtProperties.getAcceptedAudiences());
 

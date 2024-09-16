@@ -1,6 +1,7 @@
 package au.org.ala.ws.security.client;
 
 import org.pac4j.core.client.DirectClient;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
@@ -9,26 +10,16 @@ import org.pac4j.core.exception.CredentialsException;
 import java.util.Optional;
 
 public abstract class AlaDirectClient extends DirectClient {
-    @Override
-    protected Optional<Credentials> retrieveCredentials(final WebContext context, final SessionStore sessionStore) {
+    protected Optional<Credentials> internalValidateCredentials(final CallContext ctx, final Credentials credentials) {
         try {
-            final Optional<Credentials> optCredentials = this.getCredentialsExtractor().extract(context, sessionStore);
-            optCredentials.ifPresent( credentials -> {
-                    final long t0 = System.currentTimeMillis();
-                    try {
-                        AlaDirectClient.this.getAuthenticator().validate(credentials, context, sessionStore);
-                    } finally {
-                        final long t1 = System.currentTimeMillis();
-                        logger.debug("Credentials validation took: {} ms", t1 - t0);
-                    }
-
-            });
-            return optCredentials;
+            var newCredentials = this.getAuthenticator().validate(ctx, credentials).orElse(null);
+            checkCredentials(ctx, credentials);
+            return Optional.ofNullable(newCredentials);
         } catch (CredentialsException e) {
-            logger.info("Failed to retrieve or validate credentials: {}", e.getMessage());
-            logger.debug("Failed to retrieve or validate credentials", e);
-
-            throw e;
+            logger.info("Failed to validate credentials: {}", e.getMessage());
+            logger.debug("Failed to validate credentials", e);
+//            return Optional.empty();
+            throw e; // TODO why?
         }
     }
 }

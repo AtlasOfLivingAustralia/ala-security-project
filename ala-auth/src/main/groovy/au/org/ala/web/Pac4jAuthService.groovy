@@ -39,6 +39,7 @@ class Pac4jAuthService implements IAuthService {
 
     private final Pac4jContextProvider pac4jContextProvider
 
+    // TODO remove this?
     private final SessionStore sessionStore
 
     private final LinkGenerator grailsLinkGenerator
@@ -61,7 +62,7 @@ class Pac4jAuthService implements IAuthService {
 
     ProfileManager getProfileManager() {
         def context = pac4jContextProvider.webContext()
-        final ProfileManager manager = new ProfileManager(context, sessionStore)
+        final ProfileManager manager = config.profileManagerFactory.apply(context, sessionStore)
         manager.config = config
         return manager
     }

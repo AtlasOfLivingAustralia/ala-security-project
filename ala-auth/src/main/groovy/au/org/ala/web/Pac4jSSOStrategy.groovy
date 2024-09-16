@@ -6,10 +6,9 @@ import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.engine.DefaultSecurityLogic
 import org.pac4j.core.engine.SecurityLogic
 import org.pac4j.core.http.adapter.HttpActionAdapter
-import org.pac4j.core.util.FindBest
 import org.pac4j.jee.context.JEEContextFactory
-import org.pac4j.jee.context.session.JEESessionStore
-import org.pac4j.jee.http.adapter.JEEHttpActionAdapter
+import org.pac4j.jee.context.JEEFrameworkParameters
+import org.pac4j.jee.util.Pac4JHttpServletRequestWrapper
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -47,22 +46,29 @@ class Pac4jSSOStrategy implements SSOStrategy {
     @Override
     boolean authenticate(HttpServletRequest request, HttpServletResponse response, boolean gateway, String redirectUri) {
 
-        final SessionStore bestSessionStore = FindBest.sessionStore(null, config, JEESessionStore.INSTANCE)
-        final HttpActionAdapter bestAdapter = FindBest.httpActionAdapter(null, config, JEEHttpActionAdapter.INSTANCE)
-        final SecurityLogic bestLogic = FindBest.securityLogic(securityLogic, config, DefaultSecurityLogic.INSTANCE)
+        def params = new JEEFrameworkParameters(request, response)
+//        final SessionStore bestSessionStore = config.getSessionStoreFactory().newSessionStore(params)
+//        final HttpActionAdapter bestAdapter = config.httpActionAdapter
+        final SecurityLogic bestLogic = this.securityLogic ?: config.securityLogic
 
         if (bestLogic instanceof DefaultSecurityLogic && bestLogic.savedRequestHandler instanceof OverrideSavedRequestHandler) {
             request.setAttribute(OverrideSavedRequestHandler.OVERRIDE_REQUESTED_URL_ATTRIBUTE, redirectUri)
         }
 
-        final WebContext context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
+        final WebContext context = config.webContextFactory.newContext(params)
 
         def result = false
 
-        bestLogic.perform(context, bestSessionStore, config, { ctx, session, profiles, parameters ->
+//        config.getSecurityLogic().perform(config, (ctx, session, profiles) -> {
+//            // if no profiles are loaded, pac4j is not concerned with this request
+//            filterChain.doFilter(profiles.isEmpty() ? request : new Pac4JHttpServletRequestWrapper(request, profiles), response);
+//            return null;
+//        }, clients, authorizers, matchers, new JEEFrameworkParameters(request, response));
+
+        bestLogic.perform(config, { ctx, session, profiles ->
             // if no profiles are loaded, pac4j is not concerned with this request
             result = true
-        }, bestAdapter, gateway ? gatewayClients : clients, gateway ? gatewayAuthorizers : authorizers, matchers);
+        }, gateway ? gatewayClients : clients, gateway ? gatewayAuthorizers : authorizers, matchers, params)
         return result
     }
 

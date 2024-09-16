@@ -9,14 +9,13 @@ import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils
 import net.minidev.json.JSONObject
 import net.minidev.json.parser.ParseException
+import org.pac4j.core.adapter.FrameworkAdapter
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.profile.factory.ProfileManagerFactory
-import org.pac4j.core.util.FindBest
 import org.pac4j.jee.config.AbstractConfigFilter
-import org.pac4j.jee.context.JEEContextFactory
-import org.pac4j.jee.context.session.JEESessionStore
+import org.pac4j.jee.context.JEEFrameworkParameters
 import org.pac4j.oidc.profile.OidcProfile
 
 import javax.servlet.FilterChain
@@ -45,9 +44,12 @@ class AffiliationSurveyFilter extends AbstractConfigFilter {
 
     @Override
     protected void internalFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        def webContext = FindBest.webContextFactory(this.webContextFactory, config, JEEContextFactory.INSTANCE).newContext(request, response)
-        def sessionStore = FindBest.sessionStore(this.sessionStore, config, JEESessionStore.INSTANCE)
-        def profileManager = FindBest.profileManagerFactory(this.profileManagerFactory, config, ProfileManagerFactory.DEFAULT).apply(webContext, sessionStore)
+        FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config)
+
+        def params = new JEEFrameworkParameters(request, response)
+        def webContext = this.webContextFactory.newContext(params) ?: config.getWebContextFactory().newContext(params)
+        def sessionStore = this.sessionStore ?: config.getSessionStoreFactory().newSessionStore(params)
+        def profileManager = (this.profileManagerFactory ?: config.getProfileManagerFactory()).apply(webContext, sessionStore)
         profileManager.setConfig(config)
 
         profileManager.getProfile().ifPresent {profile ->

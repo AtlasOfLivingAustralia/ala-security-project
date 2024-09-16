@@ -1,8 +1,7 @@
 package au.org.ala.ws.security.credentials;
 
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
-import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.TokenCredentials;
 import org.pac4j.core.credentials.extractor.BearerAuthExtractor;
@@ -13,13 +12,13 @@ import java.util.Optional;
 
 public class AlaOidcCredentialsExtractor extends BearerAuthExtractor {
     @Override
-    public Optional<Credentials> extract(WebContext context, SessionStore sessionStore) {
+    public Optional<Credentials> extract(CallContext context) {
 
         try {
 
-            return super.extract(context, sessionStore).map((Credentials tokenCredentials) -> {
+            return super.extract(context).map((Credentials tokenCredentials) -> {
                 OidcCredentials oidcCredentials = new OidcCredentials();
-                oidcCredentials.setAccessToken(new BearerAccessToken(((TokenCredentials)tokenCredentials).getToken()));
+                oidcCredentials.setAccessTokenObject(new BearerAccessToken(((TokenCredentials)tokenCredentials).getToken()));
 
                 return oidcCredentials;
             });

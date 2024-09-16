@@ -1,8 +1,7 @@
 package au.org.ala.ws.security.authenticator;
 
 import inet.ipaddr.IPAddressString;
-import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.TokenCredentials;
 import org.pac4j.core.credentials.authenticator.Authenticator;
@@ -13,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AlaIpWhitelistAuthenticator extends InitializableObject implements Authenticator {
@@ -31,13 +31,14 @@ public class AlaIpWhitelistAuthenticator extends InitializableObject implements 
     }
 
     @Override
-    public void validate(Credentials credentials, WebContext context, SessionStore sessionStore) {
+    public Optional<Credentials> validate(CallContext callContext, Credentials credentials) {
 
         final IPAddressString ip = new IPAddressString(((TokenCredentials) credentials).getToken());
 
         if (ipMatches.stream().noneMatch(ipMatcher -> ipMatcher.contains(ip))) {
             throw new CredentialsException("Unauthorized IP address: " + ip);
         }
+        return Optional.of(credentials);
     }
 
     @Override

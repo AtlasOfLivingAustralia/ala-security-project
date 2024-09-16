@@ -38,6 +38,12 @@ configurations.all {
     resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 //dependencyManagement {
 //    imports {
 //        mavenBom "org.grails:grails-bom:$grailsVersion"

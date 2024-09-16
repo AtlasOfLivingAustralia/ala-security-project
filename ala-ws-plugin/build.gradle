@@ -19,8 +19,8 @@ apply plugin:"org.grails.grails-gsp"
 //apply plugin:"asset-pipeline"
 apply plugin:"maven-publish"
 
-sourceCompatibility = 1.11
-targetCompatibility = 1.11
+sourceCompatibility = 1.17
+targetCompatibility = 1.17
 
 repositories {
     mavenLocal()
