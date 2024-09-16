@@ -5,6 +5,7 @@ import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.grails.AnnotationMatcher
 import au.org.ala.ws.security.client.AlaAuthClient
+import au.ala.org.ws.security.filter.RequireApiKeyFilter
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -33,6 +34,9 @@ class AlaSecurityInterceptor {
 
     @Autowired(required = false)
     Config config
+
+    @Autowired(required = false)
+    RequireApiKeyFilter requireApiKeyFilter
 
     GrailsApplication grailsApplication
 
@@ -71,7 +75,8 @@ class AlaSecurityInterceptor {
                     authenticated = true
                     Credentials credentials = optCredentials.get()
 
-                    String[] requiredScopes = effectiveAnnotation.scopes()
+                    String[] requiredScopes = effectiveAnnotation.scopes() + scopesFromProperty(effectiveAnnotation.scopesFromProperty())
+
                     if (requiredScopes) {
 
                         if (credentials instanceof OidcCredentials) {
@@ -86,6 +91,15 @@ class AlaSecurityInterceptor {
                                 log.info "access_token scopes '${oidcCredentials.accessToken.scope}' is missing required scopes ${requiredScopes}"
                             }
                         }
+                    }
+
+                    if (effectiveAnnotation.useCustomFilter()) {
+
+                            if (requireApiKeyFilter) {
+                                authorised &= requireApiKeyFilter.isAllowed(effectiveAnnotation, this)
+                            } else {
+                                log.error "useCustomFilter is true but no filter is available"
+                            }
                     }
 
                     if (authorised) {
@@ -145,6 +159,17 @@ class AlaSecurityInterceptor {
         }
 
         return true
+    }
+
+    private static final String[] EMPTY_STRING_ARRAY = new String[0]
+
+    private String[] scopesFromProperty(String[] propertyScopes) {
+        def retVal = propertyScopes?.collectMany {
+            grailsApplication.config.getProperty(it, List<String>, [])
+        }
+
+        String[] retArr = retVal?.toArray(new String[retVal.size()])
+        return  retArr ?: EMPTY_STRING_ARRAY
     }
 
     /**

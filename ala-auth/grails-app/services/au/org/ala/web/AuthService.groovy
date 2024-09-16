@@ -3,12 +3,16 @@ package au.org.ala.web
 import au.org.ala.userdetails.UserDetailsClient
 import au.org.ala.userdetails.UserDetailsFromIdListRequest
 import au.org.ala.userdetails.UserDetailsFromIdListResponse
+import grails.plugin.cache.CacheEvict
 import grails.plugin.cache.Cacheable
 import grails.web.mapping.LinkGenerator
+import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.CacheManager
 
 import javax.servlet.http.HttpServletRequest
 
+@Slf4j
 class AuthService implements IAuthService {
 
     static transactional = false
@@ -22,6 +26,9 @@ class AuthService implements IAuthService {
 
     @Autowired
     LinkGenerator linkGenerator
+
+    @Autowired(required = false)
+    CacheManager cacheManager
 
     String getEmail() {
         delegateService.getEmail()
@@ -71,6 +78,16 @@ class AuthService implements IAuthService {
         return getUserForUserIdInternal(userId, includeProps).orElse(null)
     }
 
+    @CacheEvict(value='userDetailsCache', allEntries = true)
+    def clearUserDetailsCache() {
+        log.info("Clearing userDetailsCache")
+    }
+
+    @CacheEvict(value='userDetailsByIdCache', allEntries = true)
+    def clearUserDetailsByIdCache() {
+        log.info("Clearing userDetailsByIdCache")
+    }
+
     @Cacheable("userDetailsCache")
     Optional<UserDetails> getUserForUserIdInternal(String userId, boolean includeProps = true) {
         if (!userId) return Optional.empty() // this would have failed anyway
@@ -81,7 +98,11 @@ class AuthService implements IAuthService {
             if (response.successful) {
                 return Optional.of(response.body())
             } else {
-                log.warn("Failed to retrieve user details for userId: $userId, includeProps: $includeProps. Error was: ${response.message()}")
+                log.warn("Failed to retrieve user details for userId: $userId, includeProps: $includeProps. Error was: ${response.code()}")
+                if (log.debugEnabled) {
+                    log.debug("Error body: ${response.errorBody().string()}")
+                    log.debug("Error request URI: ${response.raw().request().url()}")
+                }
             }
         } catch (Exception ex) {
             log.error("Exception caught trying get find user details for $userId.", ex)
