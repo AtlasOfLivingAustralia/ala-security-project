@@ -19,7 +19,7 @@ public abstract class AlaDirectClient extends DirectClient {
             logger.info("Failed to validate credentials: {}", e.getMessage());
             logger.debug("Failed to validate credentials", e);
 //            return Optional.empty();
-            throw e; // TODO why?
+            throw e;
         }
     }
 }

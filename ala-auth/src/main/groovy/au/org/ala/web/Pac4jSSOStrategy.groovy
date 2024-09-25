@@ -51,6 +51,8 @@ class Pac4jSSOStrategy implements SSOStrategy {
 //        final HttpActionAdapter bestAdapter = config.httpActionAdapter
         final SecurityLogic bestLogic = this.securityLogic ?: config.securityLogic
 
+        // this is a hack to set the redirectUri in the request so that the OverrideSavedRequestHandler uses it
+        // on the return redirect
         if (bestLogic instanceof DefaultSecurityLogic && bestLogic.savedRequestHandler instanceof OverrideSavedRequestHandler) {
             request.setAttribute(OverrideSavedRequestHandler.OVERRIDE_REQUESTED_URL_ATTRIBUTE, redirectUri)
         }

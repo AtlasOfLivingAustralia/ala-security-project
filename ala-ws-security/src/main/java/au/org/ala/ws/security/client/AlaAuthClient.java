@@ -1,6 +1,7 @@
 package au.org.ala.ws.security.client;
 
 import org.pac4j.core.client.BaseClient;
+import org.pac4j.core.client.DirectClient;
 import org.pac4j.core.client.IndirectClient;
 import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.HttpConstants;
@@ -37,6 +38,8 @@ public class AlaAuthClient extends BaseClient {
 
         try {
             for (BaseClient authClient : authClients) {
+
+
 
                 final Optional<Credentials> optCredentials = authClient.getCredentials(ctx);
                 if (optCredentials.isPresent()) {
@@ -76,14 +79,14 @@ public class AlaAuthClient extends BaseClient {
         return Optional.empty();
     }
 
-    public List<AlaDirectClient> getAuthClients() {
+    public List<DirectClient> getAuthClients() {
         return authClients;
     }
 
-    public void setAuthClients(List<AlaDirectClient> authClients) {
+    public void setAuthClients(List<DirectClient> authClients) {
         this.authClients = authClients;
     }
 
     private String realmName = Pac4jConstants.DEFAULT_REALM_NAME;
-    private List<AlaDirectClient> authClients;
+    private List<DirectClient> authClients;
 }

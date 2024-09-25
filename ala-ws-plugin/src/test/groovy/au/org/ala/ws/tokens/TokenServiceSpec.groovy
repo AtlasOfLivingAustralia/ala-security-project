@@ -12,6 +12,7 @@ import org.pac4j.core.util.Pac4jConstants
 import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.jee.context.JEEFrameworkParameters
 import org.pac4j.jee.context.session.JEESessionStore
+import org.pac4j.jee.context.session.JEESessionStoreFactory
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.profile.OidcProfile
@@ -40,7 +41,7 @@ class TokenServiceSpec extends Specification {
         oidcConfiguration.secret >> 'secret'
         def providerMetadata = new OIDCProviderMetadata(new Issuer('https://example.org/'), [SubjectType.PUBLIC], 'https://example.org/jwks'.toURI())
         providerMetadata.setTokenEndpointURI(tokenUri.toURI())
-        oidcConfiguration.findProviderMetadata() >> providerMetadata
+        oidcConfiguration.getOpMetadataResolver().load() >> providerMetadata
         request = new MockHttpServletRequest()
         request.getSession(true)
         def response = new MockHttpServletResponse()
@@ -50,7 +51,7 @@ class TokenServiceSpec extends Specification {
                 JEEContextFactory.INSTANCE.newContext(new JEEFrameworkParameters(request, response))
             }
         }
-        sessionStore = JEESessionStore.INSTANCE
+        sessionStore = JEESessionStoreFactory.INSTANCE.newSessionStore(new JEEFrameworkParameters(request, response))
         tokenClient = Mock(TokenClient)
         tokenService = new TokenService(config, oidcConfiguration, pac4jContextProvider, sessionStore, tokenClient, 'client-id', 'client-secret', 'openid ala:internal users:read', false)
     }
@@ -58,7 +59,7 @@ class TokenServiceSpec extends Specification {
 
     def 'test token service requireUser false'() {
         setup:
-        def oidcCredentials = new OidcCredentials().tap { it.accessToken = new BearerAccessToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c') }
+        def oidcCredentials = new OidcCredentials().tap { setAccessTokenObject (new BearerAccessToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c')) }
 
         when:
         def token = tokenService.getAuthToken(false)

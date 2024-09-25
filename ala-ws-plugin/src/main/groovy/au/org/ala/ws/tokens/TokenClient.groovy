@@ -41,10 +41,11 @@ class TokenClient {
 
         def credentials = new OidcCredentials()
         def oidcTokens = tokenSuccessResponse.getOIDCTokens()
-        credentials.setAccessToken(oidcTokens.getAccessToken())
-        credentials.setRefreshToken(oidcTokens.getRefreshToken())
+        credentials.setAccessTokenObject(oidcTokens.getAccessToken())
+        credentials.setRefreshTokenObject(oidcTokens.getRefreshToken())
         if (oidcTokens.getIDToken() != null) {
-            credentials.setIdToken(oidcTokens.getIDToken())
+            credentials.setIdToken(oidcTokens.getIDToken().getParsedString())
+//            credentials.setIdToken(oidcTokens.getIDToken().serialize())
         }
         return credentials
     }

@@ -5,8 +5,11 @@ import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.context.session.SessionStoreFactory
 import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
+import org.pac4j.jee.context.JEEContext
+import org.pac4j.jee.context.JEEFrameworkParameters
 
 class Pac4jAuthService implements IAuthService {
 
@@ -40,7 +43,7 @@ class Pac4jAuthService implements IAuthService {
     private final Pac4jContextProvider pac4jContextProvider
 
     // TODO remove this?
-    private final SessionStore sessionStore
+    private final SessionStoreFactory sessionStoreFactory
 
     private final LinkGenerator grailsLinkGenerator
 
@@ -50,10 +53,10 @@ class Pac4jAuthService implements IAuthService {
 
     private final String displayNameClaim
 
-    Pac4jAuthService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStore sessionStore, LinkGenerator grailsLinkGenerator, String alaUseridClaim, String userNameClaim, String displayNameClaim) {
+    Pac4jAuthService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStoreFactory sessionStoreFactory, LinkGenerator grailsLinkGenerator, String alaUseridClaim, String userNameClaim, String displayNameClaim) {
         this.config = config
         this.pac4jContextProvider = pac4jContextProvider
-        this.sessionStore = sessionStore
+        this.sessionStoreFactory = sessionStoreFactory
         this.grailsLinkGenerator = grailsLinkGenerator
         this.alaUseridClaim = alaUseridClaim
         this.userNameClaim = userNameClaim
@@ -61,10 +64,15 @@ class Pac4jAuthService implements IAuthService {
     }
 
     ProfileManager getProfileManager() {
+        // TODO This should probably use the call context or something...
         def context = pac4jContextProvider.webContext()
-        final ProfileManager manager = config.profileManagerFactory.apply(context, sessionStore)
-        manager.config = config
-        return manager
+        if (context instanceof JEEContext) {
+            final ProfileManager manager = config.profileManagerFactory.apply(context, sessionStoreFactory.newSessionStore(new JEEFrameworkParameters(context.nativeRequest, context.nativeResponse)))
+            manager.config = config
+            return manager
+        } else {
+            throw new IllegalStateException("Pac4jAuthService currently requires a JEEContext")
+        }
     }
 
     UserProfile getUserProfile() {

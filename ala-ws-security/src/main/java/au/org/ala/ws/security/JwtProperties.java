@@ -2,6 +2,7 @@ package au.org.ala.ws.security;
 
 import org.pac4j.core.context.HttpConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.List;
 import java.util.Set;
@@ -30,6 +31,11 @@ public class JwtProperties {
     private List<String> urlPatterns = List.of(); // hard coded paths to apply JWT authentication to
 
     private Set<String> acceptedAudiences = Set.of();
+    private boolean useAlaCustomProfileCreator = true;
+    private boolean useAlaCustomJwtAuthenticator = true;
+
+    @NestedConfigurationProperty
+    private List<SignatureConfigurationProperties> signatureConfigurations;
 
     public String getClientId() {
         return clientId;
@@ -191,5 +197,29 @@ public class JwtProperties {
 
     public void setProhibitedClaims(List<String> prohibitedClaims) {
         this.prohibitedClaims = prohibitedClaims;
+    }
+
+    public boolean isUseAlaCustomProfileCreator() {
+        return useAlaCustomProfileCreator;
+    }
+
+    public void setUseAlaCustomProfileCreator(boolean useAlaCustomProfileCreator) {
+        this.useAlaCustomProfileCreator = useAlaCustomProfileCreator;
+    }
+
+    public boolean isUseAlaCustomJwtAuthenticator() {
+        return useAlaCustomJwtAuthenticator;
+    }
+
+    public void setUseAlaCustomJwtAuthenticator(boolean useAlaCustomJwtAuthenticator) {
+        this.useAlaCustomJwtAuthenticator = useAlaCustomJwtAuthenticator;
+    }
+
+    public List<SignatureConfigurationProperties> getSignatureConfigurations() {
+        return signatureConfigurations;
+    }
+
+    public void setSignatureConfigurations(List<SignatureConfigurationProperties> signatureConfigurations) {
+        this.signatureConfigurations = signatureConfigurations;
     }
 }

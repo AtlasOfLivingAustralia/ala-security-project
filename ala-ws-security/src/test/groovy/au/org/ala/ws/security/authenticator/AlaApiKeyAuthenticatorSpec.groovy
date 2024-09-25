@@ -8,6 +8,7 @@ import au.org.ala.ws.security.profile.AlaApiUserProfile
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import okhttp3.OkHttpClient
+import org.pac4j.core.context.CallContext
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.TokenCredentials
@@ -24,22 +25,7 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         setup:
 
         ApiKeyClient apiKeyClient = Stub()
-        apiKeyClient.checkApiKey('testkey') >> Calls.response(new CheckApiKeyResult() {
-            @Override
-            boolean getValid() {
-                return true
-            }
-
-            @Override
-            String getUserId() {
-                return '0'
-            }
-
-            @Override
-            String getEmail() {
-                return 'email@test.com'
-            }
-        })
+        apiKeyClient.checkApiKey('testkey') >> Calls.response(CheckApiKeyResult.valid('0', 'email@test.com'))
 
         UserDetailsClient userDetailsClient = Stub()
         userDetailsClient.getUserDetails('0', true) >>
@@ -56,7 +42,7 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
         SessionStore sessionStore = Mock()
 
         when:
-        alaApiKeyAuthenticator.validate(alaApiKeyCredentials, context, sessionStore)
+        alaApiKeyAuthenticator.validate(new CallContext(context, sessionStore), alaApiKeyCredentials)
 
         then:
         alaApiKeyCredentials.userProfile instanceof AlaApiUserProfile
@@ -69,12 +55,7 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
 
         setup:
         ApiKeyClient apiKeyClient = Stub()
-        apiKeyClient.checkApiKey('testkey') >> Calls.response(new CheckApiKeyResult() {
-            @Override
-            boolean getValid() {
-                return false
-            }
-        })
+        apiKeyClient.checkApiKey('testkey') >> Calls.response(CheckApiKeyResult.invalid())
 
         UserDetailsClient userDetailsClient = Stub()
 
@@ -95,7 +76,7 @@ class AlaApiKeyAuthenticatorSpec extends Specification {
 //        )
 
         when:
-        alaApiKeyAuthenticator.validate(alaApiKeyCredentials, context, sessionStore)
+        alaApiKeyAuthenticator.validate(new CallContext(context, sessionStore), alaApiKeyCredentials)
 
         then:
         CredentialsException ce = thrown CredentialsException

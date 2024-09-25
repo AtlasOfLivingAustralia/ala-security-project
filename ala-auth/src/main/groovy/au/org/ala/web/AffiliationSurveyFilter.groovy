@@ -13,6 +13,7 @@ import org.pac4j.core.adapter.FrameworkAdapter
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContextFactory
 import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.context.session.SessionStoreFactory
 import org.pac4j.core.profile.factory.ProfileManagerFactory
 import org.pac4j.jee.config.AbstractConfigFilter
 import org.pac4j.jee.context.JEEFrameworkParameters
@@ -26,16 +27,16 @@ import javax.servlet.http.HttpServletResponse
 class AffiliationSurveyFilter extends AbstractConfigFilter {
 
     WebContextFactory webContextFactory
-    SessionStore sessionStore
+    SessionStoreFactory sessionStoreFactory
     ProfileManagerFactory profileManagerFactory
 
     final Set<String> requiredScopesForAffiliationCheck// = ['ala', 'ala/attrs']
     final String affiliationAttribute// = 'affiliation'
     final String countryAttribute
 
-    AffiliationSurveyFilter(Config config, SessionStore sessionStore, WebContextFactory webContextFactory, Set<String> requiredScopesForAffiliationCheck, String affiliationAttribute, String countryAttribute) {
+    AffiliationSurveyFilter(Config config, SessionStoreFactory sessionStoreFactory, WebContextFactory webContextFactory, Set<String> requiredScopesForAffiliationCheck, String affiliationAttribute, String countryAttribute) {
         this.config = config
-        this.sessionStore = sessionStore
+        this.sessionStoreFactory = sessionStoreFactory
         this.webContextFactory = webContextFactory
         this.requiredScopesForAffiliationCheck = requiredScopesForAffiliationCheck
         this.affiliationAttribute = affiliationAttribute
@@ -47,8 +48,8 @@ class AffiliationSurveyFilter extends AbstractConfigFilter {
         FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config)
 
         def params = new JEEFrameworkParameters(request, response)
-        def webContext = this.webContextFactory.newContext(params) ?: config.getWebContextFactory().newContext(params)
-        def sessionStore = this.sessionStore ?: config.getSessionStoreFactory().newSessionStore(params)
+        def webContext = (this.webContextFactory ?: config.getWebContextFactory()).newContext(params)
+        def sessionStore = (this.sessionStoreFactory ?: config.getSessionStoreFactory()).newSessionStore(params)
         def profileManager = (this.profileManagerFactory ?: config.getProfileManagerFactory()).apply(webContext, sessionStore)
         profileManager.setConfig(config)
 

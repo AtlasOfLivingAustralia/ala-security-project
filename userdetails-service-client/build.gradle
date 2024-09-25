@@ -1,6 +1,7 @@
 plugins {
     id( 'java-library' )
     id( 'maven-publish' )
+    id "io.freefair.lombok" version "6.6.3"
 }
 
 group 'au.org.ala'
@@ -22,6 +23,10 @@ repositories {
 //    }
 //}
 
+lombok {
+    version = "1.18.34"
+}
+
 sourceSets {
     integrationTest {
         compileClasspath += main.output + test.output
@@ -37,8 +42,8 @@ configurations {
 }
 
 dependencies {
-    compileOnly group: 'org.projectlombok', name:'lombok', version: '1.16.12'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+//    compileOnly group: 'org.projectlombok', name:'lombok', version: '1.18.34'
+//    annotationProcessor 'org.projectlombok:lombok:1.18.34'
 
     api group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.11.0'
     api group: 'com.squareup.retrofit2', name: 'converter-moshi', version: '2.11.0'
