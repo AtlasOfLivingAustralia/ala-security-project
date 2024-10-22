@@ -319,6 +319,7 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
 
             return (TokenIntrospectionSuccessResponse)tokenIntrospectionResponse;
         }
+        return null;
     }
 
     public AlaOidcUserProfile generateAlaUserProfile(String userId, UserProfile profile) {
