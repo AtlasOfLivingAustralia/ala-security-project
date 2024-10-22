@@ -1,13 +1,13 @@
 package au.org.ala.pac4j.oidc.credentials.extractor;
 
-import org.pac4j.core.client.IndirectClient;
-import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
-import org.pac4j.oidc.credentials.extractor.OidcExtractor;
+import org.pac4j.oidc.credentials.extractor.OidcCredentialsExtractor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
@@ -18,22 +18,24 @@ import java.util.Optional;
  * authentication code and redirected to the secure page.
  * This has proven to be an issue if the user re-clicked on the login button during the callback processing.
  */
-public class CognitoOidcExtractor extends OidcExtractor {
+public class CognitoOidcExtractor extends OidcCredentialsExtractor {
+
+    static final Logger logger = LoggerFactory.getLogger(CognitoOidcExtractor.class);
 
     public CognitoOidcExtractor(OidcConfiguration configuration, OidcClient client) {
         super(configuration, client);
     }
 
     @Override
-    public Optional<Credentials> extract(WebContext context, SessionStore sessionStore) {
+    public Optional<Credentials> extract(CallContext context) {
         try {
-            return super.extract(context, sessionStore);
+            return super.extract(context);
         } catch (TechnicalException te) {
 
             if (te.getMessage().equals("State cannot be determined")) {
-                
+                logger.error("State not found in session, please check session configuration.");
                 // redirect to the authentication page
-                throw client.getRedirectionAction(context, sessionStore).get();
+                throw client.getRedirectionAction(context).get();
             }
 
             throw te;

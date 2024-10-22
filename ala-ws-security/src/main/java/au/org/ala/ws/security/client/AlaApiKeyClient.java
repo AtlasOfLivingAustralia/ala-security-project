@@ -6,8 +6,8 @@ import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor;
 public class AlaApiKeyClient extends AlaDirectClient {
     public AlaApiKeyClient(AlaApiKeyCredentialsExtractor alaApiKeyCredentialsExtractor, AlaApiKeyAuthenticator alaApiKeyAuthenticator) {
 
-        defaultCredentialsExtractor(alaApiKeyCredentialsExtractor);
-        defaultAuthenticator(alaApiKeyAuthenticator);
+        setCredentialsExtractorIfUndefined(alaApiKeyCredentialsExtractor);
+        setAuthenticatorIfUndefined(alaApiKeyAuthenticator);
     }
 
     @Override

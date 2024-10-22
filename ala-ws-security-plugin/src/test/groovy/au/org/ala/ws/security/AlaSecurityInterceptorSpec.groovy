@@ -4,22 +4,17 @@ import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.ala.org.ws.security.filter.RequireApiKeyFilter
 import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator
-import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator
-import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator
+import au.org.ala.ws.security.authenticator.AlaJwtAuthenticator
+import au.org.ala.ws.security.authenticator.IpAllowListAuthenticator
 import au.org.ala.ws.security.client.AlaApiKeyClient
 import au.org.ala.ws.security.client.AlaAuthClient
-import au.org.ala.ws.security.client.AlaIpWhitelistClient
-import au.org.ala.ws.security.client.AlaOidcClient
 import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor
-import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor
 import au.org.ala.ws.security.profile.AlaApiUserProfile
-
-import com.nimbusds.jose.JWSAlgorithm
+import au.org.ala.ws.security.profile.creator.AlaJwtProfileCreator
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
-import com.nimbusds.oauth2.sdk.id.Issuer
 import grails.testing.web.interceptor.InterceptorUnitTest
 import grails.web.api.ServletAttributes
 import groovy.time.TimeCategory
@@ -28,8 +23,10 @@ import org.grails.web.util.GrailsApplicationAttributes
 import org.pac4j.core.config.Config
 import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.profile.creator.ProfileCreator
-import org.pac4j.http.credentials.extractor.IpExtractor
-import org.pac4j.jee.context.session.JEESessionStore
+import org.pac4j.http.client.direct.DirectBearerAuthClient
+import org.pac4j.http.client.direct.IpClient
+import org.pac4j.jee.context.session.JEESessionStoreFactory
+import org.pac4j.oidc.client.OidcClient
 import org.pac4j.oidc.config.OidcConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
@@ -48,13 +45,13 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
     def jwtProperties = new JwtProperties()
 
     @Shared
-    AlaOidcClient alaOidcClient
+    DirectBearerAuthClient oidcClient
 
     @Shared
-    AlaApiKeyClient alaApiKeyClient
+    AlaApiKeyClient apiKeyClient
 
     @Shared
-    AlaIpWhitelistClient alaIpWhitelistClient
+    IpClient ipAllowListClient
     void setup() {
 
         OidcConfiguration oidcConfiguration = Mock()
@@ -64,11 +61,11 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
         ProfileCreator profileCreator = Mock()
 
-        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator)
-        alaOidcAuthenticator.issuer = new Issuer('http://localhost')
-        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
-        alaOidcAuthenticator.requiredClaims = []
-        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
+//        AlaOidcAuthenticator alaOidcAuthenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator)
+//        alaOidcAuthenticator.issuer = new Issuer('http://localhost')
+//        alaOidcAuthenticator.expectedJWSAlgs = [ JWSAlgorithm.RS256 ].toSet()
+//        alaOidcAuthenticator.requiredClaims = []
+//        alaOidcAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
 
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = Stub(AlaApiKeyAuthenticator) {
             validate(_, _, _) >> { args ->
@@ -80,18 +77,22 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
             }
         }
 
-        AlaIpWhitelistAuthenticator alaIpWhitelistAuthenticator = new AlaIpWhitelistAuthenticator()
-        alaIpWhitelistAuthenticator.ipWhitelist = [ '2.2.2.2', '3.3.3.3' ]
+//        IpAllowListAuthenticator alaIpWhitelistAuthenticator = new IpAllowListAuthenticator()
+//        alaIpWhitelistAuthenticator.ipWhitelist = [ '2.2.2.2', '3.3.3.3' ]
 
-        alaOidcClient = new AlaOidcClient(new AlaOidcCredentialsExtractor(), alaOidcAuthenticator)
-        alaApiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
-        alaIpWhitelistClient = new AlaIpWhitelistClient(new IpExtractor(), alaIpWhitelistAuthenticator)
+        oidcClient = new DirectBearerAuthClient(new AlaJwtAuthenticator(), new AlaJwtProfileCreator(oidcConfiguration, new OidcClient()))
+        apiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
+        ipAllowListClient = new IpClient(new IpAllowListAuthenticator(['2.2.2.2', '3.3.3.3']))
 
         defineBeans {
-            config(InstanceFactoryBean, new Config().tap { sessionStore = JEESessionStore.INSTANCE })
+            config(InstanceFactoryBean, new Config().tap { sessionStoreFactory = JEESessionStoreFactory.INSTANCE })
+            alaOidcClient(InstanceFactoryBean, oidcClient)
+            alaApiKeyClient(InstanceFactoryBean, apiKeyClient)
+            alaIpWhitelistClient(InstanceFactoryBean, ipAllowListClient)
+
             alaAuthClient(InstanceFactoryBean, new AlaAuthClient().tap {
 
-                it.authClients = [ alaOidcClient, alaApiKeyClient, alaIpWhitelistClient ]
+                it.authClients = [oidcClient, apiKeyClient, ipAllowListClient ]
             })
 
             jwtProperties(InstanceFactoryBean, jwtProperties)
@@ -148,8 +149,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
         AlaApiKeyAuthenticator alaApiKeyAuthenticator = Spy()
         AlaApiKeyClient apiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
-        interceptor.alaAuthClient = new AlaAuthClient()
-        interceptor.alaAuthClient.authClients = [ apiKeyClient ]
+        interceptor.clientList = [ apiKeyClient ]
 
         AnnotatedMethodController controller = new AnnotatedMethodController()
 
@@ -228,7 +228,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
         AnnotatedClassController controller = new AnnotatedClassController()
 
-        alaApiKeyClient.credentialsExtractor.alternativeHeaderNames = [ 'Authorization' ]
+        apiKeyClient.credentialsExtractor.alternativeHeaderNames = ['Authorization' ]
 //        grailsApplication.config.security.apikey.header.alternatives = [ 'Authorization' ]
 
         when:
@@ -445,7 +445,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
         AnnotatedClassController controller = new AnnotatedClassController()
 
-        alaOidcClient.authenticator.requiredScopes = [ 'missing' ]
+        oidcClient.authenticator.requiredScopes = ['missing' ]
 
         when:
         request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet)}")

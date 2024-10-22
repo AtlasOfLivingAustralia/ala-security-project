@@ -1,6 +1,8 @@
 package au.org.ala.web.pac4j
 
+import org.pac4j.core.context.CallContext
 import org.pac4j.jee.context.JEEContextFactory
+import org.pac4j.jee.context.JEEFrameworkParameters
 import org.pac4j.jee.context.session.JEESessionStoreFactory
 import org.pac4j.oidc.profile.OidcProfile
 import org.springframework.mock.web.MockHttpServletRequest
@@ -14,8 +16,8 @@ class ConvertingFromAttributesAuthorizationGeneratorSpec extends Specification {
 
         def request  = new MockHttpServletRequest()
         def response = new MockHttpServletResponse()
-        def sessionStore = JEESessionStoreFactory.INSTANCE.newSessionStore()
-        def context = JEEContextFactory.INSTANCE.newContext(request, response)
+        def sessionStore = JEESessionStoreFactory.INSTANCE.newSessionStore(new JEEFrameworkParameters(request, response))
+        def context = JEEContextFactory.INSTANCE.newContext(new JEEFrameworkParameters(request, response))
 
         def authGen = new ConvertingFromAttributesAuthorizationGenerator(['role:ala'], ['scp'], rolePrefix, convertRolesToUpperCase)
 
@@ -23,7 +25,7 @@ class ConvertingFromAttributesAuthorizationGeneratorSpec extends Specification {
         profile.addAttribute('role:ala', 'user')
 
         when:
-        def newProfile = authGen.generate(context, sessionStore, profile)
+        def newProfile = authGen.generate(new CallContext(context, sessionStore), profile)
 
         then:
         newProfile.isPresent()

@@ -12,14 +12,13 @@ import com.nimbusds.oauth2.sdk.id.ClientID
 import com.nimbusds.oauth2.sdk.token.AccessToken
 import com.nimbusds.oauth2.sdk.token.RefreshToken
 import groovy.util.logging.Slf4j
-import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
+import org.pac4j.core.adapter.FrameworkAdapter
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.profile.ProfileManager
-import org.pac4j.core.util.FindBest
-import org.pac4j.jee.context.JEEContextFactory
+import org.pac4j.jee.context.JEEFrameworkParameters
 import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
 import org.pac4j.oidc.profile.OidcProfile
@@ -84,12 +83,13 @@ class TokenService {
         if (pac4jContextProvider) {
             context = pac4jContextProvider.webContext()
         } else {
+            FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config)
             def gwr = WebUtils.retrieveGrailsWebRequest()
             def request = gwr.request
             def response = gwr.response
-            context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response)
+            context = config.getWebContextFactory().newContext(new JEEFrameworkParameters(request, response))
         }
-        final ProfileManager manager = new ProfileManager(context, sessionStore)
+        final ProfileManager manager = config.profileManagerFactory.apply(context, sessionStore)
         manager.config = config
         return manager
     }
