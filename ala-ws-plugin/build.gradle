@@ -19,14 +19,22 @@ apply plugin:"org.grails.grails-gsp"
 //apply plugin:"asset-pipeline"
 apply plugin:"maven-publish"
 
-sourceCompatibility = 1.17
-targetCompatibility = 1.17
+//sourceCompatibility = 1.17
+//targetCompatibility = 1.17
 
 repositories {
     mavenLocal()
     maven { url "https://nexus.ala.org.au/content/groups/public/" }
     maven { url "https://repo.grails.org/grails/core" }
     mavenCentral()
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 configurations {

@@ -24,6 +24,7 @@ import org.pac4j.core.credentials.authenticator.Authenticator;
 import org.pac4j.core.profile.creator.ProfileCreator;
 import org.pac4j.http.client.direct.DirectBearerAuthClient;
 import org.pac4j.http.client.direct.IpClient;
+import org.pac4j.jee.adapter.JEEFrameworkAdapter;
 import org.pac4j.jee.context.JEEContextFactory;
 import org.pac4j.jee.context.session.JEESessionStoreFactory;
 import org.pac4j.jwt.credentials.authenticator.JwtAuthenticator;
@@ -74,6 +75,7 @@ public class AlaWsSecurityConfiguration {
     @ConditionalOnMissingBean
     public Config pac4jConfig(List<Client> clients, WebContextFactory webContextFactory, SessionStoreFactory sessionStoreFactory) {
         Config config = new Config(clients);
+        JEEFrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config);
 
         config.setSessionStoreFactory(sessionStoreFactory);
         config.setWebContextFactory(webContextFactory);

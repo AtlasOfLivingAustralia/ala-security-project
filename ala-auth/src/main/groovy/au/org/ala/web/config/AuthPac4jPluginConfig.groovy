@@ -48,6 +48,7 @@ import org.pac4j.core.http.url.DefaultUrlResolver
 import org.pac4j.core.logout.handler.SessionLogoutHandler
 import org.pac4j.core.matching.matcher.PathMatcher
 import org.pac4j.core.util.Pac4jConstants
+import org.pac4j.jee.adapter.JEEFrameworkAdapter
 import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.jee.context.session.JEESessionStoreFactory
@@ -238,6 +239,8 @@ class AuthPac4jPluginConfig {
         Clients clients = new Clients(linkGenerator.link(absolute: true, uri: CALLBACK_URI), clientBeans)
 
         Config config = new Config(clients)
+        JEEFrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config)
+
         config.sessionStoreFactory = sessionStoreFactory
         config.webContextFactory = webContextFactory
 

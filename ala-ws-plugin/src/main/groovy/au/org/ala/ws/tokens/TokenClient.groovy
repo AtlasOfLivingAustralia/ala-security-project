@@ -5,6 +5,7 @@ import com.nimbusds.oauth2.sdk.TokenErrorResponse
 import com.nimbusds.oauth2.sdk.TokenRequest
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponseParser
+import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import groovy.util.logging.Slf4j
 import org.pac4j.core.exception.TechnicalException
 import org.pac4j.oidc.config.OidcConfiguration
@@ -20,7 +21,9 @@ class TokenClient {
     }
 
 
-    OidcCredentials executeTokenRequest(TokenRequest request) throws IOException, ParseException {
+    // TODO Change this to not retuen OidcCredentials any more because
+    // OidcCredentials doesn't store a parsed AccessToken object
+    OIDCTokens executeTokenRequest(TokenRequest request) throws IOException, ParseException {
         def tokenHttpRequest = request.toHTTPRequest()
         if (oidcConfiguration) {
             oidcConfiguration.configureHttpRequest(tokenHttpRequest)
@@ -39,15 +42,15 @@ class TokenClient {
         log.debug("Token response successful")
         def tokenSuccessResponse = (OIDCTokenResponse) response
 
-        def credentials = new OidcCredentials()
-        def oidcTokens = tokenSuccessResponse.getOIDCTokens()
-        credentials.setAccessTokenObject(oidcTokens.getAccessToken())
-        credentials.setRefreshTokenObject(oidcTokens.getRefreshToken())
-        if (oidcTokens.getIDToken() != null) {
-            credentials.setIdToken(oidcTokens.getIDToken().getParsedString())
-//            credentials.setIdToken(oidcTokens.getIDToken().serialize())
-        }
-        return credentials
+//        def credentials = new OidcCredentials()
+        return tokenSuccessResponse.getOIDCTokens()
+//        credentials.setAccessTokenObject(oidcTokens.getAccessToken())
+//        credentials.setRefreshTokenObject(oidcTokens.getRefreshToken())
+//        if (oidcTokens.getIDToken() != null) {
+//            credentials.setIdToken(oidcTokens.getIDToken().getParsedString())
+////            credentials.setIdToken(oidcTokens.getIDToken().serialize())
+//        }
+//        return credentials
     }
 
 }

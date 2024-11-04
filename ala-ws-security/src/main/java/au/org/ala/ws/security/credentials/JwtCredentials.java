@@ -1,5 +1,6 @@
 package au.org.ala.ws.security.credentials;
 
+import com.google.common.base.MoreObjects;
 import com.nimbusds.jwt.JWT;
 import org.pac4j.core.credentials.TokenCredentials;
 
@@ -19,5 +20,13 @@ public class JwtCredentials extends TokenCredentials {
 
     public void setJwtAccessToken(JWT jwtAccessToken) {
         this.jwtAccessToken = jwtAccessToken;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("jwtAccessToken", jwtAccessToken)
+                .add("token", getToken())
+                .toString();
     }
 }

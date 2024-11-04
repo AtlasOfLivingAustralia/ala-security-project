@@ -5,6 +5,8 @@ import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.grails.AnnotationMatcher
 import au.ala.org.ws.security.filter.RequireApiKeyFilter
+import au.org.ala.ws.security.profile.AlaApiUserProfile
+import com.nimbusds.oauth2.sdk.Scope
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -16,11 +18,16 @@ import org.pac4j.core.context.CallContext
 import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.credentials.Credentials
+import org.pac4j.core.credentials.TokenCredentials
 import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.profile.UserProfile
+import org.pac4j.http.profile.IpProfile
 import org.pac4j.jee.context.JEEFrameworkParameters
+import org.pac4j.jwt.profile.JwtProfile
+import org.pac4j.oidc.config.OidcConfiguration
 import org.pac4j.oidc.credentials.OidcCredentials
+import org.pac4j.oidc.profile.OidcProfile
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -42,6 +49,9 @@ class AlaSecurityInterceptor {
 
     @Autowired(required = false)
     RequireApiKeyFilter requireApiKeyFilter
+
+    @Autowired(required = false)
+    JwtProperties jwtProperties
 
     GrailsApplication grailsApplication
 
@@ -80,6 +90,8 @@ class AlaSecurityInterceptor {
                 final callContext = new CallContext(context, sessionStore, config.profileManagerFactory)
 
                 Optional<Pair<DirectClient, Credentials>> optCredentials = getCredentials(clientList, callContext)
+                Optional<UserProfile> optProfile = Optional.empty()
+
                 if (optCredentials.isPresent()) {
 
                     authenticated = true
@@ -93,14 +105,53 @@ class AlaSecurityInterceptor {
 
                         if (credentials instanceof OidcCredentials) {
 
-                            OidcCredentials oidcCredentials = credentials
+                            def scopes = (credentials as OidcCredentials).toAccessToken().scope
 
                             authorised = requiredScopes.every { String requiredScope ->
-                                scopeContains(oidcCredentials.accessToken.scope, requiredScope)
+                                scopeContains(scopes, requiredScope)
                             }
 
                             if (!authorised) {
-                                log.info "access_token scopes '${oidcCredentials.accessToken.scope}' is missing required scopes ${requiredScopes}"
+                                log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
+                            }
+                        } else if (credentials instanceof TokenCredentials) {
+
+                            def profile = credentials.userProfile
+
+                            // if we have a JWT profile from the authenticator we can extract the scopes from the token
+                            // without having to load the full profile via the profile creator.
+                            if (profile instanceof JwtProfile && jwtProperties.scopesFromAccessToken) {
+
+                                def scopes = (profile as JwtProfile).getAttribute(OidcConfiguration.SCOPE) ?: (profile as JwtProfile).getAuthenticationAttribute(OidcConfiguration.SCOPE)
+
+                                authorised = requiredScopes.every { String requiredScope ->
+                                    scopeContains(scopes, requiredScope)
+                                }
+
+                                if (!authorised) {
+                                    log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
+                                }
+                            } else {
+                                // we don't have a JWT, so we need to get the full profile from the client
+                                // ie via token introspection. This will allow us to get the scopes.
+                                optProfile = client.getUserProfile(callContext, credentials)
+                                profile = optProfile.orElse(null)
+                                if (profile instanceof OidcProfile) {
+                                    def scopes = (profile as OidcProfile).getAccessToken().scope
+
+                                    authorised = requiredScopes.every { String requiredScope ->
+                                        scopeContains(scopes, requiredScope)
+                                    }
+
+                                    if (!authorised) {
+                                        log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
+                                    }
+                                } else if (!(profile instanceof IpProfile || profile instanceof AlaApiUserProfile)) {
+                                    // ip address and apikey user profiles are not required to have scopes
+                                    log.info "Couldn't extract scopes from profile ${profile}"
+                                    authorised = false
+                                }
+
                             }
                         }
                     }
@@ -116,7 +167,10 @@ class AlaSecurityInterceptor {
 
                     if (authorised) {
 
-                        Optional<UserProfile> optProfile = client.getUserProfile(callContext, credentials)
+                        if (optProfile.isEmpty()) {
+                            optProfile = client.getUserProfile(callContext, credentials)
+                        }
+
                         if (optProfile.isPresent()) {
 
                             UserProfile userProfile = optProfile.get()
@@ -199,6 +253,8 @@ class AlaSecurityInterceptor {
     boolean scopeContains(Object scopeObj, String requiredScope) {
         if (scopeObj instanceof String) {
             return scopeObj.trim() == requiredScope
+        } else if (scopeObj instanceof Scope) {
+            return scopeObj.contains(requiredScope)
         } else if (scopeObj instanceof Collection) {
             return scopeObj.contains(requiredScope)
         } else if (scopeObj instanceof String[]) {
@@ -208,18 +264,21 @@ class AlaSecurityInterceptor {
         }
     }
 
+    // This is a condensed version of the pac4j DefaultSecurityLogic, we don't need the full logic here
+    // as we are only interested in the credentials and scopes.
     Optional<Pair<DirectClient, Credentials>> getCredentials(List<DirectClient> clients, CallContext context) {
         try {
             for (DirectClient client : clients) {
-                final Optional<Credentials> optCredentials = client.getCredentials(context)
-                if (optCredentials.isPresent()) {
-                    return Optional.of(Pair.of(client, optCredentials.get()))
+                Credentials credentials = client.getCredentials(context).orElse(null)
+                credentials = (Credentials)client.validateCredentials(context, credentials).orElse(null)
+                if (credentials != null && credentials.isForAuthentication()) {
+                    return Optional.of(Pair.of(client, credentials))
                 }
             }
         } catch (CredentialsException e) {
             log.info("Failed to retrieve credentials: {}", e.getMessage())
             log.debug("Failed to retrieve credentials", e)
         }
-        return Optional.empty();
+        return Optional.empty()
     }
 }

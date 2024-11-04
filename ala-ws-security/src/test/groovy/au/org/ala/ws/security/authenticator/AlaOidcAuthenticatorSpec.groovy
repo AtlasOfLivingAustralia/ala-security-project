@@ -50,9 +50,9 @@ class AlaOidcAuthenticatorSpec extends Specification {
 
         then:
         creds.isPresent()
-        creds.get() == credentials
-        credentials.userProfile instanceof JwtProfile
-        var jwtProfile = credentials.userProfile as JwtProfile
+        creds.get().getToken() == credentials.getToken()
+        creds.get().userProfile instanceof JwtProfile
+        var jwtProfile = creds.get().userProfile as JwtProfile
         jwtProfile.roles.empty
         jwtProfile.issuer == 'http://localhost'
         jwtProfile.subject == 'sub'
@@ -166,9 +166,9 @@ class AlaOidcAuthenticatorSpec extends Specification {
 
         then:
         creds.isPresent()
-        creds.get() == credentials
-        credentials.userProfile instanceof JwtProfile
-        var jwtProfile = credentials.userProfile as JwtProfile
+        creds.get().getToken() == credentials.getToken()
+        creds.get().userProfile instanceof JwtProfile
+        var jwtProfile = creds.get().userProfile as JwtProfile
         jwtProfile.roles.empty
         jwtProfile.issuer == 'http://localhost'
         jwtProfile.subject == 'sub'

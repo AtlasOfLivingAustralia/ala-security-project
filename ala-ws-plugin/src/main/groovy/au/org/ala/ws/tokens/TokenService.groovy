@@ -2,21 +2,29 @@ package au.org.ala.ws.tokens
 
 import au.org.ala.web.Pac4jContextProvider
 import com.google.common.annotations.VisibleForTesting
+import com.nimbusds.oauth2.sdk.AuthorizationGrant
 import com.nimbusds.oauth2.sdk.ClientCredentialsGrant
 import com.nimbusds.oauth2.sdk.RefreshTokenGrant
 import com.nimbusds.oauth2.sdk.Scope
 import com.nimbusds.oauth2.sdk.TokenRequest
+import com.nimbusds.oauth2.sdk.auth.ClientAuthentication
+import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod
 import com.nimbusds.oauth2.sdk.auth.ClientSecretBasic
+import com.nimbusds.oauth2.sdk.auth.ClientSecretJWT
+import com.nimbusds.oauth2.sdk.auth.ClientSecretPost
 import com.nimbusds.oauth2.sdk.auth.Secret
 import com.nimbusds.oauth2.sdk.id.ClientID
 import com.nimbusds.oauth2.sdk.token.AccessToken
 import com.nimbusds.oauth2.sdk.token.RefreshToken
+import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
+import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import groovy.util.logging.Slf4j
 import org.grails.web.util.WebUtils
 import org.pac4j.core.adapter.FrameworkAdapter
 import org.pac4j.core.config.Config
+import org.pac4j.core.context.FrameworkParameters
 import org.pac4j.core.context.WebContext
-import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.context.session.SessionStoreFactory
 import org.pac4j.core.profile.ProfileManager
 import org.pac4j.jee.context.JEEFrameworkParameters
 import org.pac4j.oidc.config.OidcConfiguration
@@ -44,30 +52,30 @@ class TokenService {
 
     private final Pac4jContextProvider pac4jContextProvider
 
-    private final SessionStore sessionStore
+    private final SessionStoreFactory sessionStoreFactory
 
     private final TokenClient tokenClient
 
     TokenService(Config config, OidcConfiguration oidcConfiguration, Pac4jContextProvider pac4jContextProvider,
-                 SessionStore sessionStore, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
+                 SessionStoreFactory sessionStoreFactory, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
                  boolean cacheTokens) {
-        this(oidcConfiguration, pac4jContextProvider, sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
+        this(oidcConfiguration, pac4jContextProvider, sessionStoreFactory, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
         this.config = config
     }
 
     TokenService(OidcConfiguration oidcConfiguration, Pac4jContextProvider pac4jContextProvider,
-                 SessionStore sessionStore, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
+                 SessionStoreFactory sessionStoreFactory, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
                  boolean cacheTokens) {
-        this(oidcConfiguration, sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
+        this(oidcConfiguration, sessionStoreFactory, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
         this.pac4jContextProvider = pac4jContextProvider
     }
 
-    TokenService(OidcConfiguration oidcConfiguration, SessionStore sessionStore, TokenClient tokenClient,
+    TokenService(OidcConfiguration oidcConfiguration, SessionStoreFactory sessionStoreFactory, TokenClient tokenClient,
                  String clientId, String clientSecret, String jwtScopes, boolean cacheTokens) {
         this.cacheTokens = cacheTokens
         this.config = config
         this.oidcConfiguration = oidcConfiguration
-        this.sessionStore = sessionStore
+        this.sessionStoreFactory = sessionStoreFactory
         this.tokenClient = tokenClient
 
         this.clientId = clientId
@@ -80,16 +88,20 @@ class TokenService {
 
     ProfileManager getProfileManager() {
         final WebContext context
+        final FrameworkParameters frameworkParameters
         if (pac4jContextProvider) {
             context = pac4jContextProvider.webContext()
+            frameworkParameters = pac4jContextProvider.frameworkParameters()
         } else {
             FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config)
             def gwr = WebUtils.retrieveGrailsWebRequest()
             def request = gwr.request
             def response = gwr.response
-            context = config.getWebContextFactory().newContext(new JEEFrameworkParameters(request, response))
+            frameworkParameters = new JEEFrameworkParameters(request, response)
+            context = config.getWebContextFactory().newContext(frameworkParameters)
         }
-        final ProfileManager manager = config.profileManagerFactory.apply(context, sessionStore)
+
+        final ProfileManager manager = config.profileManagerFactory.apply(context, sessionStoreFactory.newSessionStore(frameworkParameters))
         manager.config = config
         return manager
     }
@@ -122,12 +134,12 @@ class TokenService {
     }
 
     private long expiryWindow = 1 // 1 second
-    private volatile transient OidcCredentials cachedCredentials
+    private volatile transient OIDCTokens cachedCredentials
     private volatile transient long cachedCredentialsLifetime = 0
     @VisibleForTesting
     final Object lock = new Object()
 
-    private OidcCredentials getOrRefreshToken() {
+    private OIDCTokens getOrRefreshToken() {
 
         long now = System.currentTimeSeconds() - expiryWindow
 
@@ -146,8 +158,8 @@ class TokenService {
         return cachedCredentials
     }
 
-    private OidcCredentials tokenSupplier(OidcCredentials existingCredentials) {
-        OidcCredentials credentials = null
+    private OIDCTokens tokenSupplier(OIDCTokens existingCredentials) {
+        OIDCTokens credentials = null
         if (existingCredentials && existingCredentials.refreshToken) {
             try {
                 log.debug("Refreshing existing token")
@@ -163,26 +175,42 @@ class TokenService {
         return credentials
     }
 
-    private OidcCredentials clientCredentialsToken() {
+    private OIDCTokens clientCredentialsToken() {
+        return sendTokenRequest(new ClientCredentialsGrant())
+    }
 
+
+    private OIDCTokens refreshToken(RefreshToken refreshToken) {
+        return sendTokenRequest(new RefreshTokenGrant(refreshToken))
+    }
+
+    private OIDCTokens sendTokenRequest(AuthorizationGrant grant) {
+        def metadata = oidcConfiguration.getOpMetadataResolver().load()
+        def clientAuthentication = getClientAuthentication(metadata)
         def tokenRequest = new TokenRequest(
-                oidcConfiguration.findProviderMetadata().getTokenEndpointURI(),
-                new ClientSecretBasic(new ClientID(clientId), new Secret(clientSecret)),
-                new ClientCredentialsGrant(),
+                metadata.tokenEndpointURI,
+                clientAuthentication,
+                grant,
                 finalScopes ? new Scope(*finalScopes) : new Scope()
         )
         return tokenClient.executeTokenRequest(tokenRequest)
     }
 
-
-    private OidcCredentials refreshToken(RefreshToken refreshToken) {
-        def tokenRequest = new TokenRequest(
-                oidcConfiguration.findProviderMetadata().getTokenEndpointURI(),
-                new ClientSecretBasic(new ClientID(clientId), new Secret(clientSecret)),
-                new RefreshTokenGrant(refreshToken),
-                new Scope(*finalScopes)
-        )
-        return tokenClient.executeTokenRequest(tokenRequest)
+    private ClientAuthentication getClientAuthentication(OIDCProviderMetadata metadata) {
+        def clientAuthentication
+        def methods = metadata.tokenEndpointAuthMethods
+        if (methods.isEmpty() || methods.contains(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)) {
+            // default to basic auth
+            clientAuthentication = new ClientSecretBasic(new ClientID(clientId), new Secret(clientSecret))
+        } else if (methods.contains(ClientAuthenticationMethod.CLIENT_SECRET_POST)) {
+            clientAuthentication = new ClientSecretPost(new ClientID(clientId), new Secret(clientSecret))
+            // TODO this client auth method needs to be tested but currently isn't required so is left unimplemented
+//        } else if (methods.contains(ClientAuthenticationMethod.CLIENT_SECRET_JWT)) {
+//            clientAuthentication = new ClientSecretJWT(new ClientID(clientId), metadata.getJWKSetURI(), metadata.tokenEndpointJWSAlgs.first(), new Secret(clientSecret))
+        } else {
+            throw new UnsupportedOperationException("Unsupported token endpoint auth methods: ${metadata.tokenEndpointAuthMethods}")
+        }
+        return clientAuthentication
     }
 
 

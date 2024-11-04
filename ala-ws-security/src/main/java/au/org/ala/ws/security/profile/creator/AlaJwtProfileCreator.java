@@ -13,6 +13,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.Request;
+import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.TokenIntrospectionErrorResponse;
 import com.nimbusds.oauth2.sdk.TokenIntrospectionRequest;
 import com.nimbusds.oauth2.sdk.TokenIntrospectionResponse;
@@ -102,7 +103,7 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
         AccessToken accessToken = null;
 
         String token = ((TokenCredentials) credentials).getToken();
-        accessToken = new BearerAccessToken(token);
+//        accessToken = new BearerAccessToken(token);
         boolean jwtFlow = credentials instanceof JwtCredentials;
         JWT jwtToken;
         if (jwtFlow) {
@@ -118,10 +119,6 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
         String subject = null;
         List<String> audience = null;
         String issuer;
-
-        // Create profile
-        OidcProfile profile = (OidcProfile) getProfileDefinition().newProfile();
-        profile.setAccessToken(accessToken);
 
         try {
 
@@ -152,6 +149,12 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
             }
             Set<String> accessTokenScopeSet = accessTokenScopeList != null ? new LinkedHashSet<>(accessTokenScopeList) : Collections.emptySet();
 
+            accessToken = new BearerAccessToken(
+                    token,
+                    (jwtToken != null ? jwtToken.getJWTClaimsSet().getExpirationTime() : tokenResponse.getExpirationTime()).getTime(),
+                    Scope.parse(accessTokenScopeSet)
+            );
+
             userId = jwtToken != null ? jwtToken.getJWTClaimsSet().getStringClaim(userIdClaim) : tokenResponse.getStringParameter(userIdClaim);
 
             subject = jwtToken != null ? jwtToken.getJWTClaimsSet().getSubject() : tokenResponse.getSubject().getValue();
@@ -161,10 +164,7 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
 
             var accessTokenRoles = jwtToken != null ? getRoles(jwtToken.getJWTClaimsSet()) : getRoles(tokenResponse);
 
-
             AlaOidcUserProfile alaOidcUserProfile = null;
-
-
 
             if (accessTokenScopeSet.contains(OIDCScopeValue.PROFILE.getValue())) {
                 if (cache != null) {
@@ -185,24 +185,27 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
                 alaOidcUserProfile = new AlaM2MUserProfile(subject, issuer, audience);
                 alaOidcUserProfile.addRoles(accessTokenScopeSet);
 //                alaOidcUserProfile.addPermissions(accessTokenScopeSet);
-                alaOidcUserProfile.setAccessToken(accessToken);
             }
 
             if (configuration.isCallUserInfoEndpoint()) {
                 final var uri = configuration.getOpMetadataResolver().load().getUserInfoEndpointURI();
                 try {
-                    callUserInfoEndpoint(uri, accessToken, profile);
+                    callUserInfoEndpoint(uri, accessToken, alaOidcUserProfile);
                 } catch (final UserInfoErrorResponseException e) {
                     // bearer call -> no profile returned
 //                    if (!regularOidcFlow) {
 //                        return Optional.empty();
 //                    }
-                    log.error("Error calling user info endpoint", e);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Error calling user info endpoint", e);
+                    } else {
+                        log.warn("Error calling user info endpoint: {}", e.getMessage());
+                    }
                 }
             }
 
             if (oidcCredentials != null && configuration.isIncludeAccessTokenClaimsInProfile()) {
-                collectClaimsFromAccessTokenIfAny(oidcCredentials, nonce, profile);
+                collectClaimsFromAccessTokenIfAny(oidcCredentials, nonce, alaOidcUserProfile);
             }
 
             // session expiration with token behavior
@@ -217,7 +220,7 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
                 credentials.setUserProfile(alaOidcUserProfile);
             }
 
-            return Optional.of(profile);
+            return Optional.of(alaOidcUserProfile);
         } catch (final IOException | ParseException |
                        com.nimbusds.oauth2.sdk.ParseException | TokenIntrospectResponseException e) {
             throw new OidcException(e);
@@ -253,13 +256,11 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
             return List.of();
         }
 
-
+        // this probably has to be the userinfo endpoint instead of the token introspection endpoint
         Stream<String> roles = accessTokenRoleClaims.stream()
                 .map(response::getStringListParameter)
                 .filter(Objects::nonNull)
-                .flatMap((List<String> roleClaim) -> {
-                    return roleClaim.stream();
-                });
+                .flatMap(Collection::stream);
 
         return getRoles(roles);
     }

@@ -22,6 +22,8 @@ public class JwtProperties {
     private String rolePrefix = "ROLE_";
     private boolean roleToUppercase = true;
     private List<String> roleClaims = List.of("role");
+
+    private boolean scopesFromAccessToken = true;
     private List<String> permissionClaims = List.of("scope","scp", "scopes");
 
     private String userIdClaim = "userid";
@@ -221,5 +223,13 @@ public class JwtProperties {
 
     public void setSignatureConfigurations(List<SignatureConfigurationProperties> signatureConfigurations) {
         this.signatureConfigurations = signatureConfigurations;
+    }
+
+    public boolean isScopesFromAccessToken() {
+        return scopesFromAccessToken;
+    }
+
+    public void setScopesFromAccessToken(boolean scopesFromAccessToken) {
+        this.scopesFromAccessToken = scopesFromAccessToken;
     }
 }

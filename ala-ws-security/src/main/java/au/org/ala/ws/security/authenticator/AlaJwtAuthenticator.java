@@ -126,16 +126,16 @@ public class AlaJwtAuthenticator extends ProfileDefinitionAware implements Authe
 
             jwtProcessor.process(jwt, null);
 
-            createJwtProfile(ctx, credentials, jwt);
+            var jwtCreds = createJwtProfile(ctx, credentials, jwt);
 
-            return Optional.of(new JwtCredentials(token, jwt));
+            return jwtCreds;
 
         } catch (final ParseException | BadJOSEException | JOSEException e) {
             throw new CredentialsException("Cannot decrypt / verify JWT", e);
         }
     }
 
-    protected void createJwtProfile(CallContext ctx, TokenCredentials credentials, JWT jwt) throws ParseException {
+    protected Optional<Credentials> createJwtProfile(CallContext ctx, TokenCredentials credentials, JWT jwt) throws ParseException {
         var claimSet = jwt.getJWTClaimsSet();
         var subject = claimSet.getSubject();
         if (subject == null) {
@@ -152,11 +152,11 @@ public class AlaJwtAuthenticator extends ProfileDefinitionAware implements Authe
             var now = new Date();
             if (expTime.before(now)) {
                 logger.warn("The JWT is expired: no profile is built");
-                return;
+                return Optional.empty();
             }
             if (this.expirationTime != null && expTime.after(this.expirationTime)) {
                 logger.warn("The JWT is expired: no profile is built");
-                return;
+                return Optional.empty();
             }
         }
 
@@ -217,7 +217,11 @@ public class AlaJwtAuthenticator extends ProfileDefinitionAware implements Authe
             }
         }
 
-        credentials.setUserProfile(profile);
+        var jwtCredentials = new JwtCredentials(credentials.getToken(), jwt);
+
+        jwtCredentials.setUserProfile(profile);
+
+        return Optional.of(jwtCredentials);
     }
 
 
