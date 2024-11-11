@@ -95,6 +95,8 @@ public class AlaWsSecurityConfiguration {
 
         oidcConfig.setResourceRetriever(jwtResourceRetriever);
 
+        oidcConfig.init();
+
         return oidcConfig;
     }
 

@@ -120,6 +120,7 @@ class AuthPac4jPluginConfig {
     @Bean
     OidcConfiguration oidcConfiguration(@Qualifier('oidcResourceRetriever') ResourceRetriever resourceRetriever) {
         OidcConfiguration config = generateBaseOidcClientConfiguration(resourceRetriever)
+        config.init()
         return config
     }
 
@@ -172,6 +173,7 @@ class AuthPac4jPluginConfig {
         def config = generateBaseOidcClientConfiguration(resourceRetriever)
         // select prompt mode: none, consent, select_account
         config.addCustomParam("prompt", "none")
+        config.init()
         def client = createOidcClientFromConfig(config, authCookieGenerator)
         client.setName(PROMPT_NONE_CLIENT)
         return client
