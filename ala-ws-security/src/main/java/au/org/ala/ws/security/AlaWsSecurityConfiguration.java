@@ -10,6 +10,7 @@ import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor;
 import au.org.ala.ws.security.profile.AlaOidcUserProfile;
 import au.org.ala.ws.security.profile.creator.AlaJwtProfileCreator;
 import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.jwk.source.RemoteJWKSet;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jose.util.ResourceRetriever;
@@ -112,14 +113,20 @@ public class AlaWsSecurityConfiguration {
         } catch (MalformedURLException e) {
             throw new RuntimeException("shouldn't happen", e);
         }
-        return new RemoteJWKSet<>(keySourceUrl, oidcConfiguration.findResourceRetriever()).getFailoverJWKSource();
+        return JWKSourceBuilder.create(keySourceUrl, oidcConfiguration.findResourceRetriever())
+                .cache(true)
+                .retrying(true)
+                .refreshAheadCache(true)
+                .retrying(true)
+                .outageTolerant(true)
+                .build();
     }
 
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty("security.jwt.enabled")
     @Qualifier("alaClient")
-    public DirectBearerAuthClient getAlaOidcClient(OidcConfiguration oidcConfiguration, JWKSource<SecurityContext> jwkSource, CacheManager cacheManager) {
+    public DirectBearerAuthClient alaOidcClient(OidcConfiguration oidcConfiguration, JWKSource<SecurityContext> jwkSource, CacheManager cacheManager) {
 
 
         OidcClient oidcClient = new OidcClient(oidcConfiguration);
