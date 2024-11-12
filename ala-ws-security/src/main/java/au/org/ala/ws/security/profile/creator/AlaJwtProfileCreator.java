@@ -38,6 +38,7 @@ import org.pac4j.oidc.credentials.OidcCredentials;
 import org.pac4j.oidc.exceptions.OidcException;
 import org.pac4j.oidc.exceptions.UserInfoErrorResponseException;
 import org.pac4j.oidc.profile.OidcProfile;
+import org.pac4j.oidc.profile.OidcProfileDefinition;
 import org.pac4j.oidc.profile.creator.OidcProfileCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.pac4j.core.profile.AttributeLocation.PROFILE_ATTRIBUTE;
+import static org.pac4j.core.util.CommonHelper.assertNotNull;
 
 /** Port parts of the old AlaOidcAuthenticator to the new pac4j 6.0.0 API */
 // TODO this class shouldn't extend OidcProfileCreator, it should be a separate class
@@ -83,7 +85,9 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
 
     @Override
     protected void internalInit(boolean forceReinit) {
-        super.internalInit(forceReinit);
+        assertNotNull("configuration", configuration);
+
+        setProfileDefinitionIfUndefined(new OidcProfileDefinition((params) -> new AlaOidcUserProfile(params[0].toString())));
 
         if (cacheManager != null) {
             cache = cacheManager.getCache("user-profile");
@@ -92,6 +96,8 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
         if (cache == null) {
             log.warn("No 'user-profile' caching configured.");
         }
+
+        super.internalInit(forceReinit);
     }
 
     @Override

@@ -31,6 +31,7 @@ import org.pac4j.jee.context.session.JEESessionStoreFactory;
 import org.pac4j.jwt.credentials.authenticator.JwtAuthenticator;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
+import org.pac4j.oidc.profile.OidcProfileDefinition;
 import org.pac4j.oidc.profile.creator.OidcProfileCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -136,7 +137,6 @@ public class AlaWsSecurityConfiguration {
         ProfileCreator profileCreator;
         if (jwtProperties.isUseAlaCustomProfileCreator()) {
             var alaProfileCreator = new AlaJwtProfileCreator(oidcConfiguration, oidcClient);
-            alaProfileCreator.getProfileDefinition().setProfileFactory((params) -> new AlaOidcUserProfile(params[0].toString()));
 
 //            alaProfileCreator.setAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.getRoleClaims()));
             alaProfileCreator.setUserIdClaim(jwtProperties.getUserIdClaim());
