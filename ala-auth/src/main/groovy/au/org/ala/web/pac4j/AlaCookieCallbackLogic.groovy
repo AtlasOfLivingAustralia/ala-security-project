@@ -20,11 +20,11 @@ class AlaCookieCallbackLogic extends DefaultCallbackLogic {
         var context = ctx.webContext()
         var sessionStore = ctx.sessionStore()
 
-        var manager = ctx.profileManagerFactory().apply(ctx.webContext(), ctx.sessionStore());
+        var manager = ctx.profileManagerFactory().apply(context, sessionStore);
         manager.getProfile().ifPresent { profile ->
             // TODO Do we actually need to put the username in the cookie value?
             this.cookieGenerator.addCookie(context, profile.username ?: profile.id ?: profile.typedId)
         }
-        return super.redirectToOriginallyRequestedUrl(context, sessionStore, defaultUrl)
+        return super.redirectToOriginallyRequestedUrl(ctx, defaultUrl)
     }
 }
