@@ -147,7 +147,14 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
             if (jwtToken != null) {
                 var claims = jwtToken.getJWTClaimsSet();
                 if (claims != null) {
-                    accessTokenScopeList = claims.getStringListClaim("scope");
+                    var scopeClaim = claims.getClaim("scope");
+                    if (scopeClaim instanceof List) {
+                        accessTokenScopeList = (List<String>) scopeClaim;
+                    } else if (scopeClaim instanceof String) {
+                        accessTokenScopeList = Arrays.stream(((String) scopeClaim).split(Pattern.quote(" "))).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+                    } else {
+                        log.debug("Couldn't parse scope claim value: {}", scopeClaim);
+                    }
                 }
             }
             if (accessTokenScopeList == null) {
