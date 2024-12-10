@@ -252,7 +252,7 @@ class AlaSecurityInterceptor {
 
     boolean scopeContains(Object scopeObj, String requiredScope) {
         if (scopeObj instanceof String) {
-            return scopeObj.trim() == requiredScope
+            return scopeObj.trim().split(' ').any {it == requiredScope }
         } else if (scopeObj instanceof Scope) {
             return scopeObj.contains(requiredScope)
         } else if (scopeObj instanceof Collection) {
