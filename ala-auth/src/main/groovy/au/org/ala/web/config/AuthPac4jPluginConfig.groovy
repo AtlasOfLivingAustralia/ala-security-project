@@ -34,9 +34,7 @@ import org.pac4j.core.client.Clients
 import org.pac4j.core.client.direct.AnonymousClient
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.CallContext
-import org.pac4j.core.context.WebContext
 import org.pac4j.core.context.WebContextFactory
-import org.pac4j.core.context.session.SessionStore
 import org.pac4j.core.context.session.SessionStoreFactory
 import org.pac4j.core.engine.CallbackLogic
 import org.pac4j.core.engine.DefaultLogoutLogic
@@ -50,7 +48,6 @@ import org.pac4j.core.matching.matcher.PathMatcher
 import org.pac4j.core.util.Pac4jConstants
 import org.pac4j.jee.adapter.JEEFrameworkAdapter
 import org.pac4j.jee.context.JEEContextFactory
-import org.pac4j.jee.context.session.JEESessionStore
 import org.pac4j.jee.context.session.JEESessionStoreFactory
 import org.pac4j.jee.filter.CallbackFilter
 import org.pac4j.jee.filter.LogoutFilter
@@ -134,6 +131,7 @@ class AuthPac4jPluginConfig {
         config.setScope(oidcClientProperties.scope)
         config.setWithState(oidcClientProperties.withState)
         config.setMaxClockSkew(oidcClientProperties.maxClockSkew)
+        config.setCallUserInfoEndpoint(oidcClientProperties.callUserInfoEndpoint)
         config.customParams.putAll(oidcClientProperties.customParams)
         if (oidcClientProperties.clientAuthenticationMethod) {
             config.setClientAuthenticationMethodAsString(oidcClientProperties.clientAuthenticationMethod)

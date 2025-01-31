@@ -36,6 +36,8 @@ public class JwtProperties {
     private boolean useAlaCustomProfileCreator = true;
     private boolean useAlaCustomJwtAuthenticator = true;
 
+    private boolean callUserInfoEndpoint = true;
+
     @NestedConfigurationProperty
     private List<SignatureConfigurationProperties> signatureConfigurations;
 
@@ -231,5 +233,13 @@ public class JwtProperties {
 
     public void setScopesFromAccessToken(boolean scopesFromAccessToken) {
         this.scopesFromAccessToken = scopesFromAccessToken;
+    }
+
+    public boolean isCallUserInfoEndpoint() {
+        return callUserInfoEndpoint;
+    }
+
+    public void setCallUserInfoEndpoint(boolean callUserInfoEndpoint) {
+        this.callUserInfoEndpoint = callUserInfoEndpoint;
     }
 }

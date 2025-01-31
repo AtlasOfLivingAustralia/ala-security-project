@@ -7,11 +7,9 @@ import au.org.ala.ws.security.authenticator.IpAllowListAuthenticator;
 import au.org.ala.ws.security.client.AlaApiKeyClient;
 import au.org.ala.ws.security.client.AlaAuthClient;
 import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor;
-import au.org.ala.ws.security.profile.AlaOidcUserProfile;
 import au.org.ala.ws.security.profile.creator.AlaJwtProfileCreator;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
-import com.nimbusds.jose.jwk.source.RemoteJWKSet;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
@@ -31,7 +29,6 @@ import org.pac4j.jee.context.session.JEESessionStoreFactory;
 import org.pac4j.jwt.credentials.authenticator.JwtAuthenticator;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
-import org.pac4j.oidc.profile.OidcProfileDefinition;
 import org.pac4j.oidc.profile.creator.OidcProfileCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -94,6 +91,7 @@ public class AlaWsSecurityConfiguration {
         oidcConfig.setClientId(jwtProperties.getClientId());
         oidcConfig.setConnectTimeout(jwtProperties.getConnectTimeoutMs());
         oidcConfig.setReadTimeout(jwtProperties.getReadTimeoutMs());
+        oidcConfig.setCallUserInfoEndpoint(jwtProperties.isCallUserInfoEndpoint());
 
         oidcConfig.setResourceRetriever(jwtResourceRetriever);
 

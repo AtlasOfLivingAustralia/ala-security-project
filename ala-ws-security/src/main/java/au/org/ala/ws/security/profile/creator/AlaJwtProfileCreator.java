@@ -26,6 +26,7 @@ import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.openid.connect.sdk.Nonce;
 import com.nimbusds.openid.connect.sdk.OIDCScopeValue;
+import com.nimbusds.openid.connect.sdk.claims.IDTokenClaimsSet;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 import org.pac4j.core.context.CallContext;
 import org.pac4j.core.credentials.Credentials;
@@ -56,7 +57,8 @@ import static org.pac4j.core.profile.AttributeLocation.PROFILE_ATTRIBUTE;
 import static org.pac4j.core.util.CommonHelper.assertNotNull;
 
 /** Port parts of the old AlaOidcAuthenticator to the new pac4j 6.0.0 API */
-// TODO this class shouldn't extend OidcProfileCreator, it should be a separate class
+// TODO this class shouldn't extend OidcProfileCreator because it doesn't handle front end authentication, but rather
+//  backend authentication only.
 public class AlaJwtProfileCreator extends OidcProfileCreator {
 
     public static final Logger log = LoggerFactory.getLogger(AlaJwtProfileCreator.class);
@@ -114,6 +116,7 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
         JWT jwtToken;
         if (jwtFlow) {
             jwtToken = ((JwtCredentials) credentials).getJwtAccessToken();
+            // TODO do I need to validate JWT here?
         } else {
             jwtToken = null;
         }
@@ -128,13 +131,6 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
 
         try {
 
-            TokenIntrospectionSuccessResponse tokenResponse;
-            if (!jwtFlow) {
-                tokenResponse = callTokenIntrospectionEndpoint(token);
-            } else {
-                tokenResponse = null;
-            }
-
             final Nonce nonce;
             if (configuration.isUseNonce()) {
                 nonce = new Nonce((String) ctx.sessionStore().get(ctx.webContext(), client.getNonceSessionAttributeName()).orElse(null));
@@ -142,7 +138,7 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
                 nonce = null;
             }
 
-
+            // attempt to get scopes from jwt access token first
             List<String> accessTokenScopeList = null;
             if (jwtToken != null) {
                 var claims = jwtToken.getJWTClaimsSet();
@@ -157,6 +153,15 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
                     }
                 }
             }
+
+            // if we don't have a jwt or we don't have the scopes from the jwt access token, call the introspection endpoint
+            TokenIntrospectionSuccessResponse tokenResponse;
+            if (!jwtFlow || accessTokenScopeList == null) {
+                tokenResponse = callTokenIntrospectionEndpoint(token);
+            } else {
+                tokenResponse = null;
+            }
+
             if (accessTokenScopeList == null) {
                 accessTokenScopeList = tokenResponse.getScope().toStringList();
             }
@@ -179,7 +184,10 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
 
             AlaOidcUserProfile alaOidcUserProfile = null;
 
-            if (accessTokenScopeSet.contains(OIDCScopeValue.PROFILE.getValue())) {
+            boolean hasOpenIdScope = accessTokenScopeSet.contains(OIDCScopeValue.OPENID.getValue());
+            boolean hasProfileScope = accessTokenScopeSet.contains(OIDCScopeValue.PROFILE.getValue());
+
+            if (hasProfileScope) {
                 if (cache != null) {
                     Cache.ValueWrapper cachedProfile = cache.get(accessToken);
                     if (cachedProfile != null) {
@@ -200,14 +208,12 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
 //                alaOidcUserProfile.addPermissions(accessTokenScopeSet);
             }
 
-            if (configuration.isCallUserInfoEndpoint()) {
+            if (hasOpenIdScope && configuration.isCallUserInfoEndpoint()) {
                 final var uri = configuration.getOpMetadataResolver().load().getUserInfoEndpointURI();
                 try {
                     callUserInfoEndpoint(uri, accessToken, alaOidcUserProfile);
                 } catch (final UserInfoErrorResponseException e) {
                     // bearer call -> no profile returned
-//                    if (!regularOidcFlow) {
-//                        return Optional.empty();
 //                    }
                     if (log.isDebugEnabled()) {
                         log.debug("Error calling user info endpoint", e);
@@ -217,6 +223,12 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
                 }
             }
 
+
+            // add attributes from the jwt token to the profile
+            if (jwtFlow && configuration.isIncludeAccessTokenClaimsInProfile()) {
+                collectClaimsFromJwtAccessTokenIfAny((JwtCredentials) credentials, nonce, alaOidcUserProfile);
+            }
+            // TODO this is always false because oidcCredentials is always null
             if (oidcCredentials != null && configuration.isIncludeAccessTokenClaimsInProfile()) {
                 collectClaimsFromAccessTokenIfAny(oidcCredentials, nonce, alaOidcUserProfile);
             }
@@ -240,6 +252,31 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
         }
     }
 
+    private void collectClaimsFromJwtAccessTokenIfAny(final JwtCredentials credentials,
+                                                      final Nonce nonce, UserProfile profile) {
+        try {
+            var accessTokenJwt = credentials.getJwtAccessToken();
+            var accessTokenClaims = configuration.getOpMetadataResolver().getTokenValidator().validate(accessTokenJwt, nonce);
+
+            // add attributes of the access token if they don't already exist
+            addClaimsToProfile(profile, accessTokenClaims);
+        } catch (final JOSEException | BadJOSEException e) {
+            log.debug(e.getMessage(), e);
+        } catch (final Exception e) {
+            throw new OidcException(e);
+        }
+    }
+
+    private void addClaimsToProfile(UserProfile profile, IDTokenClaimsSet accessTokenClaims) throws com.nimbusds.oauth2.sdk.ParseException {
+        for (var entry : accessTokenClaims.toJWTClaimsSet().getClaims().entrySet()) {
+            var key = entry.getKey();
+            var value = entry.getValue();
+            if (!JwtClaims.SUBJECT.equals(key) && profile.getAttribute(key) == null) {
+                getProfileDefinition().convertAndAdd(profile, PROFILE_ATTRIBUTE, key, value);
+            }
+        }
+    }
+
     private void collectClaimsFromAccessTokenIfAny(final OidcCredentials credentials,
                                                    final Nonce nonce, UserProfile profile) {
         try {
@@ -249,13 +286,7 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
                 var accessTokenClaims = configuration.getOpMetadataResolver().getTokenValidator().validate(accessTokenJwt, nonce);
 
                 // add attributes of the access token if they don't already exist
-                for (var entry : accessTokenClaims.toJWTClaimsSet().getClaims().entrySet()) {
-                    var key = entry.getKey();
-                    var value = entry.getValue();
-                    if (!JwtClaims.SUBJECT.equals(key) && profile.getAttribute(key) == null) {
-                        getProfileDefinition().convertAndAdd(profile, PROFILE_ATTRIBUTE, key, value);
-                    }
-                }
+                addClaimsToProfile(profile, accessTokenClaims);
             }
         } catch (final ParseException | JOSEException | BadJOSEException e) {
             log.debug(e.getMessage(), e);
