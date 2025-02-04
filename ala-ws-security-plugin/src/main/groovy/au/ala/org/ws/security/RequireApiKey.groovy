@@ -31,4 +31,12 @@ import java.lang.annotation.Target
      * @return
      */
     String[] scopes() default []
+
+    /**
+     * Provide a Grails configuration property name to get the scopes from.  Combined with security.jwt.scopes and scopes parameter
+     * @return
+     */
+    String[] scopesFromProperty() default []
+
+    boolean useCustomFilter() default false
 }

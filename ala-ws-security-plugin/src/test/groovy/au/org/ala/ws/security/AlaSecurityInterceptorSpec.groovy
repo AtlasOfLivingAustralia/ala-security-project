@@ -2,6 +2,7 @@ package au.org.ala.ws.security
 
 import au.ala.org.ws.security.RequireApiKey
 import au.ala.org.ws.security.SkipApiKeyCheck
+import au.ala.org.ws.security.filter.RequireApiKeyFilter
 import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator
 import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator
 import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator
@@ -20,6 +21,7 @@ import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.oauth2.sdk.id.Issuer
 import grails.testing.web.interceptor.InterceptorUnitTest
+import grails.web.api.ServletAttributes
 import groovy.time.TimeCategory
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.util.GrailsApplicationAttributes
@@ -93,9 +95,22 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
             })
 
             jwtProperties(InstanceFactoryBean, jwtProperties)
+
+            requireApiKeyFilter(InstanceFactoryBean, new RequireApiKeyFilter() {
+
+                @Override
+                boolean isAllowed(RequireApiKey annotation, ServletAttributes servletAttributes) {
+                    return servletAttributes.actionName == 'action1'
+                }
+            })
         }
 
     }
+
+    Closure doWithConfig() {{ config ->
+        config.custom.app.scopes = ['read:userdetails']
+        config.custom.app.scopes2 = []
+    }}
 
     void "All methods of a controller annotated with RequireApiKey at the class level should be protected"() {
         setup:
@@ -344,6 +359,58 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         "action2" | OK           | true
     }
 
+    void "Secured methods should be accessible when given a valid JWT and the required scopes are from a a configuration property"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClass2Controller)
+
+        AnnotatedClass2Controller controller = new AnnotatedClass2Controller()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet, ['app/scope', 'read:userdetails'].toSet())}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass2')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass2", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | OK           | true
+        "action2" | OK           | true
+    }
+
+    void "Secured methods should be accessible when given a valid JWT and a custom authorisation filter is applied"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClass3Controller)
+
+        AnnotatedClass3Controller controller = new AnnotatedClass3Controller()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet)}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass3')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass3", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | OK           | true
+        "action2" | FORBIDDEN    | false
+    }
+
     void "Secured methods should be inaccessible when given a valid JWT without the required scopes"() {
         setup:
         // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
@@ -484,8 +551,40 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
 }
 
-@RequireApiKey(scopes=['read:userdetails'])
+@RequireApiKey(scopes=['read:userdetails'], scopesFromProperty = ['custom.app.scopes2'])
 class AnnotatedClassController {
+    def action1() {
+
+    }
+
+    def action2() {
+
+    }
+
+    @SkipApiKeyCheck
+    def action3() {
+
+    }
+}
+
+@RequireApiKey(scopes=['app/scope'], scopesFromProperty = ['custom.app.scopes'])
+class AnnotatedClass2Controller {
+    def action1() {
+
+    }
+
+    def action2() {
+
+    }
+
+    @SkipApiKeyCheck
+    def action3() {
+
+    }
+}
+
+@RequireApiKey(scopes=['read:userdetails'], useCustomFilter = true)
+class AnnotatedClass3Controller {
     def action1() {
 
     }

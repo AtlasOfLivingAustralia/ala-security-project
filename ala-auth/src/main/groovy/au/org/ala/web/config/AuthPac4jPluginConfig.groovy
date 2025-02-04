@@ -1,6 +1,7 @@
 package au.org.ala.web.config
 
 import au.org.ala.pac4j.core.logout.RemoveCookieLogoutActionBuilder
+import au.org.ala.pac4j.oidc.credentials.extractor.CognitoOidcExtractor
 import au.org.ala.web.AffiliationSurveyFilter
 import au.org.ala.web.AuthCookieProperties
 import au.org.ala.web.CasClientProperties
@@ -22,9 +23,8 @@ import au.org.ala.web.UserAgentFilterService
 import au.org.ala.web.pac4j.AlaCookieCallbackLogic
 import au.org.ala.web.pac4j.ConvertingFromAttributesAuthorizationGenerator
 import au.org.ala.pac4j.core.CookieGenerator
-import com.nimbusds.jose.util.DefaultResourceRetriever
+import com.nimbusds.jose.util.ResourceRetriever
 import grails.core.GrailsApplication
-import grails.web.http.HttpHeaders
 import grails.web.mapping.LinkGenerator
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -90,12 +90,6 @@ class AuthPac4jPluginConfig {
     public static final String CALLBACK_URI = "/callback"
     public static final String NOT_BOT_MATCHER = "notBotMatcher"
 
-    @Value('${info.app.name:Unknown-App}')
-    String name
-
-    @Value('${info.app.version:1}')
-    String version
-
     @Autowired
     CasClientProperties casClientProperties
     @Autowired
@@ -123,12 +117,12 @@ class AuthPac4jPluginConfig {
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    OidcConfiguration oidcConfiguration() {
-        OidcConfiguration config = generateBaseOidcClientConfiguration(oidcLogoutHandler)
+    OidcConfiguration oidcConfiguration(@Qualifier('oidcResourceRetriever') ResourceRetriever resourceRetriever) {
+        OidcConfiguration config = generateBaseOidcClientConfiguration(oidcLogoutHandler, resourceRetriever)
         return config
     }
 
-    private OidcConfiguration generateBaseOidcClientConfiguration(LogoutHandler logoutHandler) {
+    private OidcConfiguration generateBaseOidcClientConfiguration(LogoutHandler logoutHandler, ResourceRetriever resourceRetriever) {
         OidcConfiguration config = new OidcConfiguration()
         config.setClientId(oidcClientProperties.clientId)
         config.setSecret(oidcClientProperties.secret)
@@ -152,9 +146,6 @@ class AuthPac4jPluginConfig {
             config.logoutUrl = oidcClientProperties.logoutUrl
         }
 
-        def resourceRetriever = new DefaultResourceRetriever(oidcClientProperties.connectTimeout, oidcClientProperties.readTimeout)
-        String userAgent = "$name/$version"
-        resourceRetriever.headers = [(HttpHeaders.USER_AGENT): [userAgent]]
         config.resourceRetriever = resourceRetriever
 
         // select display mode: page, popup, touch, and wap
@@ -170,13 +161,14 @@ class AuthPac4jPluginConfig {
     OidcClient oidcClient(OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator) {
         def client = createOidcClientFromConfig(oidcConfiguration, authCookieGenerator)
         client.setName(DEFAULT_CLIENT)
+        client.setCredentialsExtractor(new CognitoOidcExtractor(oidcConfiguration, client))
         return client
     }
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    OidcClient oidcPromptNoneClient(CookieGenerator authCookieGenerator) {
-        def config = generateBaseOidcClientConfiguration(oidcLogoutHandler)
+    OidcClient oidcPromptNoneClient(CookieGenerator authCookieGenerator, @Qualifier('oidcResourceRetriever') ResourceRetriever resourceRetriever) {
+        def config = generateBaseOidcClientConfiguration(oidcLogoutHandler, resourceRetriever)
         // select prompt mode: none, consent, select_account
         config.addCustomParam("prompt", "none")
         def client = createOidcClientFromConfig(config, authCookieGenerator)

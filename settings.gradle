@@ -1,5 +1,6 @@
 rootProject.name='ala-security-project'
 include 'userdetails-service-client'
+include 'ala-security-common'
 include 'ala-ws-security'
 // include 'ala-ws-security-plugin'
 include 'ala-ws-spring-security'
@@ -14,6 +15,9 @@ dependencyResolutionManagement {
             library('http', 'org.pac4j:pac4j-http:5.7.1')
             library('jee', 'org.pac4j:pac4j-jakartaee:5.7.1')
             library('jee-support', 'org.pac4j:jakartaee-pac4j:7.1.0')
+        }
+        resilience4j {
+            alias('retry').to('io.github.resilience4j:resilience4j-retry:1.7.1')
         }
     }
 }

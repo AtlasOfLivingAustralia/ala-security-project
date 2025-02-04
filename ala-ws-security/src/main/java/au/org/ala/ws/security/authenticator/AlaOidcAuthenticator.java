@@ -1,7 +1,7 @@
 package au.org.ala.ws.security.authenticator;
 
+import au.org.ala.ws.security.profile.AlaM2MUserProfile;
 import au.org.ala.ws.security.profile.AlaOidcUserProfile;
-import au.org.ala.ws.security.profile.AlaUserProfile;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -60,6 +60,8 @@ import java.util.stream.Stream;
 public class AlaOidcAuthenticator extends InitializableObject implements Authenticator {
 
     public static final Logger log = LoggerFactory.getLogger(AlaOidcAuthenticator.class);
+
+    public static final String PARSED_JWT_ATTRIBUTE = "ala.parsed.jwt";
 
     final OidcConfiguration configuration;
     final ProfileCreator profileCreator;
@@ -135,8 +137,21 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
 
         // Set the required JWT claims for access tokens issued by the server
         // TODO externalise the required claims
-        jwtProcessor.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier(new JWTClaimsSet.Builder().issuer(issuer.getValue()).build(), Set.copyOf(requiredClaims)));
+        jwtProcessor.setJWTClaimsSetVerifier(
+                new DefaultJWTClaimsVerifier(
+                        acceptedAudience == null || acceptedAudience.isEmpty() ? null : Set.copyOf(acceptedAudience),
+                        new JWTClaimsSet.Builder()
+                                .issuer(issuer.getValue())
+                                .build(),
+                        Set.copyOf(requiredClaims),
+                        Set.copyOf(prohibitedClaims)
+                )
+        );
 
+        String jwtId = null;
+        String subject = null;
+        List<String> audience = null;
+        String issuer;
         String userId = null;
         Collection<String> accessTokenRoles;
 
@@ -144,6 +159,10 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
 
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
             userId = (String) claimsSet.getClaim(userIdClaim);
+            jwtId = claimsSet.getJWTID();
+            subject = claimsSet.getSubject();
+            audience = claimsSet.getAudience();
+            issuer = claimsSet.getIssuer();
 
             accessTokenRoles = getRoles(claimsSet);
 
@@ -164,6 +183,12 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
             throw new CredentialsException("JWT Verification failed: " + accessToken, e);
         } catch (JOSEException e) {
             throw new CredentialsException("Internal error parsing token: " + accessToken, e);
+        }
+
+        if (context != null) {
+            context.setRequestAttribute(PARSED_JWT_ATTRIBUTE, jwt);
+        } else {
+            log.debug("Not saving parsed JWT to request attribute because the context is null");
         }
 
         if (requiredScopes != null && !requiredScopes.isEmpty()) {
@@ -219,6 +244,13 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
         } else if (userId != null && !userId.isEmpty()) {
 
             alaOidcUserProfile = new AlaOidcUserProfile(userId);
+
+        } else {
+            // no user id or profile scope means this is a M2M token
+            alaOidcUserProfile = new AlaM2MUserProfile(subject, issuer, audience);
+            alaOidcUserProfile.addRoles(accessTokenScopeSet); // add scopes to profiles roles for client credentials
+            alaOidcUserProfile.addPermissions(accessTokenScopeSet); // add scopes to permissions for consistency
+            alaOidcUserProfile.setAccessToken(credentials.getAccessToken());
         }
 
         if (alaOidcUserProfile != null) {
@@ -343,6 +375,14 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
         this.requiredClaims = requiredClaims;
     }
 
+    public List<String> getProhibitedClaims() {
+        return prohibitedClaims;
+    }
+
+    public void setProhibitedClaims(List<String> prohibitedClaims) {
+        this.prohibitedClaims = prohibitedClaims;
+    }
+
     public List<String> getRequiredScopes() {
         return requiredScopes;
     }
@@ -383,12 +423,22 @@ public class AlaOidcAuthenticator extends InitializableObject implements Authent
         this.roleToUppercase = roleToUppercase;
     }
 
+    public Set<String> getAcceptedAudience() {
+        return acceptedAudience;
+    }
+
+    public void setAcceptedAudiences(Set<String> acceptedAudience) {
+        this.acceptedAudience = acceptedAudience;
+    }
+
+    private Set<String> acceptedAudience = Collections.emptySet();
     private Issuer issuer;
     private Set<JWSAlgorithm> expectedJWSAlgs;
     private JWKSource<SecurityContext> keySource;
     private AuthorizationGenerator authorizationGenerator;
     private String userIdClaim;
     private List<String> requiredClaims;
+    private List<String> prohibitedClaims = Collections.emptyList();
     private List<String> requiredScopes;
     List<String> accessTokenRoleClaims;
     boolean rolesFromAccessToken = false;

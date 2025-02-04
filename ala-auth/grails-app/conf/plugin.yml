@@ -49,3 +49,8 @@ security:
     quoteValue: true
     encodeValue: false
 
+environments:
+  development:
+    security:
+      oidc:
+        maximum-retries: 1
