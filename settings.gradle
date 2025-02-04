@@ -17,7 +17,7 @@ dependencyResolutionManagement {
             library('jee-support', 'org.pac4j:jakartaee-pac4j:7.1.0')
         }
         resilience4j {
-            alias('retry').to('io.github.resilience4j:resilience4j-retry:1.7.1')
+            library('retry', 'io.github.resilience4j:resilience4j-retry:1.7.1')
         }
     }
 }
