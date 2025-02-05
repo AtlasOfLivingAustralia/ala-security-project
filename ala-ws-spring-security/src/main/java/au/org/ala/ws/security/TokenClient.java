@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-// TODO: move this and related classes into ala-security-project
 public class TokenClient {
     private static final Logger logger = LoggerFactory.getLogger(TokenClient.class);
 

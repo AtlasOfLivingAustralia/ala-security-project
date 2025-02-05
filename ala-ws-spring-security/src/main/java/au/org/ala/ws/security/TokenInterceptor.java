@@ -20,8 +20,6 @@ import okhttp3.Response;
 
 import java.io.IOException;
 
-// TODO: move this and related classes into ala-security-project
-
 /**
  * okhttp interceptor that inserts a bearer token into the request
  */

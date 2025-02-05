@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-// TODO: move this and related classes into ala-security-project
 public class TokenService {
     private static final Logger logger = LoggerFactory.getLogger(TokenService.class);
 
