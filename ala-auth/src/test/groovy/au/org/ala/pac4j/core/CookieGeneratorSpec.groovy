@@ -1,6 +1,7 @@
 package au.org.ala.pac4j.core
 
 import org.pac4j.jee.context.JEEContextFactory
+import org.pac4j.jee.context.JEEFrameworkParameters
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import spock.lang.Specification
@@ -14,7 +15,7 @@ class CookieGeneratorSpec extends Specification {
         def cg = new CookieGenerator(true, 'name', 'ala.example', '/', false, true, -1, 'lax', 'comment', true, false)
         def request = new MockHttpServletRequest('GET', '/')
         def response = new MockHttpServletResponse()
-        def ctx = JEEContextFactory.INSTANCE.newContext(request, response)
+        def ctx = JEEContextFactory.INSTANCE.newContext(new JEEFrameworkParameters(request, response))
 
         when:
         cg.addCookie(ctx, 'test')
@@ -38,7 +39,7 @@ class CookieGeneratorSpec extends Specification {
         def request = new MockHttpServletRequest('GET', '/')
         request.cookies = new Cookie('name', '"test"').tap { it.maxAge = -1; it.path = '/'; it.domain = 'ala.example' }
         def response = new MockHttpServletResponse()
-        def ctx = JEEContextFactory.INSTANCE.newContext(request, response)
+        def ctx = JEEContextFactory.INSTANCE.newContext(new JEEFrameworkParameters(request, response))
 
         when:
         cg.removeCookie(ctx)

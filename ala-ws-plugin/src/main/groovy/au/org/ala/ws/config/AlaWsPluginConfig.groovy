@@ -7,6 +7,7 @@ import au.org.ala.ws.tokens.TokenService
 import okhttp3.Interceptor
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.context.session.SessionStoreFactory
 import org.pac4j.oidc.config.OidcConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -42,12 +43,12 @@ class AlaWsPluginConfig {
     @Bean
     TokenService tokenService(
             @Autowired(required = false) OidcConfiguration oidcConfiguration,
-            @Autowired(required = false) SessionStore sessionStore,
+            @Autowired(required = false) SessionStoreFactory sessionStoreFactory,
             @Autowired TokenClient tokenClient
     ) {
         // note not injecting PAC4j Config here due to potential circular dependency
         new TokenService(oidcConfiguration,
-                sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
+                sessionStoreFactory, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens)
     }
 
 

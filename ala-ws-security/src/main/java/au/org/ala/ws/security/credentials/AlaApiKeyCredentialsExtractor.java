@@ -1,5 +1,6 @@
 package au.org.ala.ws.security.credentials;
 
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
@@ -31,16 +32,16 @@ public class AlaApiKeyCredentialsExtractor extends HeaderExtractor {
     }
 
     @Override
-    public Optional<Credentials> extract(final WebContext context, final SessionStore sessionStore) {
+    public Optional<Credentials> extract(final CallContext callContext) {
 
-        final Optional<Credentials> credentials = super.extract(context, sessionStore);
+        final Optional<Credentials> credentials = super.extract(callContext);
 
         if (credentials.isPresent()) {
             return credentials;
         }
 
         return alternativeHeaderExtractors.stream()
-                .map(alternativeHeaderExtractor -> alternativeHeaderExtractor.extract(context, sessionStore))
+                .map(alternativeHeaderExtractor -> alternativeHeaderExtractor.extract(callContext))
                 .flatMap(Optional::stream)
                 .findFirst();
     }
