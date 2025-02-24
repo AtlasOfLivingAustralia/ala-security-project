@@ -22,8 +22,11 @@ repositories {
     maven { url "https://nexus.ala.org.au/content/groups/public/" }
     mavenCentral()
 }
-
 java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+
     withJavadocJar()
     withSourcesJar()
 }

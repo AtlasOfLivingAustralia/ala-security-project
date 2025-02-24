@@ -15,6 +15,7 @@ import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.HttpConstants;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.pac4j.core.util.CommonHelper.assertNotBlank;
@@ -84,7 +86,7 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
     @Override
     protected void internalInit(final boolean forceReinit) {
         assertNotBlank("realmName", this.realmName);
-        defaultProfileDefinition(new JwtProfileDefinition());
+        setProfileDefinitionIfUndefined(new JwtProfileDefinition());
     }
 
     /**
@@ -111,7 +113,7 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
     public UserProfile validateToken(final String token) {
         final var credentials = new TokenCredentials(token);
         try {
-            validate(credentials, null, null);
+            validate(null, credentials);
         } catch (final HttpAction e) {
             throw new TechnicalException(e);
         } catch (final CredentialsException e) {
@@ -123,9 +125,11 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
     }
 
     @Override
-    public void validate(final Credentials cred, final WebContext context, final SessionStore sessionStore) {
+    public Optional<Credentials> validate(CallContext callContext, Credentials cred) {
         init();
 
+        final var context = callContext.webContext();
+        final var sessionStore = callContext.sessionStore();
         final var credentials = (TokenCredentials) cred;
         final var token = credentials.getToken();
         final JWT jwt;
@@ -183,18 +187,17 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
             throw new CredentialsException("Internal error parsing token: " + token, e);
         }
 
-        createJwtProfile(credentials, claimsSet, context, sessionStore);
-
+        createJwtProfile(credentials, claimsSet, callContext);
+        return Optional.of(credentials);
     }
 
     @SuppressWarnings("unchecked")
-    protected void createJwtProfile(final TokenCredentials credentials, final JWTClaimsSet claimSet, final WebContext context,
-                                    final SessionStore sessionStore) {
+    protected void createJwtProfile(final TokenCredentials credentials, final JWTClaimsSet claimSet, final CallContext callContext) {
 
         var subject = claimSet.getSubject();
         if (subject == null) {
             if (identifierGenerator != null) {
-                subject = identifierGenerator.generateValue(context, sessionStore);
+                subject = identifierGenerator.generateValue(callContext);
             }
             if (subject == null) {
                 throw new TechnicalException("The JWT must contain a subject or an id must be generated via the identifierGenerator");
@@ -219,8 +222,8 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
 
         final var roles = (List<String>) attributes.get(JwtGenerator.INTERNAL_ROLES);
         attributes.remove(JwtGenerator.INTERNAL_ROLES);
-        final var permissions = (List<String>) attributes.get(JwtGenerator.INTERNAL_PERMISSIONS);
-        attributes.remove(JwtGenerator.INTERNAL_PERMISSIONS);
+//        final var permissions = (List<String>) attributes.get(JwtGenerator.INTERNAL_PERMISSIONS);
+//        attributes.remove(JwtGenerator.INTERNAL_PERMISSIONS);
         final var linkedId = (String) attributes.get(JwtGenerator.INTERNAL_LINKEDID);
         attributes.remove(JwtGenerator.INTERNAL_LINKEDID);
 
@@ -231,9 +234,9 @@ public class JwtAuthenticator extends ProfileDefinitionAware implements Authenti
         if (roles != null) {
             profile.addRoles(roles);
         }
-        if (permissions != null) {
-            profile.addPermissions(permissions);
-        }
+//        if (permissions != null) {
+//            profile.addPermissions(permissions);
+//        }
         if (linkedId != null) {
             profile.setLinkedId(linkedId);
         }

@@ -1,6 +1,7 @@
 plugins {
     id( 'java-library' )
     id( 'maven-publish' )
+    id "io.freefair.lombok" version "6.6.3"
 }
 
 group 'au.org.ala'
@@ -14,6 +15,18 @@ repositories {
     mavenCentral()
 }
 
+//java {
+//    withJavadocJar()
+//    withSourcesJar()
+//    toolchain {
+//        languageVersion.set(JavaLanguageVersion.of(17))
+//    }
+//}
+
+lombok {
+    version = "1.18.34"
+}
+
 sourceSets {
     integrationTest {
         compileClasspath += main.output + test.output
@@ -24,16 +37,16 @@ sourceSets {
 }
 
 configurations {
-    integrationTestCompile.extendsFrom testCompile
+    integrationTestImplementation.extendsFrom testImplementation
     integrationTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
-    compileOnly group: 'org.projectlombok', name:'lombok', version: '1.16.12'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+//    compileOnly group: 'org.projectlombok', name:'lombok', version: '1.18.34'
+//    annotationProcessor 'org.projectlombok:lombok:1.18.34'
 
-    api group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.9.0'
-    api group: 'com.squareup.retrofit2', name: 'converter-moshi', version: '2.9.0'
+    api group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.11.0'
+    api group: 'com.squareup.retrofit2', name: 'converter-moshi', version: '2.11.0'
     api group: 'com.squareup.moshi', name: 'moshi', version: '1.8.0'
     api group: 'com.squareup.moshi', name: 'moshi-adapters', version: '1.8.0'
 
@@ -52,12 +65,12 @@ task integrationTest(type: Test) {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 

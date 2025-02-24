@@ -1,5 +1,6 @@
 package au.org.ala.pac4j.core.logout;
 
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.HttpConstants;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
@@ -31,8 +32,11 @@ public class CognitoLogoutActionBuilder implements LogoutActionBuilder {
     }
 
     @Override
-    public Optional<RedirectionAction> getLogoutAction(WebContext context, SessionStore sessionStore, UserProfile currentProfile, String targetUrl) {
+    public Optional<RedirectionAction> getLogoutAction(CallContext context, UserProfile currentProfile, String targetUrl) {
         final var logoutUrl = configuration.findLogoutUrl();
+        final var webContext = context.webContext();
+        final var sessionStore = context.sessionStore();
+
         if (CommonHelper.isNotBlank(logoutUrl) && currentProfile instanceof OidcProfile) {
             try {
                 final var completeLogoutUrl = UriComponentsBuilder.fromUriString(logoutUrl)
@@ -40,13 +44,13 @@ public class CognitoLogoutActionBuilder implements LogoutActionBuilder {
                         .queryParam("logout_uri", targetUrl)
                         .toUriString();
 
-                if (ajaxRequestResolver.isAjax(context, sessionStore)) {
-                    sessionStore.set(context, Pac4jConstants.REQUESTED_URL, null);
-                    context.setResponseHeader(HttpConstants.LOCATION_HEADER, completeLogoutUrl);
+                if (ajaxRequestResolver.isAjax(context)) {
+                    sessionStore.set(webContext, Pac4jConstants.REQUESTED_URL, null);
+                    webContext.setResponseHeader(HttpConstants.LOCATION_HEADER, completeLogoutUrl);
                     throw new ForbiddenAction();
                 }
 
-                return Optional.of(HttpActionHelper.buildRedirectUrlAction(context, completeLogoutUrl));
+                return Optional.of(HttpActionHelper.buildRedirectUrlAction(webContext, completeLogoutUrl));
             } catch (final RuntimeException e) {
                 throw new TechnicalException(e);
             }

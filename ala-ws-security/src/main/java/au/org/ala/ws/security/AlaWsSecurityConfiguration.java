@@ -2,29 +2,31 @@ package au.org.ala.ws.security;
 
 import au.org.ala.userdetails.UserDetailsClient;
 import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator;
-import au.org.ala.ws.security.authenticator.AlaIpWhitelistAuthenticator;
-import au.org.ala.ws.security.authenticator.AlaOidcAuthenticator;
+import au.org.ala.ws.security.authenticator.AlaJwtAuthenticator;
+import au.org.ala.ws.security.authenticator.IpAllowListAuthenticator;
 import au.org.ala.ws.security.client.AlaApiKeyClient;
 import au.org.ala.ws.security.client.AlaAuthClient;
-import au.org.ala.ws.security.client.AlaDirectClient;
-import au.org.ala.ws.security.client.AlaIpWhitelistClient;
-import au.org.ala.ws.security.client.AlaOidcClient;
 import au.org.ala.ws.security.credentials.AlaApiKeyCredentialsExtractor;
-import au.org.ala.ws.security.credentials.AlaOidcCredentialsExtractor;
+import au.org.ala.ws.security.profile.creator.AlaJwtProfileCreator;
 import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 import org.pac4j.core.authorization.generator.FromAttributesAuthorizationGenerator;
 import org.pac4j.core.client.Client;
+import org.pac4j.core.client.DirectClient;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.WebContextFactory;
-import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.context.session.SessionStoreFactory;
+import org.pac4j.core.credentials.authenticator.Authenticator;
 import org.pac4j.core.profile.creator.ProfileCreator;
-import org.pac4j.http.credentials.extractor.IpExtractor;
+import org.pac4j.http.client.direct.DirectBearerAuthClient;
+import org.pac4j.http.client.direct.IpClient;
+import org.pac4j.jee.adapter.JEEFrameworkAdapter;
 import org.pac4j.jee.context.JEEContextFactory;
-import org.pac4j.jee.context.session.JEESessionStore;
+import org.pac4j.jee.context.session.JEESessionStoreFactory;
+import org.pac4j.jwt.credentials.authenticator.JwtAuthenticator;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.profile.creator.OidcProfileCreator;
@@ -58,8 +60,8 @@ public class AlaWsSecurityConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SessionStore sessionStore() {
-        return JEESessionStore.INSTANCE;
+    public SessionStoreFactory sessionStoreFactory() {
+        return JEESessionStoreFactory.INSTANCE;
     }
 
     @Bean
@@ -70,10 +72,11 @@ public class AlaWsSecurityConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public Config pac4jConfig(List<Client> clients, SessionStore sessionStore, WebContextFactory webContextFactory) {
+    public Config pac4jConfig(List<Client> clients, WebContextFactory webContextFactory, SessionStoreFactory sessionStoreFactory) {
         Config config = new Config(clients);
+        JEEFrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config);
 
-        config.setSessionStore(sessionStore);
+        config.setSessionStoreFactory(sessionStoreFactory);
         config.setWebContextFactory(webContextFactory);
         return config;
     }
@@ -88,8 +91,11 @@ public class AlaWsSecurityConfiguration {
         oidcConfig.setClientId(jwtProperties.getClientId());
         oidcConfig.setConnectTimeout(jwtProperties.getConnectTimeoutMs());
         oidcConfig.setReadTimeout(jwtProperties.getReadTimeoutMs());
+        oidcConfig.setCallUserInfoEndpoint(jwtProperties.isCallUserInfoEndpoint());
 
         oidcConfig.setResourceRetriever(jwtResourceRetriever);
+
+        oidcConfig.init();
 
         return oidcConfig;
     }
@@ -98,55 +104,85 @@ public class AlaWsSecurityConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "security.jwt", name = "enabled")
     JWKSource<SecurityContext> jwkSource(OidcConfiguration oidcConfiguration) {
-        OIDCProviderMetadata providerMetadata = oidcConfiguration.findProviderMetadata();
+        oidcConfiguration.getOpMetadataResolver();
+        OIDCProviderMetadata providerMetadata = oidcConfiguration.getOpMetadataResolver().load();
         URL keySourceUrl;
         try {
             keySourceUrl = providerMetadata.getJWKSetURI().toURL();
         } catch (MalformedURLException e) {
             throw new RuntimeException("shouldn't happen", e);
         }
-        return new RemoteJWKSet<>(keySourceUrl, oidcConfiguration.findResourceRetriever());
+        return JWKSourceBuilder.create(keySourceUrl, oidcConfiguration.findResourceRetriever())
+                .cache(true)
+                .retrying(true)
+                .refreshAheadCache(true)
+                .retrying(true)
+                .outageTolerant(true)
+                .build();
     }
 
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty("security.jwt.enabled")
-    public AlaOidcClient getAlaOidcClient(OidcConfiguration oidcConfiguration, JWKSource<SecurityContext> jwkSource, CacheManager cacheManager) {
+    @Qualifier("alaClient")
+    public DirectBearerAuthClient alaOidcClient(OidcConfiguration oidcConfiguration, JWKSource<SecurityContext> jwkSource, CacheManager cacheManager) {
 
-        AlaOidcCredentialsExtractor credentialsExtractor = new AlaOidcCredentialsExtractor();
-        ProfileCreator profileCreator = new OidcProfileCreator(oidcConfiguration, new OidcClient());
 
-        AlaOidcAuthenticator authenticator = new AlaOidcAuthenticator(oidcConfiguration, profileCreator);
-        OIDCProviderMetadata providerMetadata = oidcConfiguration.findProviderMetadata();
-        authenticator.setIssuer(providerMetadata.getIssuer());
-        authenticator.setExpectedJWSAlgs(Set.copyOf(providerMetadata.getIDTokenJWSAlgs()));
+        OidcClient oidcClient = new OidcClient(oidcConfiguration);
 
-        authenticator.setKeySource(jwkSource);
-        authenticator.setAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.getRoleClaims(), jwtProperties.getPermissionClaims()));
+        OIDCProviderMetadata providerMetadata = oidcConfiguration.getOpMetadataResolver().load();
 
-        authenticator.setAcceptedAudiences(jwtProperties.getAcceptedAudiences());
+        ProfileCreator profileCreator;
+        if (jwtProperties.isUseAlaCustomProfileCreator()) {
+            var alaProfileCreator = new AlaJwtProfileCreator(oidcConfiguration, oidcClient);
 
-        authenticator.setUserIdClaim(jwtProperties.getUserIdClaim());
-        authenticator.setRequiredClaims(jwtProperties.getRequiredClaims());
-        authenticator.setProhibitedClaims(jwtProperties.getProhibitedClaims());
-        authenticator.setRequiredScopes(jwtProperties.getRequiredScopes());
+//            alaProfileCreator.setAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.getRoleClaims()));
+            alaProfileCreator.setUserIdClaim(jwtProperties.getUserIdClaim());
 
-        authenticator.setRolesFromAccessToken(jwtProperties.isRolesFromAccessToken());
-        if (authenticator.isRolesFromAccessToken()) {
-            authenticator.setAccessTokenRoleClaims(jwtProperties.getRoleClaims());
+            alaProfileCreator.setRolesFromAccessToken(jwtProperties.isRolesFromAccessToken());
+            if (alaProfileCreator.isRolesFromAccessToken()) {
+                alaProfileCreator.setAccessTokenRoleClaims(jwtProperties.getRoleClaims());
+            }
+
+            alaProfileCreator.setRolePrefix(jwtProperties.getRolePrefix());
+            alaProfileCreator.setRoleToUppercase(jwtProperties.isRoleToUppercase());
+
+            alaProfileCreator.setCacheManager(cacheManager);
+
+            profileCreator = alaProfileCreator;
+        } else {
+            profileCreator = new OidcProfileCreator(oidcConfiguration, oidcClient);
         }
 
-        authenticator.setRolePrefix(jwtProperties.getRolePrefix());
-        authenticator.setRoleToUppercase(jwtProperties.isRoleToUppercase());
+        Authenticator authenticator;
+        if (jwtProperties.isUseAlaCustomJwtAuthenticator()) {
+            var alaJwtAuthenticator = new AlaJwtAuthenticator();
+            alaJwtAuthenticator.setIssuer(providerMetadata.getIssuer());
+            alaJwtAuthenticator.setExpectedJWSAlgs(Set.copyOf(providerMetadata.getIDTokenJWSAlgs()));
+            alaJwtAuthenticator.setKeySource(jwkSource);
+            alaJwtAuthenticator.setAcceptedAudiences(jwtProperties.getAcceptedAudiences());
+            alaJwtAuthenticator.setRequiredClaims(jwtProperties.getRequiredClaims());
+            alaJwtAuthenticator.setProhibitedClaims(jwtProperties.getProhibitedClaims());
+            alaJwtAuthenticator.setRequiredScopes(jwtProperties.getRequiredScopes());
 
-        authenticator.setCacheManager(cacheManager);
 
-        return new AlaOidcClient(credentialsExtractor, authenticator);
+            authenticator = alaJwtAuthenticator;
+        } else {
+            authenticator = new JwtAuthenticator(jwtProperties.getSignatureConfigurations().stream().map(SignatureConfigurationProperties::toSignatureConfiguration).toList());
+        }
+
+        DirectBearerAuthClient client = new DirectBearerAuthClient(authenticator, profileCreator);
+        client.setAuthorizationGenerator(new FromAttributesAuthorizationGenerator(jwtProperties.getRoleClaims()));
+
+//        client.set
+
+        return client;
     }
 
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "security.apikey", name = "enabled")
+    @Qualifier("alaClient")
     public AlaApiKeyClient getAlaApiKeyClient(ApiKeyClient apiKeyClient, UserDetailsClient userDetailsClient) {
 
         AlaApiKeyCredentialsExtractor credentialsExtractor = new AlaApiKeyCredentialsExtractor();
@@ -163,19 +199,15 @@ public class AlaWsSecurityConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty("security.ip.whitelist")
-    public AlaIpWhitelistClient getAlaIpWhitelistClient() {
+    @Qualifier("alaClient")
+    public IpClient getAlaIpWhitelistClient() {
 
-        IpExtractor credentialsExtractor = new IpExtractor();
-
-        AlaIpWhitelistAuthenticator authenticator = new AlaIpWhitelistAuthenticator();
-        authenticator.setIpWhitelist(ipWhitelistProperties.getWhitelist());
-
-        return new AlaIpWhitelistClient(credentialsExtractor, authenticator);
+        return new IpClient(new IpAllowListAuthenticator(ipWhitelistProperties.getWhitelist()));
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public AlaAuthClient getAlaAuthClient(List<AlaDirectClient> authClients) {
+    public AlaAuthClient getAlaAuthClient(@Qualifier("alaClient") List<DirectClient> authClients) {
 
         AlaAuthClient authClient = new AlaAuthClient();
         authClient.setAuthClients(authClients);
