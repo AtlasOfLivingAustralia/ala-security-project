@@ -6,6 +6,7 @@ import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.credentials.extractor.OidcCredentialsExtractor;
+import org.pac4j.oidc.exceptions.OidcStateMismatchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,7 @@ public class CognitoOidcExtractor extends OidcCredentialsExtractor {
             return super.extract(context);
         } catch (TechnicalException te) {
 
-            if (te.getMessage().equals("State cannot be determined")) {
+            if (te instanceof OidcStateMismatchException || te.getMessage().equals("State cannot be determined")) {
                 logger.error("State not found in session, please check session configuration.");
                 // redirect to the authentication page
                 throw client.getRedirectionAction(context).get();
