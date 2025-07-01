@@ -104,7 +104,7 @@ class AlaSecurityInterceptor {
                     def scopes, roles
 
                     String[] requiredScopes = effectiveAnnotation.scopes() + scopesFromProperty(effectiveAnnotation.scopesFromProperty())
-                    String[] requiredRoles = effectiveAnnotation.roles()
+                    String[] requiredRoles = effectiveAnnotation.roles() + rolesFromProperty(effectiveAnnotation.rolesFromProperty())
 
                     if (requiredScopes) {
 
@@ -239,6 +239,16 @@ class AlaSecurityInterceptor {
 
     private String[] scopesFromProperty(String[] propertyScopes) {
         def retVal = propertyScopes?.collectMany {
+            grailsApplication.config.getProperty(it, List<String>, [])
+        }
+
+        String[] retArr = retVal?.toArray(new String[retVal.size()])
+        return  retArr ?: EMPTY_STRING_ARRAY
+    }
+
+
+    private String[] rolesFromProperty(String[] propertyRoles) {
+        def retVal = propertyRoles?.collectMany {
             grailsApplication.config.getProperty(it, List<String>, [])
         }
 

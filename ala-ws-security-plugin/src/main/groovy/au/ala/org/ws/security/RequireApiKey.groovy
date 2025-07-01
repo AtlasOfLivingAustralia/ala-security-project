@@ -59,5 +59,11 @@ import java.lang.annotation.Target
      */
     String[] scopesFromProperty() default []
 
+    /**
+     * Provide a Grails configuration property name to get the roles from.  Combined with security.jwt.roles and roles parameter
+     * @return
+     */
+    String[] rolesFromProperty() default []
+
     boolean useCustomFilter() default false
 }

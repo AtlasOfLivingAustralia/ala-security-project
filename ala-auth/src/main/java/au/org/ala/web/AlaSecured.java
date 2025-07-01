@@ -78,4 +78,10 @@ public @interface AlaSecured {
      * @return true to use forward instead of redirect
      */
     boolean forward() default false;
+
+    /**
+     * Load the roles from the Grails configuration property provided in this value.
+     * @return
+     */
+    String[] rolesFromProperty();
 }
