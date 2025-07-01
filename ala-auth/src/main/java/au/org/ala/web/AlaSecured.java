@@ -83,5 +83,5 @@ public @interface AlaSecured {
      * Load the roles from the Grails configuration property provided in this value.
      * @return
      */
-    String[] rolesFromProperty();
+    String[] rolesFromProperty() default {};
 }
