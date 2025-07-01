@@ -145,8 +145,10 @@ class AlaSecurityInterceptor {
                                     if (!scopesAuthorised && !effectiveAnnotation.eitherRolesOrScopes()) {
                                         log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
                                     }
-                                } else if (!(profile instanceof IpProfile || profile instanceof AlaApiUserProfile)) {
+                                } else if (profile instanceof IpProfile || profile instanceof AlaApiUserProfile) {
                                     // ip address and apikey user profiles are not required to have scopes
+                                    scopesAuthorised = true
+                                } else {
                                     log.info "Couldn't extract scopes from profile ${profile}"
                                     scopesAuthorised = false
                                 }
