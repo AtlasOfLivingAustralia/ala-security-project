@@ -25,7 +25,7 @@ class AlaSecuredInterceptor {
     }
 
     boolean before() {
-        def annotations = AnnotationMatcher.getAnnotation(grailsApplication, controllerNamespace, controllerName, actionName, AlaSecured)
+        def annotations = AnnotationMatcher.getAnnotation(grailsApplication, controllerNamespace, controllerName, actionName, AlaSecured, SkipAlaSecured)
         def effectiveAnnotation = annotations.effectiveAnnotation()
 
         if (effectiveAnnotation) {
