@@ -162,7 +162,7 @@ class AuthPac4jPluginConfig {
         def client = createOidcClientFromConfig(oidcConfiguration, authCookieGenerator)
         client.setName(DEFAULT_CLIENT)
         client.setCredentialsExtractor(new CognitoOidcExtractor(oidcConfiguration, client))
-        client.init()
+//        client.init()
         return client
     }
 
@@ -175,7 +175,7 @@ class AuthPac4jPluginConfig {
         config.init()
         def client = createOidcClientFromConfig(config, authCookieGenerator)
         client.setName(PROMPT_NONE_CLIENT)
-        client.init()
+//        client.init()
         return client
     }
 
