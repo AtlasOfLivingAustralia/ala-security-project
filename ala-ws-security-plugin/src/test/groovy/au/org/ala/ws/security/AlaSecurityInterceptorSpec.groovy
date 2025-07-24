@@ -557,6 +557,56 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         "action2" | UNAUTHORISED | false
     }
 
+    void "Test anyScope attribute"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet, ['app/scope'].toSet())}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass4", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | OK           | true
+    }
+
+    void "Test eitherRolesOrScopes attribute"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet, ['app/scope'].toSet())}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass4", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action3" | OK           | true
+    }
+
 
 }
 
@@ -604,6 +654,28 @@ class AnnotatedClass3Controller {
 
     @SkipApiKeyCheck
     def action3() {
+
+    }
+}
+
+class AnnotatedClass4Controller {
+    @RequireApiKey(scopes=['app/scope'], scopesFromProperty = ['custom.app.scopes'], anyScope = true)
+    def action1() {
+
+    }
+
+    @RequireApiKey(roles=['ROLE_ADMIN'], rolesFromProperty =  ['custom.app.roles'], anyRole = true)
+    def action2() {
+
+    }
+
+    @RequireApiKey(scopes=['app/scope'], roles=['ROLE_ADMIN'], eitherRolesOrScopes = true)
+    def action3() {
+
+    }
+
+    @SkipApiKeyCheck
+    def action4() {
 
     }
 }
