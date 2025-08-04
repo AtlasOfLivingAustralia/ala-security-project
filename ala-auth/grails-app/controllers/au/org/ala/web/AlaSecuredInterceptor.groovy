@@ -25,7 +25,7 @@ class AlaSecuredInterceptor {
     }
 
     boolean before() {
-        def annotations = AnnotationMatcher.getAnnotation(grailsApplication, controllerNamespace, controllerName, actionName, AlaSecured)
+        def annotations = AnnotationMatcher.getAnnotation(grailsApplication, controllerNamespace, controllerName, actionName, AlaSecured, SkipAlaSecured)
         def effectiveAnnotation = annotations.effectiveAnnotation()
 
         if (effectiveAnnotation) {
@@ -36,7 +36,7 @@ class AlaSecuredInterceptor {
                 throw new IllegalArgumentException("Only one of anyRole and notRoles should be specified")
             }
 
-            def roles = effectiveAnnotation.value()?.toList()
+            def roles = effectiveAnnotation.value()?.toList() + rolesFromProperty(effectiveAnnotation.rolesFromProperty())?.toList()
 
             if (effectiveAnnotation.anonymous() && securityPrimitives.isNotLoggedIn(request)) {
                 error = false
@@ -101,6 +101,18 @@ class AlaSecuredInterceptor {
 
     def getAction(AlaSecured a) {
         return a.redirectAction() ?: a.action()
+    }
+
+
+    private static final String[] EMPTY_STRING_ARRAY = []
+
+    private String[] rolesFromProperty(String[] propertyRoles) {
+        def retVal = propertyRoles?.collectMany {
+            grailsApplication.config.getProperty(it, List<String>, [])
+        }
+
+        String[] retArr = retVal?.toArray(new String[retVal.size()])
+        return  retArr ?: EMPTY_STRING_ARRAY
     }
 
 }
