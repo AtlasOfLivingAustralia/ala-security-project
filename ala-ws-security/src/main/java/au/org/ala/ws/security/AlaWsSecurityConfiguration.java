@@ -37,6 +37,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.jcache.JCacheCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -47,7 +48,7 @@ import java.util.List;
 import java.util.Set;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, ApiKeyProperties.class, IpWhitelistProperties.class})
+@EnableConfigurationProperties({ JwtProperties.class, ApiKeyProperties.class, IpWhitelistProperties.class })
 public class AlaWsSecurityConfiguration {
 
     private static final String JWT_CLIENT = "JwtClient";
@@ -84,7 +85,8 @@ public class AlaWsSecurityConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "security.jwt", name = "enabled")
-    public OidcConfiguration oidcConfiguration(@Qualifier("oidcResourceRetriever") ResourceRetriever jwtResourceRetriever) {
+    public OidcConfiguration oidcConfiguration(
+            @Qualifier("oidcResourceRetriever") ResourceRetriever jwtResourceRetriever) {
 
         OidcConfiguration oidcConfig = new OidcConfiguration();
         oidcConfig.setDiscoveryURI(jwtProperties.getDiscoveryUri());
@@ -220,7 +222,8 @@ public class AlaWsSecurityConfiguration {
     public FilterRegistrationBean<Pac4jProfileManagerHttpRequestWrapperFilter> pac4jHttpRequestWrapper(Config config) {
         FilterRegistrationBean<Pac4jProfileManagerHttpRequestWrapperFilter> filterRegistrationBean = new FilterRegistrationBean<>();
         filterRegistrationBean.setFilter(new Pac4jProfileManagerHttpRequestWrapperFilter(config));
-        filterRegistrationBean.setOrder(filterOrder() + 6);// This is to place this filter after the request wrapper filter in the ala-auth-plugin
+        filterRegistrationBean.setOrder(filterOrder() + 6);// This is to place this filter after the request wrapper
+                                                           // filter in the ala-auth-plugin
         filterRegistrationBean.setInitParameters(new LinkedHashMap<String, String>());
         filterRegistrationBean.addUrlPatterns("/*");
         return filterRegistrationBean;

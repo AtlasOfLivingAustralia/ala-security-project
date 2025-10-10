@@ -2,13 +2,11 @@ rootProject.name='ala-security-project'
 include 'userdetails-service-client'
 include 'ala-security-common'
 include 'ala-ws-security'
-include 'ala-ws-security-plugin'
+// include 'ala-ws-security-plugin'
 include 'ala-ws-spring-security'
-include 'ala-auth'
-include 'ala-ws-plugin'
+// include 'ala-auth'
+// include 'ala-ws-plugin'
 
-// in gradle 7.5+ this syntax will change
-enableFeaturePreview('VERSION_CATALOGS')
 dependencyResolutionManagement {
     versionCatalogs {
         pac4j {
@@ -24,7 +22,7 @@ dependencyResolutionManagement {
 //            alias('jee-support').to('org.pac4j:javaee-pac4j:7.1.0')
         }
         resilience4j {
-            alias('retry').to('io.github.resilience4j:resilience4j-retry:1.7.1')
+            library('retry', 'io.github.resilience4j:resilience4j-retry:1.7.1')
         }
     }
 }
