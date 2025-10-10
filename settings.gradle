@@ -10,11 +10,11 @@ include 'ala-ws-spring-security'
 dependencyResolutionManagement {
     versionCatalogs {
         pac4j {
-            alias('oidc').to('org.pac4j:pac4j-oidc:6.0.6')
-            alias('jwt').to('org.pac4j:pac4j-jwt:6.0.6')
-            alias('http').to('org.pac4j:pac4j-http:6.0.6')
-            alias('jee').to('org.pac4j:pac4j-javaee:6.0.6')
-            alias('jee-support').to('org.pac4j:javaee-pac4j:8.0.1')
+            library('oidc', 'org.pac4j:pac4j-oidc:6.0.6')
+            library('jwt', 'org.pac4j:pac4j-jwt:6.0.6')
+            library('http', 'org.pac4j:pac4j-http:6.0.6')
+            library('jee', 'org.pac4j:pac4j-javaee:6.0.6')
+            library('jee-support', 'org.pac4j:javaee-pac4j:8.0.1')
 //            alias('oidc').to('org.pac4j:pac4j-oidc:5.7.6')
 //            alias('jwt').to('org.pac4j:pac4j-jwt:5.7.6')
 //            alias('http').to('org.pac4j:pac4j-http:5.7.6')
