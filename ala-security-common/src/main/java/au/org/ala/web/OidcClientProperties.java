@@ -78,6 +78,11 @@ public class OidcClientProperties {
      */
     private Duration maximumRetryInterval = Duration.ofSeconds(30);
 
+    /**
+     * Whether to call the user info endpoint to while creating a profile.
+     */
+    private boolean callUserInfoEndpoint = true;
+
     private boolean cacheLastDiscoveryDocument = false;
     private String discoveryDocumentCache =  "/tmp/oidc-discovery-doc.json";
 
@@ -279,5 +284,13 @@ public class OidcClientProperties {
 
     public void setDiscoveryDocumentCache(String discoveryDocumentCache) {
         this.discoveryDocumentCache = discoveryDocumentCache;
+    }
+
+    public boolean isCallUserInfoEndpoint() {
+        return callUserInfoEndpoint;
+    }
+
+    public void setCallUserInfoEndpoint(boolean callUserInfoEndpoint) {
+        this.callUserInfoEndpoint = callUserInfoEndpoint;
     }
 }

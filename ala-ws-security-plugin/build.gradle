@@ -21,6 +21,12 @@ apply plugin:"org.grails.grails-gsp"
 //apply plugin:"maven"
 apply plugin:"maven-publish"
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 repositories {
     mavenLocal()
     maven { url "https://nexus.ala.org.au/content/groups/public/" }

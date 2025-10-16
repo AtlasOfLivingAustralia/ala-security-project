@@ -1,6 +1,7 @@
 package au.org.ala.pac4j.core.logout;
 
 import au.org.ala.pac4j.core.CookieGenerator;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.exception.http.RedirectionAction;
@@ -23,8 +24,8 @@ public class RemoveCookieLogoutActionBuilder implements LogoutActionBuilder {
     }
 
     @Override
-    public Optional<RedirectionAction> getLogoutAction(WebContext context, SessionStore sessionStore, UserProfile currentProfile, String targetUrl) {
-        cookieGenerator.removeCookie(context);
-        return delegate.getLogoutAction(context, sessionStore, currentProfile, targetUrl);
+    public Optional<RedirectionAction> getLogoutAction(CallContext callContext, UserProfile userProfile, String targetUrl) {
+        cookieGenerator.removeCookie(callContext.webContext());
+        return delegate.getLogoutAction(callContext, userProfile, targetUrl);
     }
 }

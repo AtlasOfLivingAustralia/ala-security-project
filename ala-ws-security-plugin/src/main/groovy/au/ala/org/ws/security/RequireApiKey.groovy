@@ -21,6 +21,27 @@ import java.lang.annotation.Target
     String redirectAction() default "index"
 
     /**
+     * If this is set to true, then only one of the roles or scopes needs to be present for the request to be allowed.
+     * If this is false, then both roles and scopes must be present.
+     * @return
+     */
+    boolean eitherRolesOrScopes() default false
+
+    /**
+     * If this is set to true, then only one of the roles needs to be present for the request to be allowed.
+     * If this is false, then all listed roles must be present.
+     * @return
+     */
+    boolean anyRole() default false
+
+    /**
+     * If this is set to true, then only one of the scopes needs to be present for the request to be allowed.
+     * If this is false, then all listed scopes must be present.
+     * @return
+     */
+    boolean anyScope() default false
+
+    /**
      * Only taken into account for JWT authentications
      * @return
      */
@@ -37,6 +58,12 @@ import java.lang.annotation.Target
      * @return
      */
     String[] scopesFromProperty() default []
+
+    /**
+     * Provide a Grails configuration property name to get the roles from.  Combined with security.jwt.roles and roles parameter
+     * @return
+     */
+    String[] rolesFromProperty() default []
 
     boolean useCustomFilter() default false
 }

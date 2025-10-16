@@ -21,10 +21,10 @@ apply plugin: 'maven-publish'
 group 'org.grails.plugins'
 
 repositories {
-    mavenLocal()
     maven { url "https://nexus.ala.org.au/content/groups/public/" }
     maven { url "https://repo.grails.org/grails/core" }
     mavenCentral()
+    mavenLocal()
 }
 
 configurations {
@@ -36,6 +36,12 @@ configurations {
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 //dependencyManagement {

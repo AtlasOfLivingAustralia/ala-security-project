@@ -1,6 +1,7 @@
 plugins {
     id( 'java-library' )
     id( 'maven-publish' )
+    id "io.freefair.lombok" version "6.6.3"
 }
 
 group 'au.org.ala'
@@ -9,6 +10,18 @@ repositories {
 //    mavenLocal()
     maven { url "https://nexus.ala.org.au/nexus/content/groups/public" }
     mavenCentral()
+}
+
+//java {
+//    withJavadocJar()
+//    withSourcesJar()
+//    toolchain {
+//        languageVersion.set(JavaLanguageVersion.of(17))
+//    }
+//}
+
+lombok {
+    version = "1.18.34"
 }
 
 sourceSets {
@@ -21,13 +34,14 @@ sourceSets {
 }
 
 configurations {
-    integrationTestCompile.extendsFrom testCompile
+    integrationTestImplementation.extendsFrom testImplementation
     integrationTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
-    compileOnly group: 'org.projectlombok', name:'lombok', version: '1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    compileOnly group: 'org.projectlombok', name:'lombok', version: '1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
 
     api group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.11.0'
     api group: 'com.squareup.retrofit2', name: 'converter-moshi', version: '2.11.0'

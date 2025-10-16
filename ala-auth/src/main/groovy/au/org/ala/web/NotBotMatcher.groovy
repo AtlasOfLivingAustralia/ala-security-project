@@ -1,7 +1,6 @@
 package au.org.ala.web
 
-import org.pac4j.core.context.WebContext
-import org.pac4j.core.context.session.SessionStore
+import org.pac4j.core.context.CallContext
 import org.pac4j.core.matching.matcher.Matcher
 
 /**
@@ -17,7 +16,9 @@ class NotBotMatcher implements Matcher {
     }
 
     @Override
-    boolean matches(WebContext context, SessionStore sessionStore) {
+    boolean matches(CallContext ctx) {
+        var context = ctx.webContext()
+
         def headerValue = context.getRequestHeader("User-Agent")
         def header = headerValue.orElseGet { "" }
         return !filterService.isFiltered(header)

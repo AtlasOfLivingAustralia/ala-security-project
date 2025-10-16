@@ -1,11 +1,9 @@
 package au.org.ala.ws.security;
 
+import org.pac4j.core.adapter.FrameworkAdapter;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.profile.ProfileManager;
-import org.pac4j.core.profile.factory.ProfileManagerFactory;
-import org.pac4j.core.util.FindBest;
-import org.pac4j.jee.context.JEEContextFactory;
-import org.pac4j.jee.context.session.JEESessionStore;
+import org.pac4j.jee.context.JEEFrameworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,16 +42,23 @@ public class Pac4jProfileManagerHttpRequestWrapperFilter extends HttpFilter {
         //  JWT profile? <- need to check this.
 //        var reqWrapperClass = getPac4jWrapperClass();
 //        var pac4jRequest = reqWrapperClass != null ? WebUtils.getNativeRequest(req, reqWrapperClass) :  null;
-        var sessionStore = FindBest.sessionStore(null, config, JEESessionStore.INSTANCE);
-        var webContextFactory = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE);
-        var profileManagerFactory = FindBest.profileManagerFactory(null, config, ProfileManagerFactory.DEFAULT);
+        FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config);
+
+//        var sessionStore = FindBest.sessionStore(null, config, JEESessionStore.INSTANCE);
+
+//        var webContextFactory = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE);
+//        var profileManagerFactory = FindBest.profileManagerFactory(null, config, ProfileManagerFactory.DEFAULT);
+        var params = new JEEFrameworkParameters(req, res);
+        var profileManagerFactory = config.getProfileManagerFactory();
+        var webContextFactory = config.getWebContextFactory();
+        var sessionStore = config.getSessionStoreFactory().newSessionStore(params);
 
         chain.doFilter(
                 new Pac4jProfileManagerHttpRequestWrapper(
                         req,
                         profileManager != null ?
                                 profileManager :
-                                profileManagerFactory.apply(webContextFactory.newContext(req, res), sessionStore)),
+                                profileManagerFactory.apply(webContextFactory.newContext(params), sessionStore)),
                 res);
     }
 
