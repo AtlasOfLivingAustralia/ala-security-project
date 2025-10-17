@@ -1,10 +1,15 @@
 package au.org.ala.ws.security.client;
 
 import org.pac4j.core.client.BaseClient;
+import org.pac4j.core.client.DirectClient;
+import org.pac4j.core.client.IndirectClient;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.HttpConstants;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
+import org.pac4j.core.exception.CredentialsException;
+import org.pac4j.core.exception.http.HttpAction;
 import org.pac4j.core.exception.http.RedirectionAction;
 import org.pac4j.core.profile.UserProfile;
 import org.pac4j.core.util.CommonHelper;
@@ -28,56 +33,60 @@ public class AlaAuthClient extends BaseClient {
         CommonHelper.assertNotBlank("realmName", this.realmName);
     }
 
-    @Override
-    protected Optional<Credentials> retrieveCredentials(final WebContext context, final SessionStore sessionStore) {
+    public Optional<Credentials> getCredentials(CallContext ctx) {
+        this.init();
 
-        if (authClients == null || authClients.isEmpty()) {
-            return Optional.empty();
-        }
+        try {
+            for (BaseClient authClient : authClients) {
 
 
-        // set the www-authenticate in case of error
-        context.setResponseHeader(HttpConstants.AUTHENTICATE_HEADER, HttpConstants.BEARER_HEADER_PREFIX + "realm=\"" + realmName + "\"");
 
-        for (BaseClient authClient : authClients) {
-
-            final Optional<Credentials> optCredentials = authClient.getCredentials(context, sessionStore);
-            if (optCredentials.isPresent()) {
-
-                return optCredentials;
+                final Optional<Credentials> optCredentials = authClient.getCredentials(ctx);
+                if (optCredentials.isPresent()) {
+                    this.checkCredentials(ctx, optCredentials.get());
+                    return optCredentials;
+                }
             }
-
+        } catch (CredentialsException e) {
+            this.logger.info("Failed to retrieve credentials: {}", e.getMessage());
+            this.logger.debug("Failed to retrieve credentials", e);
         }
-
-
         return Optional.empty();
     }
 
     @Override
-    public Optional<RedirectionAction> getRedirectionAction(WebContext context, SessionStore sessionStore) {
+    public HttpAction processLogout(CallContext callContext, Credentials credentials) {
+        this.init();
+        // TODO This is probably wrong
+        for (BaseClient authClient : authClients) {
+            if (authClient instanceof IndirectClient) {
+                final HttpAction action = ((IndirectClient) authClient).processLogout(callContext, credentials);
+                if (action != null) {
+                    return action;
+                }
+            }
+        }
+        throw new UnsupportedOperationException("Direct clients cannot process logout");
+    }
+
+    @Override
+    public Optional<RedirectionAction> getRedirectionAction(CallContext callContext) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Credentials> getCredentials(WebContext context, SessionStore sessionStore) {
-
-        init();
-        return retrieveCredentials(context, sessionStore);
-    }
-
-    @Override
-    public Optional<RedirectionAction> getLogoutAction(WebContext context, SessionStore sessionStore, UserProfile currentProfile, String targetUrl) {
+    public Optional<RedirectionAction> getLogoutAction(CallContext callContext, UserProfile userProfile, String s) {
         return Optional.empty();
     }
 
-    public List<AlaDirectClient> getAuthClients() {
+    public List<DirectClient> getAuthClients() {
         return authClients;
     }
 
-    public void setAuthClients(List<AlaDirectClient> authClients) {
+    public void setAuthClients(List<DirectClient> authClients) {
         this.authClients = authClients;
     }
 
     private String realmName = Pac4jConstants.DEFAULT_REALM_NAME;
-    private List<AlaDirectClient> authClients;
+    private List<DirectClient> authClients;
 }

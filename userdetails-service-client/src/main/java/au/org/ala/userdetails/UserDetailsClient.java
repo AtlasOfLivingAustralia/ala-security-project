@@ -2,7 +2,7 @@ package au.org.ala.userdetails;
 
 import au.org.ala.web.UserDetails;
 import com.squareup.moshi.Moshi;
-import com.squareup.moshi.Rfc3339DateJsonAdapter;
+import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.java.Log;

@@ -1,8 +1,8 @@
 package au.org.ala.pac4j.core.logout;
 
+import org.apache.commons.lang3.StringUtils;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.HttpConstants;
-import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.core.exception.http.ForbiddenAction;
 import org.pac4j.core.exception.http.RedirectionAction;
@@ -19,6 +19,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Optional;
 
+import static java.util.Objects.requireNonNull;
+
 public class CognitoLogoutActionBuilder implements LogoutActionBuilder {
 
     protected OidcConfiguration configuration;
@@ -26,27 +28,30 @@ public class CognitoLogoutActionBuilder implements LogoutActionBuilder {
     private AjaxRequestResolver ajaxRequestResolver = new DefaultAjaxRequestResolver();
 
     public CognitoLogoutActionBuilder(final OidcConfiguration configuration) {
-        CommonHelper.assertNotNull("configuration", configuration);
+        requireNonNull(configuration, "configuration cannot be null");
         this.configuration = configuration;
     }
 
     @Override
-    public Optional<RedirectionAction> getLogoutAction(WebContext context, SessionStore sessionStore, UserProfile currentProfile, String targetUrl) {
+    public Optional<RedirectionAction> getLogoutAction(CallContext context, UserProfile currentProfile, String targetUrl) {
         final var logoutUrl = configuration.findLogoutUrl();
-        if (CommonHelper.isNotBlank(logoutUrl) && currentProfile instanceof OidcProfile) {
+        final var webContext = context.webContext();
+        final var sessionStore = context.sessionStore();
+
+        if (StringUtils.isNotBlank(logoutUrl) && currentProfile instanceof OidcProfile) {
             try {
                 final var completeLogoutUrl = UriComponentsBuilder.fromUriString(logoutUrl)
                         .queryParam("client_id", configuration.getClientId())
                         .queryParam("logout_uri", targetUrl)
                         .toUriString();
 
-                if (ajaxRequestResolver.isAjax(context, sessionStore)) {
-                    sessionStore.set(context, Pac4jConstants.REQUESTED_URL, null);
-                    context.setResponseHeader(HttpConstants.LOCATION_HEADER, completeLogoutUrl);
+                if (ajaxRequestResolver.isAjax(context)) {
+                    sessionStore.set(webContext, Pac4jConstants.REQUESTED_URL, null);
+                    webContext.setResponseHeader(HttpConstants.LOCATION_HEADER, completeLogoutUrl);
                     throw new ForbiddenAction();
                 }
 
-                return Optional.of(HttpActionHelper.buildRedirectUrlAction(context, completeLogoutUrl));
+                return Optional.of(HttpActionHelper.buildRedirectUrlAction(webContext, completeLogoutUrl));
             } catch (final RuntimeException e) {
                 throw new TechnicalException(e);
             }

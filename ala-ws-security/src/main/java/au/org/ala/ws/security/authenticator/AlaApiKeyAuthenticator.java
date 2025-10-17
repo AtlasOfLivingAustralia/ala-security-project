@@ -5,8 +5,7 @@ import au.org.ala.web.UserDetails;
 import au.org.ala.ws.security.ApiKeyClient;
 import au.org.ala.ws.security.CheckApiKeyResult;
 import au.org.ala.ws.security.profile.AlaApiUserProfile;
-import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.TokenCredentials;
 import org.pac4j.core.credentials.authenticator.Authenticator;
@@ -21,6 +20,7 @@ import retrofit2.Response;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.Optional;
 
 public class AlaApiKeyAuthenticator extends InitializableObject implements Authenticator {
 
@@ -33,7 +33,7 @@ public class AlaApiKeyAuthenticator extends InitializableObject implements Authe
     }
 
     @Override
-    public void validate(Credentials credentials, WebContext context, SessionStore sessionStore) {
+    public Optional<Credentials> validate(CallContext context, Credentials credentials) {
 
         init();
 
@@ -52,6 +52,7 @@ public class AlaApiKeyAuthenticator extends InitializableObject implements Authe
             alaApiKeyCredentials.setUserProfile(alaApiUserProfile);
         }
 
+        return Optional.of(alaApiKeyCredentials);
     }
 
     public AlaApiUserProfile fetchUserProfile(final String apiKey) throws IOException {

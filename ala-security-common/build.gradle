@@ -1,7 +1,7 @@
 plugins {
-    id("org.springframework.boot") version "2.7.0" apply false
+    id("org.springframework.boot") version "3.4.0" apply false
     id("io.spring.dependency-management") version "1.0.13.RELEASE"
-
+//    id 'java'
     id 'groovy'
     id 'java-library'
 
@@ -24,6 +24,10 @@ repositories {
 }
 
 java {
+//    toolchain {
+//        languageVersion.set(JavaLanguageVersion.of(17))
+//    }
+
     withJavadocJar()
     withSourcesJar()
 }
@@ -40,7 +44,7 @@ dependencies {
     implementation 'org.springframework:spring-context-support'
 
 //    compileOnly 'org.springframework.boot:spring-boot-starter-security'
-    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api'
 
 //    api project(':userdetails-service-client')
 
@@ -63,9 +67,10 @@ dependencies {
     testImplementation "org.spockframework:spock-junit4"  // you can remove this if your code does not rely on old JUnit 4 rules
 
     testImplementation "org.mockito:mockito-core:4.6.1"
-    testImplementation 'javax.servlet:javax.servlet-api:4.0.1'
+//    testImplementation 'javax.servlet:javax.servlet-api:4.0.1'
+    testImplementation 'jakarta.servlet:jakarta.servlet-api:6.2.0'
     testImplementation "co.infinum:retromock:1.1.1"
-    testImplementation 'com.squareup.retrofit2:retrofit-mock:2.9.0'
+    testImplementation 'com.squareup.retrofit2:retrofit-mock:2.11.0'
 }
 
 test {

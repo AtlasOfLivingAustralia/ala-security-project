@@ -10,11 +10,16 @@ include 'ala-ws-spring-security'
 dependencyResolutionManagement {
     versionCatalogs {
         pac4j {
-            library('oidc', 'org.pac4j:pac4j-oidc:5.7.1')
-            library('jwt', 'org.pac4j:pac4j-jwt:5.7.1')
-            library('http', 'org.pac4j:pac4j-http:5.7.1')
-            library('jee', 'org.pac4j:pac4j-jakartaee:5.7.1')
-            library('jee-support', 'org.pac4j:jakartaee-pac4j:7.1.0')
+            library('oidc', 'org.pac4j:pac4j-oidc:6.2.0')
+            library('jwt', 'org.pac4j:pac4j-jwt:6.2.0')
+            library('http', 'org.pac4j:pac4j-http:6.2.0')
+            library('jee', 'org.pac4j:pac4j-jakartaee:6.2.0')
+            library('jee-support', 'org.pac4j:pac4j-jakartaee:6.2.0')
+//            alias('oidc').to('org.pac4j:pac4j-oidc:5.7.6')
+//            alias('jwt').to('org.pac4j:pac4j-jwt:5.7.6')
+//            alias('http').to('org.pac4j:pac4j-http:5.7.6')
+//            alias('jee').to('org.pac4j:pac4j-javaee:5.7.6')
+//            alias('jee-support').to('org.pac4j:javaee-pac4j:7.1.0')
         }
         resilience4j {
             library('retry', 'io.github.resilience4j:resilience4j-retry:1.7.1')

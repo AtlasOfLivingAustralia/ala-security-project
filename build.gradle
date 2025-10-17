@@ -1,3 +1,11 @@
 allprojects {
     version=projectVersion
 }
+
+subprojects {
+    plugins.withType(JavaPlugin) {
+        javadoc {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+}

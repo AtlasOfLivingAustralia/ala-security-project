@@ -84,20 +84,20 @@ public class AlaApiUserProfile implements AlaUserProfile {
         this.roles.addAll(roles);
     }
 
-    @Override
-    public void addPermission(String permission) {
-
-    }
-
-    @Override
-    public void addPermissions(Collection<String> permissions) {
-
-    }
-
-    @Override
-    public Set<String> getPermissions() {
-        return Set.of();
-    }
+//    @Override
+//    public void addPermission(String permission) {
+//
+//    }
+//
+//    @Override
+//    public void addPermissions(Collection<String> permissions) {
+//
+//    }
+//
+//    @Override
+//    public Set<String> getPermissions() {
+//        return Set.of();
+//    }
 
     @Override
     public boolean isRemembered() {
