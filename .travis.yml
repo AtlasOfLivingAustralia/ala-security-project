@@ -2,7 +2,7 @@ language: groovy
 sudo: false
 jdk:
 - openjdk21
-dist: jammy
+dist: focal
 
 branches:
   only:
