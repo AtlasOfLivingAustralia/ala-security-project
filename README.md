@@ -2,6 +2,9 @@
 Java libraries and Grails plugins for authentication and authorization with backwards compatibility to previous
 ALA plugins
 
+[![Build Status](https://app.travis-ci.com/AtlasOfLivingAustralia/ala-security-project.svg?branch=develop)](https://app.travis-ci.com/AtlasOfLivingAustralia/ala-security-project)
+
+
 Usage
 -----
 
