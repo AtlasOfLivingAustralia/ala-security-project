@@ -1,8 +1,7 @@
 language: groovy
 sudo: false
 jdk:
-- openjdk21
-dist: focal
+- temurin
 
 branches:
   only:
