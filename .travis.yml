@@ -2,6 +2,8 @@ language: groovy
 sudo: false
 jdk:
 - openjdk21
+dist: jammy
+
 branches:
   only:
   - master
