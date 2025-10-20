@@ -1,9 +1,9 @@
 # arch: amd64
+version: ~> 1.0 # validates .travis.yml syntax
+os: linux
 language: groovy
-# sudo: false
 dist: jammy
-jdk:
-  - openjdk21
+jdk: openjdk21
 
 branches:
   only:
