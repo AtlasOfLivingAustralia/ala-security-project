@@ -2,7 +2,7 @@
 version: ~> 1.0 # validates .travis.yml syntax
 os: linux
 language: groovy
-dist: jammy
+dist: noble
 jdk: openjdk21
 
 branches:
