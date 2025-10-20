@@ -1,6 +1,7 @@
-arch: amd64
+# arch: amd64
 language: groovy
-sudo: false
+# sudo: false
+dist: jammy
 jdk:
   - openjdk21
 
@@ -20,7 +21,7 @@ cache:
   - $HOME/.gradle/wrapper/
 before_install:
 - export TZ=Australia/Canberra
-- sudo apt install --reinstall ca-certificates
+#- sudo apt install --reinstall ca-certificates
 after_success:
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && ./gradlew clean && travis_retry ./gradlew publish'
 env:
