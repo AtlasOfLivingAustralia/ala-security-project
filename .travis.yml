@@ -19,6 +19,9 @@ cache:
 before_install:
 - export TZ=Australia/Canberra
 # Work-around for Travis OpenJDK 21 issue
+- echo "Removing BellSoft repository due to certificate not trusted issue..."
+- sudo rm -f /etc/apt/sources.list.d/bellsoft.list
+- sudo apt-get update
 - wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | sudo apt-key add -
 - echo "deb https://packages.adoptium.net/artifactory/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/adoptium.list
 - sudo apt-get update
