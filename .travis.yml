@@ -19,8 +19,16 @@ cache:
 before_install:
 - export TZ=Australia/Canberra
 # Work-around for Travis OpenJDK 21 issue
-- echo "Removing BellSoft repository due to certificate not trusted issue..."
-- sudo rm -f /etc/apt/sources.list.d/bellsoft.list
+- echo "Attempting to remove the problematic BellSoft repository file..."
+- |
+  # Find the repository file by looking for its content (the unique URL) and delete it.
+  REPO_FILE=$(sudo grep -l 'apt.bell-sw.com' /etc/apt/sources.list.d/*)
+  if [ ! -z "$REPO_FILE" ]; then
+  sudo rm -f "$REPO_FILE"
+  echo "Successfully removed repository file: $REPO_FILE"
+  else
+  echo "BellSoft repository file not found in sources.list.d. Proceeding."
+  fi
 - sudo apt-get update
 - wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | sudo apt-key add -
 - echo "deb https://packages.adoptium.net/artifactory/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/adoptium.list
