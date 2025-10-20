@@ -1,7 +1,8 @@
+arch: amd64
 language: groovy
 sudo: false
 jdk:
-- temurin21
+  - openjdk21
 
 branches:
   only:
