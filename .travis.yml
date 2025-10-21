@@ -29,6 +29,7 @@ before_install:
 - export JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64
 - export PATH=$JAVA_HOME/bin:$PATH
 - java -version
+- gradle -version
 after_success:
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && ./gradlew clean && travis_retry ./gradlew publish'
 env:
