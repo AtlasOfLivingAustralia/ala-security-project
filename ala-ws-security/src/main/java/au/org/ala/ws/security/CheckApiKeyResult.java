@@ -1,6 +1,16 @@
 package au.org.ala.ws.security;
 
 public class CheckApiKeyResult {
+
+    public CheckApiKeyResult() {
+    }
+
+    public CheckApiKeyResult(boolean valid, String userId, String email) {
+        this.valid = valid;
+        this.userId = userId;
+        this.email = email;
+    }
+
     public boolean getValid() {
         return valid;
     }
@@ -32,4 +42,12 @@ public class CheckApiKeyResult {
     private boolean valid;
     private String userId;
     private String email;
+
+    public static CheckApiKeyResult valid(String userId, String email) {
+        return new CheckApiKeyResult(true, userId, email);
+    }
+
+    public static CheckApiKeyResult invalid() {
+        return new CheckApiKeyResult(false, null, null);
+    }
 }

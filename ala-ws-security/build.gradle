@@ -45,7 +45,7 @@ dependencies {
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
     compileOnly "org.springframework.boot:spring-boot-configuration-processor"
-
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 
     implementation 'org.springframework.boot:spring-boot-autoconfigure'
     implementation 'org.springframework:spring-web'
@@ -68,6 +68,8 @@ dependencies {
     api(pac4j.http)
     api(pac4j.jee)
     api(pac4j.jee.support)
+//    library('jee', 'org.pac4j:pac4j-jakartaee:6.2.0')
+//    library('jee-support', 'org.pac4j:pac4j-jakartaee:6.2.0')
 
     // mandatory dependencies for using Spock
 //    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
@@ -78,7 +80,7 @@ dependencies {
     testImplementation platform("org.spockframework:spock-bom:2.3-groovy-3.0")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"  // you can remove this if your code does not rely on old JUnit 4 rules
-
+    testImplementation 'org.springframework:spring-test:6.1.13'
     testImplementation "org.mockito:mockito-core:4.6.1"
     testImplementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
     testImplementation "co.infinum:retromock:1.1.1"
