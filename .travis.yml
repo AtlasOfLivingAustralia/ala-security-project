@@ -18,6 +18,18 @@ cache:
   - $HOME/.gradle/wrapper/
 before_install:
 - export TZ=Australia/Canberra
+# Work-around for Travis OpenJDK 21 issue
+- echo "Removing BellSoft URL from /etc/apt/sources.list..."
+- sudo sed -i '/apt\.bell-sw\.com/d' /etc/apt/sources.list
+- sudo apt-get update
+- wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | sudo apt-key add -
+- echo "deb https://packages.adoptium.net/artifactory/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/adoptium.list
+- sudo apt-get update
+- sudo apt-get install -y temurin-21-jdk
+- export JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64
+- export PATH=$JAVA_HOME/bin:$PATH
+- java -version
+- ./gradlew --version
 after_success:
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && ./gradlew clean && travis_retry ./gradlew publish'
 env:
