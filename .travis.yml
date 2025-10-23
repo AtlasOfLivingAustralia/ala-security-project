@@ -1,12 +1,12 @@
 language: groovy
-sudo: false
+dist: jammy
 jdk:
 - openjdk21
 branches:
   only:
   - master
   - develop
-  - /^epic\/.*\/develop$/
+  - /^epic\/.*\/develop.*/
   - /^feature.*$/
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
