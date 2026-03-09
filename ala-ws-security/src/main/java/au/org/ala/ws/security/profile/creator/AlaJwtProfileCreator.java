@@ -283,7 +283,7 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
             var accessToken = credentials.toAccessToken();
             if (accessToken != null) {
                 var accessTokenJwt = JWTParser.parse(accessToken.getValue());
-                var accessTokenClaims = configuration.getOpMetadataResolver().getTokenValidator().validate(accessTokenJwt, nonce);
+                var accessTokenClaims = configuration.getOpMetadataResolver().getTokenValidator().validateIdToken(accessTokenJwt, nonce);
 
                 // add attributes of the access token if they don't already exist
                 addClaimsToProfile(profile, accessTokenClaims);
