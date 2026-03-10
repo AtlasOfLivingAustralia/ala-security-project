@@ -23,6 +23,7 @@ import groovy.time.TimeCategory
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.util.GrailsApplicationAttributes
 import org.pac4j.core.config.Config
+import org.pac4j.core.credentials.authenticator.Authenticator
 import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.profile.creator.ProfileCreator
 import org.pac4j.http.client.direct.DirectBearerAuthClient
@@ -82,7 +83,9 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         jwtAuthenticator.requiredClaims = []
         jwtAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
 
-        oidcClient = new DirectBearerAuthClient(jwtAuthenticator, new AlaJwtProfileCreator(oidcConfiguration, new OidcClient()))
+        OidcClient mockClient = Mock()
+        mockClient.getAuthenticator() >> Authenticator.NEVER_VALIDATE // The initialisation of the OidcProfileCreator fails an assertion without this.
+        oidcClient = new DirectBearerAuthClient(jwtAuthenticator, new AlaJwtProfileCreator(oidcConfiguration, mockClient))
         apiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
         ipAllowListClient = new IpClient(new IpAllowListAuthenticator(['2.2.2.2', '3.3.3.3']))
 
