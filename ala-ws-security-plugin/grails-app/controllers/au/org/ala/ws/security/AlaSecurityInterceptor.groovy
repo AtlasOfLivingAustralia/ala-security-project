@@ -79,6 +79,9 @@ class AlaSecurityInterceptor {
 
             boolean authenticated = false
             boolean authorised = true
+            boolean scopesAuthorised
+            boolean rolesAuthorised
+            boolean customFilterAuthorised
 
             try {
 
@@ -98,20 +101,20 @@ class AlaSecurityInterceptor {
                     def pair = optCredentials.get()
                     def client = pair.left
                     Credentials credentials = pair.right
+                    def scopes, roles
 
                     String[] requiredScopes = effectiveAnnotation.scopes() + scopesFromProperty(effectiveAnnotation.scopesFromProperty())
+                    String[] requiredRoles = effectiveAnnotation.roles() + rolesFromProperty(effectiveAnnotation.rolesFromProperty())
 
                     if (requiredScopes) {
 
                         if (credentials instanceof OidcCredentials) {
 
-                            def scopes = (credentials as OidcCredentials).toAccessToken().scope
+                            scopes = (credentials as OidcCredentials).toAccessToken().scope
 
-                            authorised = requiredScopes.every { String requiredScope ->
-                                scopeContains(scopes, requiredScope)
-                            }
+                            scopesAuthorised = scopesAllowed(scopes, effectiveAnnotation)
 
-                            if (!authorised) {
+                            if (!scopesAuthorised && !effectiveAnnotation.eitherRolesOrScopes()) {
                                 log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
                             }
                         } else if (credentials instanceof TokenCredentials) {
@@ -122,13 +125,11 @@ class AlaSecurityInterceptor {
                             // without having to load the full profile via the profile creator.
                             if (profile instanceof JwtProfile && jwtProperties.scopesFromAccessToken) {
 
-                                def scopes = (profile as JwtProfile).getAttribute(OidcConfiguration.SCOPE) ?: (profile as JwtProfile).getAuthenticationAttribute(OidcConfiguration.SCOPE)
+                                scopes = (profile as JwtProfile).getAttribute(OidcConfiguration.SCOPE) ?: (profile as JwtProfile).getAuthenticationAttribute(OidcConfiguration.SCOPE)
 
-                                authorised = requiredScopes.every { String requiredScope ->
-                                    scopeContains(scopes, requiredScope)
-                                }
+                                scopesAuthorised = scopesAllowed(scopes, effectiveAnnotation)
 
-                                if (!authorised) {
+                                if (!scopesAuthorised && !effectiveAnnotation.eitherRolesOrScopes()) {
                                     log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
                                 }
                             } else {
@@ -137,19 +138,19 @@ class AlaSecurityInterceptor {
                                 optProfile = client.getUserProfile(callContext, credentials)
                                 profile = optProfile.orElse(null)
                                 if (profile instanceof OidcProfile) {
-                                    def scopes = (profile as OidcProfile).getAccessToken().scope
+                                    scopes = (profile as OidcProfile).getAccessToken().scope
 
-                                    authorised = requiredScopes.every { String requiredScope ->
-                                        scopeContains(scopes, requiredScope)
-                                    }
+                                    scopesAuthorised = scopesAllowed(scopes, effectiveAnnotation)
 
-                                    if (!authorised) {
+                                    if (!scopesAuthorised && !effectiveAnnotation.eitherRolesOrScopes()) {
                                         log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
                                     }
-                                } else if (!(profile instanceof IpProfile || profile instanceof AlaApiUserProfile)) {
+                                } else if (profile instanceof IpProfile || profile instanceof AlaApiUserProfile) {
                                     // ip address and apikey user profiles are not required to have scopes
+                                    scopesAuthorised = true
+                                } else {
                                     log.info "Couldn't extract scopes from profile ${profile}"
-                                    authorised = false
+                                    scopesAuthorised = false
                                 }
 
                             }
@@ -159,45 +160,54 @@ class AlaSecurityInterceptor {
                     if (effectiveAnnotation.useCustomFilter()) {
 
                             if (requireApiKeyFilter) {
-                                authorised &= requireApiKeyFilter.isAllowed(effectiveAnnotation, this)
+                                customFilterAuthorised = requireApiKeyFilter.isAllowed(effectiveAnnotation, this)
                             } else {
                                 log.error "useCustomFilter is true but no filter is available"
+                                customFilterAuthorised = false
                             }
+                    } else {
+                        customFilterAuthorised = true
                     }
 
-                    if (authorised) {
+                    if (optProfile.isEmpty()) {
+                        optProfile = client.getUserProfile(callContext, credentials)
+                    }
 
-                        if (optProfile.isEmpty()) {
-                            optProfile = client.getUserProfile(callContext, credentials)
+                    if (optProfile.isPresent()) {
+
+                        UserProfile userProfile = optProfile.get()
+
+                        ProfileManager profileManager = config.profileManagerFactory.apply(context, sessionStore)
+                        profileManager.setConfig(config)
+
+                        profileManager.save(
+                                client.getSaveProfileInSession(context, userProfile),
+                                userProfile,
+                                client.isMultiProfile(context, userProfile)
+                        )
+
+                        roles = userProfile.roles
+
+                        rolesAuthorised = rolesAllowed(roles, effectiveAnnotation)
+
+                        if (!rolesAuthorised && !effectiveAnnotation.eitherRolesOrScopes()) {
+                            log.info "user profile roles '${roles}' is missing required scopes ${requiredRoles}"
                         }
+                    } else if (effectiveAnnotation.roles()) {
 
-                        if (optProfile.isPresent()) {
+                        rolesAuthorised = false
+                        log.info "no user profile available missing roles"
+                    }
 
-                            UserProfile userProfile = optProfile.get()
-
-                            ProfileManager profileManager = config.profileManagerFactory.apply(context, sessionStore)
-                            profileManager.setConfig(config)
-
-                            profileManager.save(
-                                    client.getSaveProfileInSession(context, userProfile),
-                                    userProfile,
-                                    client.isMultiProfile(context, userProfile)
-                            )
-
-                            String[] requiredRoles = effectiveAnnotation.roles()
-
-                            if (requiredRoles) {
-                                authorised = requiredRoles.every() { String requiredRole -> userProfile.roles.contains(requiredRole) }
-
-                                if (!authorised) {
-                                    log.info "user profile roles '${userProfile.roles}' is missing required scopes ${requiredRoles}"
-                                }
-                            }
-                        } else if (effectiveAnnotation.roles()) {
-
-                            authorised = false
-                            log.info "no user profile available missing roles"
+                    if (effectiveAnnotation.eitherRolesOrScopes()) {
+                        authorised = scopesAuthorised || rolesAuthorised && customFilterAuthorised
+                        if (!authorised) {
+                            log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
+                            log.info "user profile roles '${roles}' is missing required scopes ${requiredRoles}"
+                            log.info "eitherRolesOrScopes is true but neither scopes nor roles are authorised"
                         }
+                    } else {
+                        authorised = scopesAuthorised && rolesAuthorised && customFilterAuthorised
                     }
                 } else {
 
@@ -238,6 +248,16 @@ class AlaSecurityInterceptor {
         return  retArr ?: EMPTY_STRING_ARRAY
     }
 
+
+    private String[] rolesFromProperty(String[] propertyRoles) {
+        def retVal = propertyRoles?.collectMany {
+            grailsApplication.config.getProperty(it, List<String>, [])
+        }
+
+        String[] retArr = retVal?.toArray(new String[retVal.size()])
+        return  retArr ?: EMPTY_STRING_ARRAY
+    }
+
     /**
      * Executed after the action executes but prior to view rendering
      *
@@ -249,6 +269,44 @@ class AlaSecurityInterceptor {
      * Executed after view rendering completes
      */
     void afterView() {}
+
+    boolean scopesAllowed(Object scopeObj, RequireApiKey effectiveAnnotation) {
+
+        if (!scopeObj || !effectiveAnnotation) {
+            return true
+        }
+
+        String[] requiredScopes = effectiveAnnotation.scopes() + scopesFromProperty(effectiveAnnotation.scopesFromProperty())
+
+        if (requiredScopes.length == 0) {
+            return true
+        }
+
+        if (effectiveAnnotation.anyScope()) {
+            return requiredScopes.any { scopeContains(scopeObj, it) }
+        } else {
+            return requiredScopes.every { scopeContains(scopeObj, it) }
+        }
+    }
+
+    boolean rolesAllowed(Set<String> roles, RequireApiKey effectiveAnnotation) {
+
+        if (!effectiveAnnotation) {
+            return true
+        }
+
+        String[] requiredRoles = effectiveAnnotation.roles()
+
+        if (requiredRoles.length == 0) {
+            return true
+        }
+
+        if (effectiveAnnotation.anyRole()) {
+            return requiredRoles.any { roles.contains(it) }
+        } else {
+            return requiredRoles.every { roles.contains(it) }
+        }
+    }
 
     boolean scopeContains(Object scopeObj, String requiredScope) {
         if (scopeObj instanceof String) {

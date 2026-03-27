@@ -2,17 +2,20 @@
 Java libraries and Grails plugins for authentication and authorization with backwards compatibility to previous
 ALA plugins
 
+[![Build Status](https://app.travis-ci.com/AtlasOfLivingAustralia/ala-security-project.svg?branch=develop)](https://app.travis-ci.com/AtlasOfLivingAustralia/ala-security-project)
+
+
 Usage
 -----
 
-The current version of these libraries is: `6.2.0`.
+The current version of these libraries is: `7.0.1`.
 
 To ensure that various plugins and libraries and self-consistent, a project should use the same version for
 each of the plugins and libraries that it consumes, eg for a Grails project:
 
 `gradle.properties`:
 ```gradle.properties
-alaSecurityLibsVersion=6.2.0
+alaSecurityLibsVersion=7.0.1
 ```
 
 `build.gradle`:

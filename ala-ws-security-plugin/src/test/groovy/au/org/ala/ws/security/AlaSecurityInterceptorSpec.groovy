@@ -23,6 +23,7 @@ import groovy.time.TimeCategory
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.util.GrailsApplicationAttributes
 import org.pac4j.core.config.Config
+import org.pac4j.core.credentials.authenticator.Authenticator
 import org.pac4j.core.exception.CredentialsException
 import org.pac4j.core.profile.creator.ProfileCreator
 import org.pac4j.http.client.direct.DirectBearerAuthClient
@@ -82,7 +83,9 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         jwtAuthenticator.requiredClaims = []
         jwtAuthenticator.keySource = new ImmutableJWKSet<SecurityContext>(jwkSet)
 
-        oidcClient = new DirectBearerAuthClient(jwtAuthenticator, new AlaJwtProfileCreator(oidcConfiguration, new OidcClient()))
+        OidcClient mockClient = Mock()
+        mockClient.getAuthenticator() >> Authenticator.NEVER_VALIDATE // The initialisation of the OidcProfileCreator fails an assertion without this.
+        oidcClient = new DirectBearerAuthClient(jwtAuthenticator, new AlaJwtProfileCreator(oidcConfiguration, mockClient))
         apiKeyClient = new AlaApiKeyClient(new AlaApiKeyCredentialsExtractor(), alaApiKeyAuthenticator)
         ipAllowListClient = new IpClient(new IpAllowListAuthenticator(['2.2.2.2', '3.3.3.3']))
 
@@ -557,6 +560,56 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         "action2" | UNAUTHORISED | false
     }
 
+    void "Test anyScope attribute"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet, ['app/scope'].toSet())}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass4", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action1" | OK           | true
+    }
+
+    void "Test eitherRolesOrScopes attribute"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet, ['app/scope'].toSet())}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass4", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | responseCode | before
+        "action3" | OK           | true
+    }
+
 
 }
 
@@ -604,6 +657,28 @@ class AnnotatedClass3Controller {
 
     @SkipApiKeyCheck
     def action3() {
+
+    }
+}
+
+class AnnotatedClass4Controller {
+    @RequireApiKey(scopes=['app/scope'], scopesFromProperty = ['custom.app.scopes'], anyScope = true)
+    def action1() {
+
+    }
+
+    @RequireApiKey(roles=['ROLE_ADMIN'], rolesFromProperty =  ['custom.app.roles'], anyRole = true)
+    def action2() {
+
+    }
+
+    @RequireApiKey(scopes=['app/scope'], roles=['ROLE_ADMIN'], eitherRolesOrScopes = true)
+    def action3() {
+
+    }
+
+    @SkipApiKeyCheck
+    def action4() {
 
     }
 }
