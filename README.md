@@ -8,14 +8,14 @@ ALA plugins
 Usage
 -----
 
-The current version of these libraries is: `7.0.1`.
+The current version of these libraries is: `7.1.0`.
 
 To ensure that various plugins and libraries and self-consistent, a project should use the same version for
 each of the plugins and libraries that it consumes, eg for a Grails project:
 
 `gradle.properties`:
 ```gradle.properties
-alaSecurityLibsVersion=7.0.1
+alaSecurityLibsVersion=7.1.0
 ```
 
 `build.gradle`:
