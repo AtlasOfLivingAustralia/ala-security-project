@@ -129,7 +129,7 @@ class TokenService {
 
     private OidcCredentials getOrRefreshToken() {
 
-        long now = System.currentTimeSeconds() - expiryWindow
+        long now = System.currentTimeSeconds() + expiryWindow
 
         def lifetime = cachedCredentialsLifetime
         if (lifetime == 0 || now >= lifetime) {
