@@ -155,6 +155,8 @@ class AlaSecurityInterceptor {
 
                             }
                         }
+                    } else {
+                        scopesAuthorised = true
                     }
 
                     if (effectiveAnnotation.useCustomFilter()) {
