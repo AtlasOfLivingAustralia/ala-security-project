@@ -201,7 +201,7 @@ class AlaSecurityInterceptor {
                     }
 
                     if (effectiveAnnotation.eitherRolesOrScopes()) {
-                        authorised = (scopesAuthorised || rolesAuthorised) && customFilterAuthorised
+                        authorised = ((requiredScopes && scopesAuthorised) || (requiredRoles && rolesAuthorised) || (!requiredScopes && !requiredRoles)) && customFilterAuthorised
                         if (!authorised) {
                             if (!scopesAuthorised && !rolesAuthorised) {
                                 log.info "eitherRolesOrScopes is true but neither is authorized:"
