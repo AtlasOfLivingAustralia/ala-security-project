@@ -242,9 +242,10 @@ class AlaSecurityInterceptor {
 
     private String[] scopesFromProperty(String[] propertyScopes) {
         def retVal = propertyScopes?.collectMany {
-            def scopes = grailsApplication.config.getProperty(it, List<String>, [])
-            if (!scopes) {
+            def scopes = grailsApplication.config.getProperty(it, List<String>, null)
+            if (scopes == null) {
                 log.warn "No scopes found for property '${it}', this is likely a configuration issue and may result in requests being incorrectly allowed or denied. Please check your configuration and ensure the property is set and contains the expected scopes."
+                scopes = []
             }
             scopes
         }
@@ -256,9 +257,10 @@ class AlaSecurityInterceptor {
 
     private String[] rolesFromProperty(String[] propertyRoles) {
         def retVal = propertyRoles?.collectMany {
-            def roles = grailsApplication.config.getProperty(it, List<String>, [])
-            if (!roles) {
+            def roles = grailsApplication.config.getProperty(it, List<String>, null)
+            if (roles == null) {
                 log.warn "No roles found for property '${it}', this is likely a configuration issue and may result in requests being incorrectly allowed or denied. Please check your configuration and ensure the property is set and contains the expected roles."
+                roles = []
             }
             roles
         }

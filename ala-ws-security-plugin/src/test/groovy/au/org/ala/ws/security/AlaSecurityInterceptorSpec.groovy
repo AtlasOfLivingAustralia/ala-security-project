@@ -618,22 +618,19 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
         AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
 
-        apiKeyClient.authenticator = Stub(AlaApiKeyAuthenticator) {
-            validate(_, _) >> { args ->
-                if (args[1].token == 'valid') {
-                    def profile = new AlaApiUserProfile(email: 'email@test.com', givenName: 'first_name', familyName: 'last_name')
-                    profile.roles = userRoles as Set
-                    profile.addAttribute('scope', userScopes)
-                    args[1].userProfile = profile
-                    return Optional.of(args[1])
-                } else {
-                    throw new CredentialsException("invalid apikey: '${args[1].token}'")
-                }
-            }
-        }
+        // Configure profile creator to extract roles from access token
+        def alaJwtProfileCreator = (AlaJwtProfileCreator) oidcClient.profileCreator
+        def originalRolesFromAccessToken = alaJwtProfileCreator.rolesFromAccessToken
+        def originalRoleClaims = alaJwtProfileCreator.accessTokenRoleClaims
+        alaJwtProfileCreator.rolesFromAccessToken = true
+        alaJwtProfileCreator.accessTokenRoleClaims = ['role']
 
         when:
-        request.addHeader("apiKey", "valid")
+        def claims = generateClaims(userScopes as Set)
+        if (userRoles) {
+            claims.claim('role', userRoles)
+        }
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet, claims.build())}")
 
         request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
         request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
@@ -644,10 +641,15 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         result == before
         response.status == responseCode
 
+        cleanup:
+        alaJwtProfileCreator.rolesFromAccessToken = originalRolesFromAccessToken
+        alaJwtProfileCreator.accessTokenRoleClaims = originalRoleClaims
+
         where:
         action    | userRoles       | userScopes    | responseCode | before
         "action6" | ['ROLE_USER']   | []            | OK           | true  // Role OK, Scope fail, Filter OK
         "action6" | []              | ['app/scope'] | OK           | true  // Role fail, Scope OK, Filter OK
+        "action6" | []              | []            | FORBIDDEN    | false // Role fail, Scope fail, Filter OK
         "action5" | ['ROLE_ADMIN']  | []            | FORBIDDEN    | false // Role OK, Scope fail, Filter fail
         "action5" | []              | ['app/scope'] | FORBIDDEN    | false // Role fail, Scope OK, Filter fail
     }
@@ -663,6 +665,27 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
         when:
         request.addHeader("apiKey", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedMethod')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'securedAction')
+        withRequest(controller: "annotatedMethod", action: "securedAction")
+        def result = interceptor.before()
+
+        then:
+        result == true
+        response.status == OK
+    }
+
+    void "Secured methods should be accessible when given a valid JWT and no scopes are specified on the annotation"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedMethodController)
+
+        AnnotatedMethodController controller = new AnnotatedMethodController()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet)}")
 
         request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedMethod')
         request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'securedAction')
