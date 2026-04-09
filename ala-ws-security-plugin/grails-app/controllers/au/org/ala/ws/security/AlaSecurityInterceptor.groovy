@@ -203,9 +203,11 @@ class AlaSecurityInterceptor {
                     if (effectiveAnnotation.eitherRolesOrScopes()) {
                         authorised = (scopesAuthorised || rolesAuthorised) && customFilterAuthorised
                         if (!authorised) {
-                            log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
-                            log.info "user profile roles '${roles}' is missing required roles ${requiredRoles}"
-                            log.info "eitherRolesOrScopes is true but neither scopes nor roles are authorised"
+                            if (!scopesAuthorised && !rolesAuthorised) {
+                                log.info "eitherRolesOrScopes is true but neither is authorized:"
+                                log.info "access_token scopes '${scopes}' is missing required scopes ${requiredScopes}"
+                                log.info "user profile roles '${roles}' is missing required roles ${requiredRoles}"
+                            }
                         }
                     } else {
                         authorised = scopesAuthorised && rolesAuthorised && customFilterAuthorised
