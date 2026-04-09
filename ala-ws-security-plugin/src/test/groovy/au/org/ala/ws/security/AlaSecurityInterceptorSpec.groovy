@@ -14,7 +14,6 @@ import au.org.ala.ws.security.profile.creator.AlaJwtProfileCreator
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
-import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.oauth2.sdk.id.Issuer
 import grails.testing.web.interceptor.InterceptorUnitTest
@@ -106,7 +105,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
                 @Override
                 boolean isAllowed(RequireApiKey annotation, ServletAttributes servletAttributes) {
-                    return servletAttributes.actionName == 'action1'
+                    return servletAttributes.actionName == 'action1' || servletAttributes.actionName == 'action6'
                 }
             })
         }
@@ -121,6 +120,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
     Closure doWithConfig() {{ config ->
         config.custom.app.scopes = ['read:userdetails']
         config.custom.app.scopes2 = []
+        config.custom.app.roles = ['ROLE_USER']
     }}
 
     void "All methods of a controller annotated with RequireApiKey at the class level should be protected"() {
@@ -610,6 +610,133 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         "action3" | OK           | true
     }
 
+    void "Test eitherRolesOrScopes with useCustomFilter"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        apiKeyClient.authenticator = Stub(AlaApiKeyAuthenticator) {
+            validate(_, _) >> { args ->
+                if (args[1].token == 'valid') {
+                    def profile = new AlaApiUserProfile(email: 'email@test.com', givenName: 'first_name', familyName: 'last_name')
+                    profile.roles = userRoles as Set
+                    profile.addAttribute('scope', userScopes)
+                    args[1].userProfile = profile
+                    return Optional.of(args[1])
+                } else {
+                    throw new CredentialsException("invalid apikey: '${args[1].token}'")
+                }
+            }
+        }
+
+        when:
+        request.addHeader("apiKey", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass4", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action    | userRoles       | userScopes    | responseCode | before
+        "action6" | ['ROLE_USER']   | []            | OK           | true  // Role OK, Scope fail, Filter OK
+        "action6" | []              | ['app/scope'] | OK           | true  // Role fail, Scope OK, Filter OK
+        "action5" | ['ROLE_ADMIN']  | []            | FORBIDDEN    | false // Role OK, Scope fail, Filter fail
+        "action5" | []              | ['app/scope'] | FORBIDDEN    | false // Role fail, Scope OK, Filter fail
+    }
+
+
+    void "Secured methods should be accessible when given a valid key and no scopes are specified on the annotation"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedMethodController)
+
+        AnnotatedMethodController controller = new AnnotatedMethodController()
+
+        when:
+        request.addHeader("apiKey", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedMethod')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'securedAction')
+        withRequest(controller: "annotatedMethod", action: "securedAction")
+        def result = interceptor.before()
+
+        then:
+        result == true
+        response.status == OK
+    }
+
+    void "Secured methods should be accessible when given a valid key and the required roles are from a configuration property"() {
+        setup:
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        // need to re-wire because setup() already happened
+        apiKeyClient.authenticator = Stub(AlaApiKeyAuthenticator) {
+            validate(_, _) >> { args ->
+                if (args[1].token == 'valid') {
+                    def profile = new AlaApiUserProfile(email: 'email@test.com', givenName: 'first_name', familyName: 'last_name')
+                    profile.roles = ['ROLE_USER'] as Set
+                    args[1].userProfile = profile
+                    return Optional.of(args[1])
+                } else {
+                    throw new CredentialsException("invalid apikey: '${args[1].token}'")
+                }
+            }
+        }
+
+        when:
+        request.addHeader("apiKey", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'action2')
+        withRequest(controller: "annotatedClass4", action: "action2")
+        def result = interceptor.before()
+
+        then:
+        result == true
+        response.status == OK
+    }
+
+    void "Secured methods should be inaccessible when given a valid key but the user does not have the required roles from properties"() {
+        setup:
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        // need to re-wire because setup() already happened
+        apiKeyClient.authenticator = Stub(AlaApiKeyAuthenticator) {
+            validate(_, _) >> { args ->
+                if (args[1].token == 'valid') {
+                    def profile = new AlaApiUserProfile(email: 'email@test.com', givenName: 'first_name', familyName: 'last_name')
+                    profile.roles = ['ROLE_OTHER'] as Set
+                    args[1].userProfile = profile
+                    return Optional.of(args[1])
+                } else {
+                    throw new CredentialsException("invalid apikey: '${args[1].token}'")
+                }
+            }
+        }
+
+        when:
+        request.addHeader("apiKey", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'action2')
+        withRequest(controller: "annotatedClass4", action: "action2")
+        def result = interceptor.before()
+
+        then:
+        result == false
+        response.status == FORBIDDEN
+    }
 
 }
 
@@ -674,6 +801,16 @@ class AnnotatedClass4Controller {
 
     @RequireApiKey(scopes=['app/scope'], roles=['ROLE_ADMIN'], eitherRolesOrScopes = true)
     def action3() {
+
+    }
+
+    @RequireApiKey(scopes=['app/scope'], roles=['ROLE_USER'], eitherRolesOrScopes = true, useCustomFilter = true)
+    def action6() {
+
+    }
+
+    @RequireApiKey(scopes=['app/scope'], roles=['ROLE_ADMIN'], eitherRolesOrScopes = true, useCustomFilter = true)
+    def action5() {
 
     }
 
