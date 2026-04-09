@@ -14,7 +14,6 @@ import au.org.ala.ws.security.profile.creator.AlaJwtProfileCreator
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
-import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.oauth2.sdk.id.Issuer
 import grails.testing.web.interceptor.InterceptorUnitTest
@@ -106,7 +105,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
 
                 @Override
                 boolean isAllowed(RequireApiKey annotation, ServletAttributes servletAttributes) {
-                    return servletAttributes.actionName == 'action1'
+                    return servletAttributes.actionName == 'action1' || servletAttributes.actionName == 'action6'
                 }
             })
         }
@@ -121,6 +120,7 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
     Closure doWithConfig() {{ config ->
         config.custom.app.scopes = ['read:userdetails']
         config.custom.app.scopes2 = []
+        config.custom.app.roles = ['ROLE_USER']
     }}
 
     void "All methods of a controller annotated with RequireApiKey at the class level should be protected"() {
@@ -610,6 +610,211 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         "action3" | OK           | true
     }
 
+    void "Test eitherRolesOrScopes with useCustomFilter"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        // Configure profile creator to extract roles from access token
+        def alaJwtProfileCreator = (AlaJwtProfileCreator) oidcClient.profileCreator
+        def originalRolesFromAccessToken = alaJwtProfileCreator.rolesFromAccessToken
+        def originalRoleClaims = alaJwtProfileCreator.accessTokenRoleClaims
+        alaJwtProfileCreator.rolesFromAccessToken = true
+        alaJwtProfileCreator.accessTokenRoleClaims = ['role']
+
+        when:
+        def claims = generateClaims(userScopes as Set)
+        if (userRoles) {
+            claims.claim('role', userRoles)
+        }
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet, claims.build())}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass4", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        cleanup:
+        alaJwtProfileCreator.rolesFromAccessToken = originalRolesFromAccessToken
+        alaJwtProfileCreator.accessTokenRoleClaims = originalRoleClaims
+
+        where:
+        action    | userRoles       | userScopes    | responseCode | before
+        "action6" | ['ROLE_USER']   | []            | OK           | true  // Role OK, Scope fail, Filter OK
+        "action6" | []              | ['app/scope'] | OK           | true  // Role fail, Scope OK, Filter OK
+        "action6" | []              | []            | FORBIDDEN    | false // Role fail, Scope fail, Filter OK
+        "action5" | ['ROLE_ADMIN']  | []            | FORBIDDEN    | false // Role OK, Scope fail, Filter fail
+        "action5" | []              | ['app/scope'] | FORBIDDEN    | false // Role fail, Scope OK, Filter fail
+    }
+
+    void "Test eitherRolesOrScopes combinations"() {
+        setup:
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        // Configure profile creator to extract roles from access token
+        def alaJwtProfileCreator = (AlaJwtProfileCreator) oidcClient.profileCreator
+        def originalRolesFromAccessToken = alaJwtProfileCreator.rolesFromAccessToken
+        def originalRoleClaims = alaJwtProfileCreator.accessTokenRoleClaims
+        alaJwtProfileCreator.rolesFromAccessToken = true
+        alaJwtProfileCreator.accessTokenRoleClaims = ['role']
+
+        when:
+        def claims = generateClaims(userScopes as Set)
+        if (userRoles) {
+            claims.claim('role', userRoles)
+        }
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet, claims.build())}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "annotatedClass4", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == expectedResult
+        response.status == (expectedResult ? OK : FORBIDDEN)
+
+        cleanup:
+        alaJwtProfileCreator.rolesFromAccessToken = originalRolesFromAccessToken
+        alaJwtProfileCreator.accessTokenRoleClaims = originalRoleClaims
+
+        where:
+        action          | userRoles     | userScopes    | expectedResult
+        // Case 1: requiredScopes = empty, requiredRoles = empty
+        "actionEither1" | []            | []            | true
+        "actionEither1" | ['ROLE_USER'] | ['app/scope'] | true
+
+        // Case 2: requiredScopes = empty, requiredRoles = ['ROLE_USER']
+        "actionEither2" | ['ROLE_USER'] | []            | true
+        "actionEither2" | []            | ['app/scope'] | false // requiredRoles is NOT empty, so roles must be authorized
+        "actionEither2" | []            | []            | false
+
+        // Case 3: requiredScopes = ['app/scope'], requiredRoles = empty
+        "actionEither3" | []            | ['app/scope'] | true
+        "actionEither3" | ['ROLE_USER'] | []            | false // requiredScopes is NOT empty, so scopes must be authorized
+        "actionEither3" | []            | []            | false
+
+        // Case 4: requiredScopes = ['app/scope'], requiredRoles = ['ROLE_USER']
+        "actionEither4" | ['ROLE_USER'] | []            | true
+        "actionEither4" | []            | ['app/scope'] | true
+        "actionEither4" | ['ROLE_USER'] | ['app/scope'] | true
+        "actionEither4" | []            | []            | false
+    }
+
+
+    void "Secured methods should be accessible when given a valid key and no scopes are specified on the annotation"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedMethodController)
+
+        AnnotatedMethodController controller = new AnnotatedMethodController()
+
+        when:
+        request.addHeader("apiKey", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedMethod')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'securedAction')
+        withRequest(controller: "annotatedMethod", action: "securedAction")
+        def result = interceptor.before()
+
+        then:
+        result == true
+        response.status == OK
+    }
+
+    void "Secured methods should be accessible when given a valid JWT and no scopes are specified on the annotation"() {
+        setup:
+        // need to do this because grailsApplication.controllerClasses is empty in the filter when run from the unit test
+        // unless we manually add the dummy controller class used in this test
+        grailsApplication.addArtefact("Controller", AnnotatedMethodController)
+
+        AnnotatedMethodController controller = new AnnotatedMethodController()
+
+        when:
+        request.addHeader("Authorization", "Bearer ${generateJwt(jwkSet)}")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedMethod')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'securedAction')
+        withRequest(controller: "annotatedMethod", action: "securedAction")
+        def result = interceptor.before()
+
+        then:
+        result == true
+        response.status == OK
+    }
+
+    void "Secured methods should be accessible when given a valid key and the required roles are from a configuration property"() {
+        setup:
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        // need to re-wire because setup() already happened
+        apiKeyClient.authenticator = Stub(AlaApiKeyAuthenticator) {
+            validate(_, _) >> { args ->
+                if (args[1].token == 'valid') {
+                    def profile = new AlaApiUserProfile(email: 'email@test.com', givenName: 'first_name', familyName: 'last_name')
+                    profile.roles = ['ROLE_USER'] as Set
+                    args[1].userProfile = profile
+                    return Optional.of(args[1])
+                } else {
+                    throw new CredentialsException("invalid apikey: '${args[1].token}'")
+                }
+            }
+        }
+
+        when:
+        request.addHeader("apiKey", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'action2')
+        withRequest(controller: "annotatedClass4", action: "action2")
+        def result = interceptor.before()
+
+        then:
+        result == true
+        response.status == OK
+    }
+
+    void "Secured methods should be inaccessible when given a valid key but the user does not have the required roles from properties"() {
+        setup:
+        grailsApplication.addArtefact("Controller", AnnotatedClass4Controller)
+        AnnotatedClass4Controller controller = new AnnotatedClass4Controller()
+
+        // need to re-wire because setup() already happened
+        apiKeyClient.authenticator = Stub(AlaApiKeyAuthenticator) {
+            validate(_, _) >> { args ->
+                if (args[1].token == 'valid') {
+                    def profile = new AlaApiUserProfile(email: 'email@test.com', givenName: 'first_name', familyName: 'last_name')
+                    profile.roles = ['ROLE_OTHER'] as Set
+                    args[1].userProfile = profile
+                    return Optional.of(args[1])
+                } else {
+                    throw new CredentialsException("invalid apikey: '${args[1].token}'")
+                }
+            }
+        }
+
+        when:
+        request.addHeader("apiKey", "valid")
+
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'annotatedClass4')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, 'action2')
+        withRequest(controller: "annotatedClass4", action: "action2")
+        def result = interceptor.before()
+
+        then:
+        result == false
+        response.status == FORBIDDEN
+    }
 
 }
 
@@ -674,6 +879,36 @@ class AnnotatedClass4Controller {
 
     @RequireApiKey(scopes=['app/scope'], roles=['ROLE_ADMIN'], eitherRolesOrScopes = true)
     def action3() {
+
+    }
+
+    @RequireApiKey(scopes=['app/scope'], roles=['ROLE_USER'], eitherRolesOrScopes = true, useCustomFilter = true)
+    def action6() {
+
+    }
+
+    @RequireApiKey(scopes=['app/scope'], roles=['ROLE_ADMIN'], eitherRolesOrScopes = true, useCustomFilter = true)
+    def action5() {
+
+    }
+
+    @RequireApiKey(eitherRolesOrScopes = true)
+    def actionEither1() {
+
+    }
+
+    @RequireApiKey(roles=['ROLE_USER'], eitherRolesOrScopes = true)
+    def actionEither2() {
+
+    }
+
+    @RequireApiKey(scopes=['app/scope'], eitherRolesOrScopes = true)
+    def actionEither3() {
+
+    }
+
+    @RequireApiKey(scopes=['app/scope'], roles=['ROLE_USER'], eitherRolesOrScopes = true)
+    def actionEither4() {
 
     }
 
