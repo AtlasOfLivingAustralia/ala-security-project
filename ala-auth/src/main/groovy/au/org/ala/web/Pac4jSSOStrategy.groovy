@@ -10,8 +10,8 @@ import org.pac4j.jee.context.JEEContextFactory
 import org.pac4j.jee.context.JEEFrameworkParameters
 import org.pac4j.jee.util.Pac4JHttpServletRequestWrapper
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 class Pac4jSSOStrategy implements SSOStrategy {
 

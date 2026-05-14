@@ -6,7 +6,7 @@ import groovy.util.logging.Slf4j
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.util.UriComponentsBuilder
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 /**
  * CAS based implementation of the generic auth service methods.

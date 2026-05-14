@@ -1,6 +1,6 @@
 package au.org.ala.web
 
-import org.jasig.cas.client.authentication.UrlPatternMatcherStrategy
+import org.apereo.cas.client.authentication.UrlPatternMatcherStrategy
 
 import java.util.regex.Pattern
 

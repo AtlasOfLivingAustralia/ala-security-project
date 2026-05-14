@@ -2,17 +2,17 @@ package au.org.ala.web
 
 import groovy.util.logging.Slf4j
 import org.grails.web.servlet.mvc.GrailsWebRequest
-import org.jasig.cas.client.Protocol
-import org.jasig.cas.client.authentication.AuthenticationFilter
-import org.jasig.cas.client.authentication.AuthenticationRedirectStrategy
-import org.jasig.cas.client.authentication.DefaultAuthenticationRedirectStrategy
-import org.jasig.cas.client.authentication.GatewayResolver
-import org.jasig.cas.client.authentication.UrlPatternMatcherStrategy
-import org.jasig.cas.client.util.CommonUtils
-import org.jasig.cas.client.validation.Assertion
+import org.apereo.cas.client.Protocol
+import org.apereo.cas.client.authentication.AuthenticationFilter
+import org.apereo.cas.client.authentication.AuthenticationRedirectStrategy
+import org.apereo.cas.client.authentication.DefaultAuthenticationRedirectStrategy
+import org.apereo.cas.client.authentication.GatewayResolver
+import org.apereo.cas.client.authentication.UrlPatternMatcherStrategy
+import org.apereo.cas.client.util.CommonUtils
+import org.apereo.cas.client.validation.Assertion
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @Slf4j
 class CasSSOStrategy implements SSOStrategy {

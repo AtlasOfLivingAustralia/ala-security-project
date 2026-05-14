@@ -64,7 +64,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 
-import javax.servlet.DispatcherType
+import jakarta.servlet.DispatcherType
 import java.util.regex.Pattern
 
 import static org.pac4j.core.authorization.authorizer.IsAnonymousAuthorizer.isAnonymous
