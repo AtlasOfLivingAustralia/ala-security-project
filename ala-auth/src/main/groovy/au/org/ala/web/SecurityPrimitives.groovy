@@ -2,7 +2,7 @@ package au.org.ala.web
 
 import grails.core.GrailsApplication
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 class SecurityPrimitives {
 

@@ -3,18 +3,20 @@ buildscript {
         mavenLocal()
         maven { url "https://nexus.ala.org.au/content/groups/public/" }
         maven { url "https://repo.grails.org/grails/core" }
+        gradlePluginPortal()
+        mavenCentral()
     }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath "org.apache.grails:grails-gradle-plugins:$grailsGradlePluginVersion"
 //        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:3.3.4"
     }
 }
 
 apply plugin:"eclipse"
 apply plugin:"idea"
-apply plugin:"org.grails.grails-plugin"
+apply plugin:"org.apache.grails.gradle.grails-plugin"
 //apply plugin:"asset-pipeline"
-apply plugin:"org.grails.grails-gsp"
+apply plugin:"org.apache.grails.gradle.grails-gsp"
 apply plugin: 'maven-publish'
 
 
@@ -32,6 +34,11 @@ configurations {
     runtimeClasspath {
         extendsFrom developmentOnly
     }
+    all {
+        resolutionStrategy {
+            force "org.spockframework:spock-core:2.3-groovy-4.0"
+        }
+    }
 }
 
 configurations.all {
@@ -39,6 +46,8 @@ configurations.all {
 }
 
 java {
+    withJavadocJar()
+    withSourcesJar()
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
@@ -53,52 +62,67 @@ java {
 
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
+    implementation platform("org.apache.grails:grails-bom:$grailsVersion")
     implementation "org.springframework.boot:spring-boot-starter-logging"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
-    implementation "org.grails:grails-core"
+    implementation "org.apache.grails:grails-core"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "org.springframework.boot:spring-boot-starter-tomcat"
-    implementation "org.grails:grails-web-boot"
-    implementation "org.grails:grails-logging"
-    implementation "org.grails:grails-plugin-rest"
-    implementation "org.grails:grails-plugin-databinding"
-    implementation "org.grails:grails-plugin-i18n"
-    implementation "org.grails:grails-plugin-services"
-    implementation "org.grails:grails-plugin-url-mappings"
-    implementation "org.grails:grails-plugin-interceptors"
+    implementation "org.apache.grails:grails-web-boot"
+    implementation "org.apache.grails:grails-logging"
+    implementation "org.apache.grails:grails-rest-transforms"
+    implementation "org.apache.grails:grails-databinding"
+    implementation "org.apache.grails:grails-services"
+    implementation "org.apache.grails:grails-url-mappings"
+    implementation "org.apache.grails:grails-interceptors"
+    implementation "org.apache.grails:grails-layout"
 
-    implementation "org.grails.plugins:cache"
-    implementation 'org.grails.plugins:cache-ehcache:3.0.0'
-
-    implementation "org.grails.plugins:async"
-    implementation "org.grails.plugins:scaffolding"
-    implementation "org.grails.plugins:gsp"
-    compileOnly "io.micronaut:micronaut-inject-groovy"
-    console "org.grails:grails-console"
-    profile "org.grails.profiles:web-plugin"
+    implementation "org.apache.grails:grails-cache"
+    implementation "org.apache.grails:grails-async"
+    implementation "org.apache.grails:grails-scaffolding"
+    implementation "org.apache.grails:grails-gsp"
+    compileOnly "io.micronaut:micronaut-inject-groovy:3.10.4"
+    console "org.apache.grails:grails-console"
+    profile "org.apache.grails.profiles:web-plugin"
 //    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.3.4"
-    testImplementation "io.micronaut:micronaut-inject-groovy"
-    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "io.micronaut:micronaut-inject-groovy:3.10.4"
+    testImplementation("org.apache.grails:grails-testing-support-datamapping") {
+        exclude group: 'org.spockframework'
+    }
     testImplementation "org.mockito:mockito-core"
-    testImplementation "org.grails:grails-web-testing-support"
+    testImplementation("org.apache.grails:grails-testing-support-web") {
+        exclude group: 'org.spockframework'
+    }
+    testImplementation 'javax.servlet:javax.servlet-api:4.0.1'
+
+    implementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
+    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0") {
+        because "Force Groovy 4.0 compatible version"
+    }
+    testImplementation("org.spockframework:spock-junit4:2.3-groovy-4.0") {
+        because "Force Groovy 4.0 compatible version"
+    }
 
     implementation project(':userdetails-service-client')
     testImplementation "com.squareup.retrofit2:retrofit-mock:2.9.0"
 
-    implementation 'au.org.ala:ala-cas-client:3.0.0'
+    implementation 'org.apereo.cas.client:cas-client-core:4.0.4'
 
-    implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
+    implementation 'au.org.ala.grails:interceptor-annotation-matcher:2.0.0-SNAPSHOT'
 
-    implementation project(':ala-security-common')
+    implementation(project(':ala-security-common')) {
+        exclude group: 'org.spockframework'
+    }
 
     implementation(pac4j.oidc)
-    implementation(pac4j.jee)
-    implementation(pac4j.jee.support)
+    implementation 'org.pac4j:pac4j-jakartaee:6.3.3'
+    implementation 'org.pac4j:jakartaee-pac4j:8.0.1'
 
     // Not required but this plugin can react to the presence of Spring Session
     compileOnly 'org.springframework.session:spring-session-core'
     compileOnly 'org.springframework.session:spring-session-data-mongodb'
     compileOnly 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
     compileOnly "org.springframework.boot:spring-boot-configuration-processor"
@@ -141,7 +165,7 @@ publishing {
     repositories {
         maven {
             name 'Nexus'
-            url "https://nexus.ala.org.au/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
+            url "https://nexus.ala.org.au/content/repositories/${project.version.toString().endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
             credentials {
                 username = System.getenv('TRAVIS_DEPLOY_USERNAME')
                 password = System.getenv('TRAVIS_DEPLOY_PASSWORD')
@@ -151,8 +175,6 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
-            artifact sourcesJar
-            artifact javadocJar
 
             pom {
                 name = 'ALA Auth Plugin'

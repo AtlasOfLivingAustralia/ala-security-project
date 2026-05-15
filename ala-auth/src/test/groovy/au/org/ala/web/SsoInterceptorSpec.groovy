@@ -3,11 +3,11 @@ package au.org.ala.web
 
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
-import org.jasig.cas.client.authentication.DefaultGatewayResolverImpl
+import org.apereo.cas.client.authentication.DefaultGatewayResolverImpl
 import spock.lang.Specification
 
 /**
- * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
+ * Interceptor unit test coverage for the SSO interceptor.
  */
 class SsoInterceptorSpec extends Specification implements InterceptorUnitTest<SsoInterceptor> {
 

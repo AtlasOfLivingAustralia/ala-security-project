@@ -11,10 +11,10 @@ import org.pac4j.jee.context.JEEFrameworkParameters
 import org.pac4j.jee.util.Pac4JHttpServletRequestWrapper
 import org.springframework.web.util.WebUtils
 
-import javax.servlet.FilterChain
-import javax.servlet.ServletException
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.FilterChain
+import jakarta.servlet.ServletException
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 /**
  * Loads existing Pac4J profiles from the Http Session and, if they are present and the

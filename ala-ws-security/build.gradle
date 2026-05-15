@@ -62,8 +62,8 @@ dependencies {
 //    implementation platform('org.apache.groovy:groovy-bom:4.0.5')
 //    implementation 'org.apache.groovy:groovy'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.codehaus.groovy:groovy-all:3.0.11'
-    testImplementation platform("org.spockframework:spock-bom:2.3-groovy-3.0")
+    testImplementation 'org.apache.groovy:groovy-all:4.0.31'
+    testImplementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"  // you can remove this if your code does not rely on old JUnit 4 rules
 
@@ -84,7 +84,7 @@ publishing {
     repositories {
         maven {
             name 'Nexus'
-            url "https://nexus.ala.org.au/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
+            url "https://nexus.ala.org.au/content/repositories/${project.version.toString().endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
             credentials {
                 username = System.getenv('TRAVIS_DEPLOY_USERNAME')
                 password = System.getenv('TRAVIS_DEPLOY_PASSWORD')
