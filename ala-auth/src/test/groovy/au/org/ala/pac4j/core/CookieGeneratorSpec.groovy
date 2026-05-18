@@ -6,7 +6,7 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import spock.lang.Specification
 
-import javax.servlet.http.Cookie
+import jakarta.servlet.http.Cookie
 
 class CookieGeneratorSpec extends Specification {
 
@@ -37,7 +37,7 @@ class CookieGeneratorSpec extends Specification {
         setup:
         def cg = new CookieGenerator(true, 'name', 'ala.example', '/', false, true, -1, 'lax', 'comment', true, false)
         def request = new MockHttpServletRequest('GET', '/')
-        request.cookies = new Cookie('name', '"test"').tap { it.maxAge = -1; it.path = '/'; it.domain = 'ala.example' }
+        request.cookies = [new Cookie('name', '"test"').tap { it.maxAge = -1; it.path = '/'; it.domain = 'ala.example' }] as Cookie[]
         def response = new MockHttpServletResponse()
         def ctx = JEEContextFactory.INSTANCE.newContext(new JEEFrameworkParameters(request, response))
 

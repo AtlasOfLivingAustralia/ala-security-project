@@ -12,6 +12,7 @@ import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.FrameworkParameters
 import org.pac4j.core.context.WebContext
+import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.util.Pac4jConstants
 import org.pac4j.jee.adapter.JEEFrameworkAdapter
 import org.pac4j.jee.context.JEEContextFactory
@@ -24,7 +25,8 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import spock.lang.Specification
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
+import java.util.Optional
 
 class TokenServiceSpec extends Specification {
 
@@ -86,7 +88,13 @@ class TokenServiceSpec extends Specification {
 
     def 'test token service requireUser true'() {
         setup:
-        request.getSession(false).setAttribute(Pac4jConstants.USER_PROFILES, ['oidc': new OidcProfile().tap { it.accessToken = new BearerAccessToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c') }])
+        def profile = new OidcProfile().tap {
+            it.accessToken = new BearerAccessToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c')
+        }
+        def profileManager = Mock(ProfileManager)
+        profileManager.getProfile(OidcProfile) >> Optional.of(profile)
+        tokenService = Spy(tokenService)
+        tokenService.getProfileManager() >> profileManager
 
         when:
         def token = tokenService.getAuthToken(true)

@@ -8,7 +8,6 @@ import grails.converters.JSON
 import groovyx.net.http.ContentType as GContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
-import groovyx.net.http.ParserRegistry
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
@@ -42,10 +41,6 @@ class WebService {
     static final int DEFAULT_TIMEOUT_MILLIS = 600000 // five minutes
     static final String DEFAULT_AUTH_HEADER = "X-ALA-userId"
     static final String DEFAULT_API_KEY_HEADER = "apiKey"
-
-    static {
-        ParserRegistry.setDefaultCharset(CHAR_ENCODING)
-    }
 
     def grailsApplication
     AuthService authService
@@ -310,7 +305,11 @@ class WebService {
 
             HTTPBuilder http = newHttpBuilder(url, contentType)
 
-            http.request(method, contentType) { request ->
+            // http-builder's HTML parser depends on old Groovy XML classes removed in Groovy 4.
+            // Parse HTML responses as text; request content-type is still set explicitly below.
+            boolean isHtmlContentType = contentType?.mimeType?.equalsIgnoreCase(ContentType.TEXT_HTML.mimeType)
+            def responseContentType = isHtmlContentType ? GContentType.TEXT : contentType
+            http.request(method, responseContentType) { request ->
                 configureRequestTimeouts(request)
                 configureRequestHeaders(delegate.headers, includeApiKey, includeUser, customHeaders)
 
@@ -359,6 +358,13 @@ class WebService {
         http.encoder[ContentType.APPLICATION_JSON] = encoder
         http.parser[GContentType.JSON] = decoder
         http.parser[ContentType.APPLICATION_JSON] = decoder
+        // http-builder's default HTML parser relies on legacy XmlSlurper classes not present on Groovy 4.
+        def htmlTextParser = { HttpResponse resp ->
+            new InputStreamReader(resp.entity.content, UTF_8)
+        }
+        http.parser[GContentType.HTML] = htmlTextParser
+        http.parser['text/html'] = htmlTextParser
+        http.parser['text/html;charset=UTF-8'] = htmlTextParser
         // TODO XML
         return http
     }
@@ -599,8 +605,7 @@ class WebService {
      */
     static JSONElement decodeJSON(HttpResponse httpResponse) {
 //        log.info("Grails decodeJSON")
-        final cs = ParserRegistry.getCharset(httpResponse)
-        def json = JSON.parse(new InputStreamReader(httpResponse.entity.content, cs))
+        def json = JSON.parse(new InputStreamReader(httpResponse.entity.content, UTF_8))
         return json
     }
 }
