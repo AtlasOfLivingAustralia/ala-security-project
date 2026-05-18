@@ -2,13 +2,13 @@ package au.org.ala.ws
 
 import org.apache.http.HttpStatus
 
-import javax.validation.ConstraintViolation
+import jakarta.validation.ConstraintViolation
 import java.lang.reflect.Method
 import java.lang.annotation.Annotation
 import au.org.ala.ws.validation.ValidatedParameter
-import javax.validation.Validation
-import javax.validation.ValidatorFactory
-import javax.validation.executable.ExecutableValidator
+import jakarta.validation.Validation
+import jakarta.validation.ValidatorFactory
+import jakarta.validation.executable.ExecutableValidator
 import java.util.concurrent.ConcurrentHashMap
 
 class WSInterceptor {

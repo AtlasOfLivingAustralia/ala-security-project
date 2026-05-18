@@ -5,9 +5,9 @@ import org.codehaus.groovy.control.CompilePhase
 import spock.lang.Specification
 import org.codehaus.groovy.tools.ast.TransformTestHelper
 
-import javax.validation.constraints.NotNull
-import javax.validation.constraints.Null
-import javax.validation.constraints.Size
+import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Null
+import jakarta.validation.constraints.Size
 
 class BeanValidationASTSpec extends Specification {
     static CompilePhase PHASE = CompilePhase.SEMANTIC_ANALYSIS
@@ -16,8 +16,8 @@ class BeanValidationASTSpec extends Specification {
         setup:
         BeanValidationAST transformer = new BeanValidationAST()
         Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
-            import javax.validation.constraints.NotNull
-            import javax.validation.constraints.Null
+            import jakarta.validation.constraints.NotNull
+            import jakarta.validation.constraints.Null
             class TestController {
               def action1(@NotNull String param1, @Null String param2, String param3) {
               }
@@ -41,7 +41,7 @@ class BeanValidationASTSpec extends Specification {
         setup:
         BeanValidationAST transformer = new BeanValidationAST()
         Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
-            import javax.validation.constraints.NotNull
+            import jakarta.validation.constraints.NotNull
             class TestController {
               def action1(@NotNull String param1) {
               }
@@ -59,7 +59,7 @@ class BeanValidationASTSpec extends Specification {
         setup:
         BeanValidationAST transformer = new BeanValidationAST()
         Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
-            import javax.validation.constraints.NotNull
+            import jakarta.validation.constraints.NotNull
             class TestController {
               def action1(@NotNull Double param1) {
               }
@@ -77,7 +77,7 @@ class BeanValidationASTSpec extends Specification {
         setup:
         BeanValidationAST transformer = new BeanValidationAST()
         Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
-            import javax.validation.constraints.NotNull
+            import jakarta.validation.constraints.NotNull
             class TestController {
               def action1(@NotNull String param1) {
               }
@@ -95,7 +95,7 @@ class BeanValidationASTSpec extends Specification {
         setup:
         BeanValidationAST transformer = new BeanValidationAST()
         Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
-            import javax.validation.constraints.NotNull
+            import jakarta.validation.constraints.NotNull
             class TestController {
               def action1(@NotNull(message = 'test message') String param1) {
               }
@@ -113,7 +113,7 @@ class BeanValidationASTSpec extends Specification {
         setup:
         BeanValidationAST transformer = new BeanValidationAST()
         Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
-            import javax.validation.constraints.NotNull
+            import jakarta.validation.constraints.NotNull
             import grails.web.RequestParameter
             class TestController {
               def action1(@NotNull @RequestParameter(value="otherName") String param1) {
@@ -132,7 +132,7 @@ class BeanValidationASTSpec extends Specification {
         setup:
         BeanValidationAST transformer = new BeanValidationAST()
         Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
-              import javax.validation.constraints.NotNull
+              import jakarta.validation.constraints.NotNull
               class TestClass {
               def action1(@NotNull String param1) {
               }
@@ -152,7 +152,7 @@ class BeanValidationASTSpec extends Specification {
         BeanValidationAST transformer = new BeanValidationAST()
         Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
             import au.org.ala.ws.validation.ValidatedParameter
-            import javax.validation.constraints.NotNull
+            import jakarta.validation.constraints.NotNull
             class TestController {
               def action1(@NotNull @ValidatedParameter(paramName = "test") String param1) {
               }
@@ -174,8 +174,8 @@ class BeanValidationASTSpec extends Specification {
         BeanValidationAST transformer = new BeanValidationAST()
         Class testClass = new TransformTestHelper(transformer, PHASE).parse '''
             import au.org.ala.ws.validation.ValidatedParameter
-            import javax.validation.constraints.NotNull
-            import javax.validation.constraints.Size
+            import jakarta.validation.constraints.NotNull
+            import jakarta.validation.constraints.Size
             class TestController {
               def action1(@NotNull @Size(min = 2) String param1) {
               }
