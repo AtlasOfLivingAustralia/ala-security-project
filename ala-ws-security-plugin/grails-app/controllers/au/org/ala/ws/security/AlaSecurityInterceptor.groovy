@@ -33,7 +33,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.http.HttpStatus
 
-import javax.annotation.PostConstruct
+import jakarta.annotation.PostConstruct
 
 @CompileStatic
 @Slf4j

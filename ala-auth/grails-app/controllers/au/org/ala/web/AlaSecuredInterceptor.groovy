@@ -4,7 +4,7 @@ import au.org.ala.grails.AnnotationMatcher
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 
-import javax.annotation.PostConstruct
+import jakarta.annotation.PostConstruct
 
 @CompileStatic
 class AlaSecuredInterceptor {

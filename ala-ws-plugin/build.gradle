@@ -98,7 +98,7 @@ dependencies {
     testImplementation("org.spockframework:spock-junit4:2.3-groovy-4.0") {
         because "Force Groovy 4.0 compatible version"
     }
-    //testImplementation 'javax.servlet:javax.servlet-api:4.0.1'
+    //testImplementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 
     // Grails plugin dependencies
     implementation 'org.grails.plugins:http-builder-helper:1.1.0'
@@ -114,7 +114,7 @@ dependencies {
     // Regular JAR dependencies
     implementation "org.apache.httpcomponents:httpmime:4.5.3"
     implementation "jakarta.validation:jakarta.validation-api"
-    implementation "javax.xml.bind:jaxb-api:2.3.1"
+    implementation "jakarta.xml.bind:jakarta.xml.bind-api:4.0.2"
 
 
     testImplementation 'uk.org.lidalia:slf4j-test:1.2.0'
