@@ -98,8 +98,8 @@ dependencies {
     testImplementation "com.squareup.retrofit2:retrofit-mock:2.9.0"
 
     implementation 'org.apereo.cas.client:cas-client-core:4.0.4'
-
     implementation 'au.org.ala.grails:interceptor-annotation-matcher:2.0.0-SNAPSHOT'
+    implementation 'au.org.ala:ala-cas-client:4.0.0-SNAPSHOT'
 
     implementation(project(':ala-security-common')) {}
 

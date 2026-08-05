@@ -13,15 +13,11 @@ dependencyResolutionManagement {
             library('oidc', 'org.pac4j', 'pac4j-oidc').version('6.3.3')
             library('jwt', 'org.pac4j', 'pac4j-jwt').version('6.3.3')
             library('http', 'org.pac4j', 'pac4j-http').version('6.3.3')
-            library('jee', 'org.pac4j', 'pac4j-javaee').version('6.3.3')
-            library('jee-support', 'org.pac4j', 'javaee-pac4j').version('8.0.1')
             library('jakartaee', 'org.pac4j', 'pac4j-jakartaee').version('6.3.3')
             library('jakartaee-support', 'org.pac4j', 'jakartaee-pac4j').version('8.0.1')
 //            library('oidc', 'org.pac4j', 'pac4j-oidc').version('5.7.6')
 //            library('jwt', 'org.pac4j', 'pac4j-jwt').version('5.7.6')
 //            library('http', 'org.pac4j', 'pac4j-http').version('5.7.6')
-//            library('jee', 'org.pac4j', 'pac4j-javaee').version('5.7.6')
-//            library('jee-support', 'org.pac4j', 'javaee-pac4j').version('7.1.0')
         }
         resilience4j {
             library('retry', 'io.github.resilience4j', 'resilience4j-retry').version('1.7.1')

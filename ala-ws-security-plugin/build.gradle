@@ -93,12 +93,9 @@ dependencies {
     implementation 'au.org.ala.grails:interceptor-annotation-matcher:2.0.0-SNAPSHOT'
 //    testImplementation 'io.github.joke:spock-mockable:1.5.5'
 
-    api(project(':ala-ws-security')) {
-        exclude group: 'org.pac4j', module: 'pac4j-javaee'
-        exclude group: 'org.pac4j', module: 'javaee-pac4j'
-    }
-    implementation 'org.pac4j:pac4j-jakartaee:6.3.3'
-    implementation 'org.pac4j:jakartaee-pac4j:8.0.1'
+    api(project(':ala-ws-security'))
+    implementation(pac4j.jakartaee)
+    implementation(pac4j.jakartaee.support)
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
     compileOnly "org.springframework.boot:spring-boot-configuration-processor"

@@ -52,8 +52,8 @@ dependencies {
     api(pac4j.oidc)
     api(pac4j.jwt)
     api(pac4j.http)
-    api(pac4j.jee)
-    api(pac4j.jee.support)
+    api(pac4j.jakartaee)
+    api(pac4j.jakartaee.support)
 
     // mandatory dependencies for using Spock
 //    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'

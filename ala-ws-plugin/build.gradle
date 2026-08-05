@@ -99,7 +99,7 @@ dependencies {
     implementation project(':ala-auth')
     implementation project(':userdetails-service-client')
     implementation(pac4j.oidc)
-    implementation(pac4j.jee)
+    implementation(pac4j.jakartaee)
 
     // Regular JAR dependencies
     implementation "org.apache.httpcomponents:httpmime:4.5.3"

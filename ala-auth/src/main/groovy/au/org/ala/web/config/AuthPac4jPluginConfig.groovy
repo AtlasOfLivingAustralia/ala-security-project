@@ -119,7 +119,7 @@ class AuthPac4jPluginConfig {
      * @return the OIDC resource retriever bean
 
      */
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @ConditionalOnMissingBean(name = "oidcResourceRetriever")
     @Bean("oidcResourceRetriever")
     ResourceRetriever oidcResourceRetriever() {
@@ -129,14 +129,14 @@ class AuthPac4jPluginConfig {
         )
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     IAuthService delegateService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStoreFactory sessionStoreFactory, LinkGenerator grailsLinkGenerator) {
         new Pac4jAuthService(config, pac4jContextProvider, sessionStoreFactory, grailsLinkGenerator,
                 oidcClientProperties.alaUseridClaim, oidcClientProperties.userNameClaim, oidcClientProperties.displayNameClaim)
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     OidcConfiguration oidcConfiguration(@Qualifier('oidcResourceRetriever') ResourceRetriever resourceRetriever) {
         println "=== OidcConfiguration LOADED ==="
@@ -179,7 +179,7 @@ class AuthPac4jPluginConfig {
         config
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     @Primary
     OidcClient oidcClient(@Qualifier('oidcConfiguration') OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator) {
@@ -190,7 +190,7 @@ class AuthPac4jPluginConfig {
         return client
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     OidcClient oidcPromptNoneClient(CookieGenerator authCookieGenerator, @Qualifier('oidcResourceRetriever') ResourceRetriever resourceRetriever) {
         def config = generateBaseOidcClientConfiguration(resourceRetriever)
@@ -219,38 +219,38 @@ class AuthPac4jPluginConfig {
         return client
     }
 
-    @ConditionalOnProperty(prefix='security.oidc', name=['enabled', 'useAnonymousClient'], havingValue = "true")
+    @ConditionalOnProperty(prefix='security.oidc', name=['enabled', 'useAnonymousClient'])
     @Bean
     Client anonymousClient() {
         return AnonymousClient.INSTANCE
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     Pac4jContextProvider pac4jContextProvider(Config config) {
         new GrailsPac4jContextProvider(config)
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     SessionStoreFactory sessionStoreFactory() {
         JEESessionStoreFactory.INSTANCE
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     WebContextFactory webContextFactory() {
         JEEContextFactory.INSTANCE
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @ConditionalOnMissingBean
     @Bean
     SavedRequestHandler savedRequestHandler() {
         new OverrideSavedRequestHandler()
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @ConditionalOnMissingBean
     @Bean
     SecurityLogic securityLogic(SavedRequestHandler savedRequestHandler) {
@@ -259,7 +259,7 @@ class AuthPac4jPluginConfig {
         }
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     Config pac4jConfig(List<Client> clientBeans, SessionStoreFactory sessionStoreFactory, WebContextFactory webContextFactory, UserAgentFilterService userAgentFilterService, SecurityLogic securityLogic, CallbackLogic callbackLogic, @Qualifier('defaultLogoutLogic') LogoutLogic defaultLogoutLogic) {
         Clients clients = new Clients(linkGenerator.link(absolute: true, uri: CALLBACK_URI), clientBeans)
@@ -296,7 +296,7 @@ class AuthPac4jPluginConfig {
         config
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @ConditionalOnMissingBean(name = 'defaultLogoutLogic')
     @Bean('defaultLogoutLogic')
     LogoutLogic defaultLogoutLogic() {
@@ -313,7 +313,7 @@ class AuthPac4jPluginConfig {
         }
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @ConditionalOnMissingBean(name = 'authCookieGenerator')
     @Bean('authCookieGenerator')
     CookieGenerator authCookieGenerator() {
@@ -331,7 +331,7 @@ class AuthPac4jPluginConfig {
         )
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     FilterRegistrationBean pac4jLogoutFilter(Config pac4jConfig) {
         final name = 'Pac4j Logout Filter'
@@ -383,13 +383,13 @@ class AuthPac4jPluginConfig {
         return frb
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     CallbackLogic callbackLogic(CookieGenerator authCookieGenerator) {
         new AlaCookieCallbackLogic(authCookieGenerator)
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     FilterRegistrationBean pac4jCallbackFilter(Config pac4jConfig) {
         final name = 'Pac4j Callback Filter'
@@ -409,7 +409,7 @@ class AuthPac4jPluginConfig {
         return frb
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     FilterRegistrationBean pac4jUriFilter(Config pac4jConfig) {
 
@@ -433,7 +433,7 @@ class AuthPac4jPluginConfig {
         return frb
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     FilterRegistrationBean pac4jOptionalFilter(Config pac4jConfig) {
 
@@ -460,7 +460,7 @@ class AuthPac4jPluginConfig {
         return frb
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     FilterRegistrationBean pac4jPromptNoneFilter(Config pac4jConfig) {
 
@@ -484,7 +484,7 @@ class AuthPac4jPluginConfig {
         return frb
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     FilterRegistrationBean pac4jPromptNoneCookieFilter(Config pac4jConfig) {
 
@@ -508,7 +508,7 @@ class AuthPac4jPluginConfig {
         return frb
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     FilterRegistrationBean pac4jProfileFilter(Config pac4jConfig, SessionStoreFactory sessionStoreFactory, WebContextFactory webContextFactory) {
 
@@ -529,8 +529,7 @@ class AuthPac4jPluginConfig {
         return frb
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
-    @ConditionalOnProperty(prefix='security.core.affiliation-survey', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(['security.oidc.enabled', 'security.core.affiliation-survey.enabled'])
     @Bean
     FilterRegistrationBean alaAffiliationFilter(Config pac4jConfig, SessionStoreFactory sessionStoreFactory, WebContextFactory webContextFactory) {
         final name = 'ALA Affiliation Survey Filter'
@@ -560,7 +559,7 @@ class AuthPac4jPluginConfig {
         }
     }
 
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled', havingValue = "true")
+    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     SSOStrategy ssoStrategy(Config config) {
         new Pac4jSSOStrategy(config, null,
