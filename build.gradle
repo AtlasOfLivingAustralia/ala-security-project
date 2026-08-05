@@ -2,11 +2,6 @@ allprojects {
     version=projectVersion
 
     configurations.all {
-        resolutionStrategy {
-            // Force Spock Groovy 4.0 compatible version across all projects
-            force "org.spockframework:spock-core:2.3-groovy-4.0"
-            force "org.spockframework:spock-junit4:2.3-groovy-4.0"
-        }
         resolutionStrategy.eachDependency { DependencyResolveDetails details ->
             // Redirect Groovy runtime modules to Apache Groovy 4.0.31.
             // Do not rewrite BOM modules here: remapping groovy-bom as a regular library causes variant mismatch.

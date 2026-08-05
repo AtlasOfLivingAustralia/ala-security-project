@@ -8,6 +8,7 @@ import grails.converters.JSON
 import groovyx.net.http.ContentType as GContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
+import groovyx.net.http.ParserRegistry
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
@@ -41,6 +42,10 @@ class WebService {
     static final int DEFAULT_TIMEOUT_MILLIS = 600000 // five minutes
     static final String DEFAULT_AUTH_HEADER = "X-ALA-userId"
     static final String DEFAULT_API_KEY_HEADER = "apiKey"
+
+    static {
+        ParserRegistry.setDefaultCharset(CHAR_ENCODING)
+    }
 
     def grailsApplication
     AuthService authService
@@ -605,7 +610,8 @@ class WebService {
      */
     static JSONElement decodeJSON(HttpResponse httpResponse) {
 //        log.info("Grails decodeJSON")
-        def json = JSON.parse(new InputStreamReader(httpResponse.entity.content, UTF_8))
+        final cs = ParserRegistry.getCharset(httpResponse)
+        def json = JSON.parse(new InputStreamReader(httpResponse.entity.content, cs))
         return json
     }
 }

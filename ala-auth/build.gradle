@@ -34,11 +34,6 @@ configurations {
     runtimeClasspath {
         extendsFrom developmentOnly
     }
-    all {
-        resolutionStrategy {
-            force "org.spockframework:spock-core:2.3-groovy-4.0"
-        }
-    }
 }
 
 configurations.all {
@@ -96,12 +91,8 @@ dependencies {
     testImplementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 
     implementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
-    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0") {
-        because "Force Groovy 4.0 compatible version"
-    }
-    testImplementation("org.spockframework:spock-junit4:2.3-groovy-4.0") {
-        because "Force Groovy 4.0 compatible version"
-    }
+    testImplementation "org.spockframework:spock-core"
+    testImplementation "org.spockframework:spock-junit4"
 
     implementation project(':userdetails-service-client')
     testImplementation "com.squareup.retrofit2:retrofit-mock:2.9.0"
@@ -110,13 +101,11 @@ dependencies {
 
     implementation 'au.org.ala.grails:interceptor-annotation-matcher:2.0.0-SNAPSHOT'
 
-    implementation(project(':ala-security-common')) {
-        exclude group: 'org.spockframework'
-    }
+    implementation(project(':ala-security-common')) {}
 
     implementation(pac4j.oidc)
-    implementation 'org.pac4j:pac4j-jakartaee:6.3.3'
-    implementation 'org.pac4j:jakartaee-pac4j:8.0.1'
+    implementation(pac4j.jakartaee)
+    implementation(pac4j.jakartaee.support)
 
     // Not required but this plugin can react to the presence of Spring Session
     compileOnly 'org.springframework.session:spring-session-core'

@@ -75,7 +75,6 @@ import static org.pac4j.core.authorization.authorizer.OrAuthorizer.or
 
 @CompileStatic
 @Configuration("authPac4jPluginConfiguration")
-//@Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties([CasClientProperties, OidcClientProperties, CoreAuthProperties, AuthCookieProperties])
 @Slf4j
 class AuthPac4jPluginConfig {

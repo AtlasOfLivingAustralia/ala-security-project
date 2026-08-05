@@ -47,12 +47,6 @@ configurations {
     runtimeClasspath {
         extendsFrom developmentOnly
     }
-    all {
-        resolutionStrategy {
-            force "org.spockframework:spock-core:2.3-groovy-4.0"
-            force "org.spockframework:spock-junit4:2.3-groovy-4.0"
-        }
-    }
 }
 
 dependencies {
@@ -92,12 +86,8 @@ dependencies {
     }
 
     testImplementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
-    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0") {
-        because "Force Groovy 4.0 compatible version"
-    }
-    testImplementation("org.spockframework:spock-junit4:2.3-groovy-4.0") {
-        because "Force Groovy 4.0 compatible version"
-    }
+    testImplementation "org.spockframework:spock-core"
+    testImplementation "org.spockframework:spock-junit4"
     //testImplementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 
     // Grails plugin dependencies
