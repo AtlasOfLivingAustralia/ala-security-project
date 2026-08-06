@@ -11,10 +11,10 @@ import io.github.resilience4j.retry.RetryConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties(OidcClientProperties.class)
 public class AlaSecurityCommonConfiguration {
 

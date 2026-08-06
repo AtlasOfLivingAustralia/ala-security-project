@@ -108,27 +108,6 @@ class AuthPac4jPluginConfig {
     @Autowired(required = false)
     SessionLogoutHandler oidcLogoutHandler
 
-    /**
-     * Registers the OIDC resource retriever automatically, removing the need for applications to define
-     * oidcResourceRetriever(DefaultResourceRetriever) in resources.groovy.
-     * This ensures that the authentication-related configuration beans are initialized correctly in the Grails 7 runtime.
-     *
-     * todo - @Bear Simon needs to review this and test that it works as expected in Grails 7 runtimes,
-     * and that it doesn't cause any issues with bean initialization order or other aspects of the application context.
-     *
-     * @return the OIDC resource retriever bean
-
-     */
-    @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
-    @ConditionalOnMissingBean(name = "oidcResourceRetriever")
-    @Bean("oidcResourceRetriever")
-    ResourceRetriever oidcResourceRetriever() {
-        new DefaultResourceRetriever(
-            oidcClientProperties.connectTimeout,
-            oidcClientProperties.readTimeout
-        )
-    }
-
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     IAuthService delegateService(Config config, Pac4jContextProvider pac4jContextProvider, SessionStoreFactory sessionStoreFactory, LinkGenerator grailsLinkGenerator) {
