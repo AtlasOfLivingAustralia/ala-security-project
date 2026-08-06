@@ -1,15 +1,15 @@
 package au.org.ala.web
 
 import groovy.util.logging.Slf4j
-import org.jasig.cas.client.configuration.ConfigurationStrategyName
-import org.jasig.cas.client.session.SingleSignOutHttpSessionListener
+import org.apereo.cas.client.configuration.ConfigurationStrategyName
+import org.apereo.cas.client.session.SingleSignOutHttpSessionListener
 import org.springframework.boot.web.servlet.ServletContextInitializer
 import org.springframework.stereotype.Component
 
-import javax.servlet.ServletContext
-import javax.servlet.ServletException
+import jakarta.servlet.ServletContext
+import jakarta.servlet.ServletException
 
-import static org.jasig.cas.client.configuration.ConfigurationKeys.*
+import static org.apereo.cas.client.configuration.ConfigurationKeys.*
 
 @Component
 @Slf4j

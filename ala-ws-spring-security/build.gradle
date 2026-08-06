@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "2.7.0" apply false
+    id("org.springframework.boot") version "3.5.14" apply false
     id("io.spring.dependency-management") version "1.0.13.RELEASE"
 
     id 'java-library'
@@ -34,7 +34,7 @@ dependencies {
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
     compileOnly "org.springframework.boot:spring-boot-configuration-processor"
     compileOnly 'org.springframework.boot:spring-boot-starter-security'
-    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 
     api project(':ala-ws-security')
 
@@ -44,7 +44,7 @@ publishing {
     repositories {
         maven {
             name 'Nexus'
-            url "https://nexus.ala.org.au/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
+            url "https://nexus.ala.org.au/content/repositories/${project.version.toString().endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
             credentials {
                 username = System.getenv('TRAVIS_DEPLOY_USERNAME')
                 password = System.getenv('TRAVIS_DEPLOY_PASSWORD')

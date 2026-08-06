@@ -12,9 +12,20 @@ import org.springframework.web.context.request.RequestContextHolder
 import retrofit2.mock.Calls
 import spock.lang.Specification
 
-import javax.servlet.http.Cookie
+import jakarta.servlet.http.Cookie
+import java.security.Principal
 
 class CasAuthServiceSpec extends Specification {
+
+    private static class PrincipalWithAttributes implements Principal {
+        final String name
+        final Map attributes
+
+        PrincipalWithAttributes(String name, Map attributes) {
+            this.name = name
+            this.attributes = attributes
+        }
+    }
 
     def "test getUserId with empty cookie value"() {
         setup:
@@ -63,6 +74,7 @@ class CasAuthServiceSpec extends Specification {
                 .session(session)
                 .cookie(new Cookie(AuthenticationCookieUtils.ALA_AUTH_COOKIE, username))
                 .buildRequest(servletContext)
+        request.setUserPrincipal(new PrincipalWithAttributes(username, [email: username]))
         def response = new MockHttpServletResponse()
 
         // GWR users the Spring Context so could be fragile?

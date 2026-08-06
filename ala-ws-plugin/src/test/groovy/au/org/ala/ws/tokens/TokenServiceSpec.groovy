@@ -12,6 +12,7 @@ import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import org.pac4j.core.config.Config
 import org.pac4j.core.context.FrameworkParameters
 import org.pac4j.core.context.WebContext
+import org.pac4j.core.profile.ProfileManager
 import org.pac4j.core.util.Pac4jConstants
 import org.pac4j.jee.adapter.JEEFrameworkAdapter
 import org.pac4j.jee.context.JEEContextFactory
@@ -24,7 +25,8 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import spock.lang.Specification
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
+import java.util.Optional
 
 class TokenServiceSpec extends Specification {
 

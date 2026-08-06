@@ -15,7 +15,7 @@ import org.codehaus.groovy.ast.MethodNode
 import org.codehaus.groovy.ast.AnnotationNode
 import org.codehaus.groovy.ast.Parameter
 
-import javax.validation.Constraint
+import jakarta.validation.Constraint
 
 @GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
 class BeanValidationAST implements ASTTransformation {

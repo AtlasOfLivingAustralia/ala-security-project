@@ -1,3 +1,14 @@
 allprojects {
     version=projectVersion
+
+    configurations.all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            // Redirect Groovy runtime modules to Apache Groovy 4.0.31.
+            // Do not rewrite BOM modules here: remapping groovy-bom as a regular library causes variant mismatch.
+            if (details.requested.group == 'org.codehaus.groovy' && !details.requested.name.endsWith('-bom')) {
+                details.useTarget(group: 'org.apache.groovy', name: details.requested.name, version: '4.0.31')
+                details.because('Align Groovy runtime modules to Apache Groovy 4.0.31')
+            }
+        }
+    }
 }

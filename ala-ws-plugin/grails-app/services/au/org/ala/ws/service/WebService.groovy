@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.multipart.MultipartFile
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.nio.charset.Charset
 
 import static grails.web.http.HttpHeaders.AUTHORIZATION
@@ -310,7 +310,11 @@ class WebService {
 
             HTTPBuilder http = newHttpBuilder(url, contentType)
 
-            http.request(method, contentType) { request ->
+            // http-builder's HTML parser depends on old Groovy XML classes removed in Groovy 4.
+            // Parse HTML responses as text; request content-type is still set explicitly below.
+            boolean isHtmlContentType = contentType?.mimeType?.equalsIgnoreCase(ContentType.TEXT_HTML.mimeType)
+            def responseContentType = isHtmlContentType ? GContentType.TEXT : contentType
+            http.request(method, responseContentType) { request ->
                 configureRequestTimeouts(request)
                 configureRequestHeaders(delegate.headers, includeApiKey, includeUser, customHeaders)
 
@@ -359,6 +363,13 @@ class WebService {
         http.encoder[ContentType.APPLICATION_JSON] = encoder
         http.parser[GContentType.JSON] = decoder
         http.parser[ContentType.APPLICATION_JSON] = decoder
+        // http-builder's default HTML parser relies on legacy XmlSlurper classes not present on Groovy 4.
+        def htmlTextParser = { HttpResponse resp ->
+            new InputStreamReader(resp.entity.content, UTF_8)
+        }
+        http.parser[GContentType.HTML] = htmlTextParser
+        http.parser['text/html'] = htmlTextParser
+        http.parser['text/html;charset=UTF-8'] = htmlTextParser
         // TODO XML
         return http
     }

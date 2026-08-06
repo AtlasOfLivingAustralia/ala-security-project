@@ -18,14 +18,15 @@ import grails.core.GrailsApplication
 import grails.util.Metadata
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.jasig.cas.client.authentication.AuthenticationFilter
-import org.jasig.cas.client.authentication.DefaultGatewayResolverImpl
-import org.jasig.cas.client.authentication.GatewayResolver
-import org.jasig.cas.client.authentication.UrlPatternMatcherStrategy
-import org.jasig.cas.client.configuration.ConfigurationKeys
-import org.jasig.cas.client.session.SingleSignOutFilter
-import org.jasig.cas.client.util.HttpServletRequestWrapperFilter
-import org.jasig.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
+import org.grails.web.config.http.GrailsFilters
+import org.apereo.cas.client.authentication.AuthenticationFilter
+import org.apereo.cas.client.authentication.DefaultGatewayResolverImpl
+import org.apereo.cas.client.authentication.GatewayResolver
+import org.apereo.cas.client.authentication.UrlPatternMatcherStrategy
+import org.apereo.cas.client.configuration.ConfigurationKeys
+import org.apereo.cas.client.session.SingleSignOutFilter
+import org.apereo.cas.client.util.HttpServletRequestWrapperFilter
+import org.apereo.cas.client.validation.Cas30ProxyReceivingTicketValidationFilter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -36,8 +37,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.util.AntPathMatcher
 
-import javax.servlet.DispatcherType
-import javax.servlet.Filter
+import jakarta.servlet.DispatcherType
+import jakarta.servlet.Filter
 
 @CompileStatic
 @Configuration("alaAuthPluginConfiguration")
@@ -88,16 +89,17 @@ class AuthPluginConfig {
         return resolver
     }
 
-    // The filter chain has to be before grailsWebRequestFilter but after the encoding filter.
-    // Its order changed in 3.1 (from Ordered.HIGHEST_PRECEDENCE + 30 (-2147483618) to
-    // FilterRegistrationBean.REQUEST_WRAPPER_FILTER_MAX_ORDER + 30 (30))
+    // The filter chain has to run before GrailsWebRequestFilter so Grails binds the wrapped,
+    // authenticated request into the web request seen by interceptors and controllers.
+    // Keep the old Grails 3.0 behavior, but for later versions anchor this chain relative to
+    // GrailsWebRequestFilter itself rather than a legacy hard-coded positive order.
     static int filterOrder() {
         String grailsVersion = Metadata.current.getGrailsVersion()
         if (grailsVersion.startsWith('3.0')) {
             return Ordered.HIGHEST_PRECEDENCE + 21
         }
         else {
-            return 21 // FilterRegistrationBean.REQUEST_WRAPPER_FILTER_MAX_ORDER + 21
+            return GrailsFilters.GRAILS_WEB_REQUEST_FILTER.order - 7
         }
     }
 

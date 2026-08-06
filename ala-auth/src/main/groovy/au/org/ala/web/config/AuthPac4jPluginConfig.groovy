@@ -23,6 +23,7 @@ import au.org.ala.web.UserAgentFilterService
 import au.org.ala.web.pac4j.AlaCookieCallbackLogic
 import au.org.ala.web.pac4j.ConvertingFromAttributesAuthorizationGenerator
 import au.org.ala.pac4j.core.CookieGenerator
+import com.nimbusds.jose.util.DefaultResourceRetriever
 import com.nimbusds.jose.util.ResourceRetriever
 import grails.core.GrailsApplication
 import grails.web.mapping.LinkGenerator
@@ -63,8 +64,9 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
+import org.springframework.context.annotation.Import
 
-import javax.servlet.DispatcherType
+import jakarta.servlet.DispatcherType
 import java.util.regex.Pattern
 
 import static org.pac4j.core.authorization.authorizer.IsAnonymousAuthorizer.isAnonymous
@@ -116,6 +118,7 @@ class AuthPac4jPluginConfig {
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     OidcConfiguration oidcConfiguration(@Qualifier('oidcResourceRetriever') ResourceRetriever resourceRetriever) {
+        println "=== OidcConfiguration LOADED ==="
         OidcConfiguration config = generateBaseOidcClientConfiguration(resourceRetriever)
         config.init()
         return config
@@ -158,7 +161,7 @@ class AuthPac4jPluginConfig {
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     @Primary
-    OidcClient oidcClient(OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator) {
+    OidcClient oidcClient(@Qualifier('oidcConfiguration') OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator) {
         def client = createOidcClientFromConfig(oidcConfiguration, authCookieGenerator)
         client.setName(DEFAULT_CLIENT)
         client.setCredentialsExtractor(new CognitoOidcExtractor(oidcConfiguration, client))

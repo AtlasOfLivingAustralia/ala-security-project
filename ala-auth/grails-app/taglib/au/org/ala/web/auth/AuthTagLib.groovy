@@ -1,6 +1,7 @@
 package au.org.ala.web.auth
 
-import au.org.ala.cas.util.AuthenticationCookieUtils
+import au.org.ala.cas.util.AuthenticationCookieUtils;
+
 import grails.util.Holders
 
 class AuthTagLib {

@@ -6,8 +6,8 @@ import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.web.util.GrailsApplicationAttributes
 import spock.lang.Specification
 
-import javax.validation.constraints.Min
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotNull
 
 class WSFiltersSpec extends Specification implements InterceptorUnitTest<WSInterceptor> {
     def controller = new TestController()
