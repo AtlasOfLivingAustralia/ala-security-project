@@ -88,13 +88,7 @@ class TokenServiceSpec extends Specification {
 
     def 'test token service requireUser true'() {
         setup:
-        def profile = new OidcProfile().tap {
-            it.accessToken = new BearerAccessToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c')
-        }
-        def profileManager = Mock(ProfileManager)
-        profileManager.getProfile(OidcProfile) >> Optional.of(profile)
-        tokenService = Spy(tokenService)
-        tokenService.getProfileManager() >> profileManager
+        request.getSession(false).setAttribute(Pac4jConstants.USER_PROFILES, ['oidc': new OidcProfile().tap { it.accessToken = new BearerAccessToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c') }])
 
         when:
         def token = tokenService.getAuthToken(true)
