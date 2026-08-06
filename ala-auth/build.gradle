@@ -8,7 +8,6 @@ buildscript {
     }
     dependencies {
         classpath "org.apache.grails:grails-gradle-plugins:$grailsGradlePluginVersion"
-//        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:3.3.4"
     }
 }
 
@@ -48,13 +47,6 @@ java {
     }
 }
 
-//dependencyManagement {
-//    imports {
-//        mavenBom "org.grails:grails-bom:$grailsVersion"
-//    }
-//    applyMavenExclusions false
-//}
-
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation platform("org.apache.grails:grails-bom:$grailsVersion")
@@ -71,7 +63,6 @@ dependencies {
     implementation "org.apache.grails:grails-url-mappings"
     implementation "org.apache.grails:grails-interceptors"
     implementation "org.apache.grails:grails-layout"
-
     implementation "org.apache.grails:grails-cache"
     implementation "org.apache.grails:grails-async"
     implementation "org.apache.grails:grails-scaffolding"
@@ -79,7 +70,25 @@ dependencies {
     compileOnly "io.micronaut:micronaut-inject-groovy:3.10.4"
     console "org.apache.grails:grails-console"
     profile "org.apache.grails.profiles:web-plugin"
-//    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.3.4"
+    implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '2.7.0'
+    implementation(pac4j.oidc)
+    implementation(pac4j.jakartaee)
+    implementation(pac4j.jakartaee.support)
+
+    implementation project(':userdetails-service-client')
+    implementation 'au.org.ala.grails:interceptor-annotation-matcher:2.0.0'
+    implementation 'au.org.ala:ala-cas-client:4.0.0'
+    implementation(project(':ala-security-common'))
+
+    // Not required but this plugin can react to the presence of Spring Session
+    compileOnly 'org.springframework.session:spring-session-core'
+    compileOnly 'org.springframework.session:spring-session-data-mongodb'
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor"
+
     testImplementation "io.micronaut:micronaut-inject-groovy:3.10.4"
     testImplementation("org.apache.grails:grails-testing-support-datamapping") {
         exclude group: 'org.spockframework'
@@ -93,31 +102,7 @@ dependencies {
     implementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"
-
-    implementation project(':userdetails-service-client')
     testImplementation "com.squareup.retrofit2:retrofit-mock:2.9.0"
-
-    implementation 'org.apereo.cas.client:cas-client-core:4.0.4'
-    implementation 'au.org.ala.grails:interceptor-annotation-matcher:2.0.0-SNAPSHOT'
-    implementation 'au.org.ala:ala-cas-client:4.0.0-SNAPSHOT'
-
-    implementation(project(':ala-security-common')) {}
-
-    implementation(pac4j.oidc)
-    implementation(pac4j.jakartaee)
-    implementation(pac4j.jakartaee.support)
-
-    // Not required but this plugin can react to the presence of Spring Session
-    compileOnly 'org.springframework.session:spring-session-core'
-    compileOnly 'org.springframework.session:spring-session-data-mongodb'
-    compileOnly 'org.springframework.boot:spring-boot-starter-data-mongodb'
-    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
-
-    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
-    compileOnly "org.springframework.boot:spring-boot-configuration-processor"
-
-    implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '2.7.0'
-
 }
 
 compileGroovy {
