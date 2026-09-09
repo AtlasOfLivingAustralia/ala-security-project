@@ -28,8 +28,8 @@ import org.pac4j.core.config.Config;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.profile.ProfileManager;
-import org.pac4j.core.util.FindBest;
 import org.pac4j.jee.context.JEEContextFactory;
+import org.pac4j.jee.context.JEEFrameworkParameters;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.credentials.OidcCredentials;
 import org.pac4j.oidc.profile.OidcProfile;
@@ -98,7 +98,7 @@ public class TokenService {
         if (pac4jContextProvider != null) {
             context = pac4jContextProvider.webContext();
         } else {
-            context = FindBest.webContextFactory(null, config, JEEContextFactory.INSTANCE).newContext(request, response);
+            context = JEEContextFactory.INSTANCE.newContext(new JEEFrameworkParameters(request, response));
         }
         final ProfileManager manager = new ProfileManager(context, sessionStore);
         manager.setConfig(config);
@@ -125,7 +125,7 @@ public class TokenService {
                     credentials = clientCredentialsToken();
                 }
                 if (credentials != null) {
-                    token = credentials.getAccessToken();
+                    token = credentials.toAccessToken();
                 }
             } else {
                 logger.debug("Not generating token because OIDC is not configured");
@@ -145,7 +145,7 @@ public class TokenService {
                 if (lifetime == 0 || now >= lifetime) {
                     OidcCredentials credentials = tokenSupplier(cachedCredentials);
                     cachedCredentials = credentials;
-                    cachedCredentialsLifetime = (System.currentTimeMillis() / 1000) + credentials.getAccessToken().getLifetime();
+                    cachedCredentialsLifetime = (System.currentTimeMillis() / 1000) + credentials.toAccessToken().getLifetime();
                     return credentials;
                 }
             }
@@ -158,9 +158,9 @@ public class TokenService {
         if (existingCredentials != null && existingCredentials.getRefreshToken() != null) {
             try {
                 logger.debug("Refreshing existing token");
-                credentials = refreshToken(existingCredentials.getRefreshToken());
+                credentials = refreshToken(existingCredentials.toRefreshToken());
             } catch (Exception e) {
-                logger.warn("Couldn't get refresh token from {}", existingCredentials.getRefreshToken(), e);
+                logger.warn("Couldn't get refresh token from {}", existingCredentials.toRefreshToken(), e);
             }
         }
         if (credentials == null) { // no refresh token or refresh token grant failed
@@ -173,7 +173,7 @@ public class TokenService {
     private OidcCredentials clientCredentialsToken() {
 
         TokenRequest tokenRequest = new TokenRequest(
-                oidcConfiguration.findProviderMetadata().getTokenEndpointURI(),
+                oidcConfiguration.getOpMetadataResolver().load().getTokenEndpointURI(),
                 new ClientSecretBasic(new ClientID(clientId), new Secret(clientSecret)),
                 new ClientCredentialsGrant(),
                 finalScopes != null ? new Scope(finalScopes.toArray(new String[0])) : new Scope());
@@ -188,7 +188,7 @@ public class TokenService {
 
     private OidcCredentials refreshToken(RefreshToken refreshToken) {
         TokenRequest tokenRequest = new TokenRequest(
-                oidcConfiguration.findProviderMetadata().getTokenEndpointURI(),
+                oidcConfiguration.getOpMetadataResolver().load().getTokenEndpointURI(),
                 new ClientSecretBasic(new ClientID(clientId), new Secret(clientSecret)),
                 new RefreshTokenGrant(refreshToken),
                 new Scope(finalScopes.toArray(new String[0])));

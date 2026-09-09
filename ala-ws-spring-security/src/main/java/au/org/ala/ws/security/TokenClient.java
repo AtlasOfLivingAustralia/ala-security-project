@@ -61,10 +61,10 @@ public class TokenClient {
 
         OidcCredentials credentials = new OidcCredentials();
         OIDCTokens oidcTokens = tokenSuccessResponse.getOIDCTokens();
-        credentials.setAccessToken(oidcTokens.getAccessToken());
-        credentials.setRefreshToken(oidcTokens.getRefreshToken());
+        credentials.setAccessTokenObject(oidcTokens.getAccessToken());
+        credentials.setRefreshTokenObject(oidcTokens.getRefreshToken());
         if (oidcTokens.getIDToken() != null) {
-            credentials.setIdToken(oidcTokens.getIDToken());
+            credentials.setIdToken(oidcTokens.getIDTokenString());
         }
         return credentials;
     }
