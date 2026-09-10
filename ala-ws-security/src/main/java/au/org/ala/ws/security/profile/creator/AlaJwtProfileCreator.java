@@ -154,16 +154,19 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
                 }
             }
 
-            // if we don't have a jwt or we don't have the scopes from the jwt access token, call the introspection endpoint
+            // A JWT has already been verified by AlaJwtAuthenticator. Do not require a
+            // second remote introspection request when it has no scope claim.
             TokenIntrospectionSuccessResponse tokenResponse;
-            if (!jwtFlow || accessTokenScopeList == null) {
+            if (!jwtFlow) {
                 tokenResponse = callTokenIntrospectionEndpoint(token);
             } else {
                 tokenResponse = null;
             }
 
             if (accessTokenScopeList == null) {
-                accessTokenScopeList = tokenResponse.getScope().toStringList();
+                accessTokenScopeList = tokenResponse != null && tokenResponse.getScope() != null
+                        ? tokenResponse.getScope().toStringList()
+                        : Collections.emptyList();
             }
             Set<String> accessTokenScopeSet = accessTokenScopeList != null ? new LinkedHashSet<>(accessTokenScopeList) : Collections.emptySet();
 
@@ -176,6 +179,9 @@ public class AlaJwtProfileCreator extends OidcProfileCreator {
             userId = jwtToken != null ? jwtToken.getJWTClaimsSet().getStringClaim(userIdClaim) : tokenResponse.getStringParameter(userIdClaim);
 
             subject = jwtToken != null ? jwtToken.getJWTClaimsSet().getSubject() : tokenResponse.getSubject().getValue();
+            if (userId == null || userId.isBlank()) {
+                userId = subject;
+            }
             audience = jwtToken != null ? jwtToken.getJWTClaimsSet().getAudience() : tokenResponse.getAudience().stream().map(Identifier::getValue).toList();
             issuer = jwtToken != null ? jwtToken.getJWTClaimsSet().getIssuer() : tokenResponse.getIssuer().getValue();
             jwtId = jwtToken != null ? jwtToken.getJWTClaimsSet().getJWTID() : tokenResponse.getJWTID().getValue();
