@@ -62,9 +62,6 @@ public class AlaWebServiceAuthFilter extends OncePerRequestFilter {
                 Credentials credentials = optCredentials.get();
 
                 Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(callContext, credentials);
-                if (optProfile.isEmpty() && credentials.getUserProfile() != null) {
-                    optProfile = Optional.of(credentials.getUserProfile());
-                }
                 if (optProfile.isPresent()) {
 
                     UserProfile userProfile = optProfile.get();
