@@ -58,29 +58,19 @@ public class TokenService {
     List<String> finalScopes;
     // mutable to break circular spring dependency
     Config config;
-    private Pac4jContextProvider pac4jContextProvider;
     final private long expiryWindow = 1; // 1 second
     private volatile transient OidcCredentials cachedCredentials;
     private volatile transient long cachedCredentialsLifetime = 0;
 
-    public TokenService(Config config, OidcConfiguration oidcConfiguration, Pac4jContextProvider pac4jContextProvider,
-            SessionStore sessionStore, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
-            boolean cacheTokens) {
-        this(oidcConfiguration, pac4jContextProvider, sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens);
-        this.config = config;
-    }
-
-    public TokenService(OidcConfiguration oidcConfiguration, Pac4jContextProvider pac4jContextProvider,
-            SessionStore sessionStore, TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes,
-            boolean cacheTokens) {
+    public TokenService(Config config, OidcConfiguration oidcConfiguration, SessionStore sessionStore,
+            TokenClient tokenClient, String clientId, String clientSecret, String jwtScopes, boolean cacheTokens) {
         this(oidcConfiguration, sessionStore, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens);
-        this.pac4jContextProvider = pac4jContextProvider;
+        this.config = config;
     }
 
     public TokenService(OidcConfiguration oidcConfiguration, SessionStore sessionStore, TokenClient tokenClient,
             String clientId, String clientSecret, String jwtScopes, boolean cacheTokens) {
         this.cacheTokens = cacheTokens;
-        this.config = config;
         this.oidcConfiguration = oidcConfiguration;
         this.sessionStore = sessionStore;
         this.tokenClient = tokenClient;
@@ -94,12 +84,9 @@ public class TokenService {
     }
 
     public ProfileManager getProfileManager(final HttpServletRequest request, final HttpServletResponse response) {
-        final WebContext context;
-        if (pac4jContextProvider != null) {
-            context = pac4jContextProvider.webContext();
-        } else {
-            context = JEEContextFactory.INSTANCE.newContext(new JEEFrameworkParameters(request, response));
-        }
+        final WebContext context = (config != null && config.getWebContextFactory() != null)
+                ? config.getWebContextFactory().newContext(new JEEFrameworkParameters(request, response))
+                : JEEContextFactory.INSTANCE.newContext(new JEEFrameworkParameters(request, response));
         final ProfileManager manager = new ProfileManager(context, sessionStore);
         manager.setConfig(config);
         return manager;
