@@ -41,6 +41,19 @@ public class AlaAuthClient extends BaseClient {
                 final Optional<Credentials> optCredentials = authClient.getCredentials(ctx);
                 if (optCredentials.isPresent()) {
                     this.checkCredentials(ctx, optCredentials.get());
+
+                    // DirectBearerAuthClient requires the following to get the user profile
+                    if (optCredentials.get().getUserProfile() == null) {
+                        Optional<Credentials> optCredWithProfile = authClient.validateCredentials(ctx, optCredentials.get());
+                        if (optCredWithProfile.isPresent()) {
+                            // convert the profile to AlaOidcUserProfile
+                            Optional<UserProfile> userProfile = authClient.getUserProfile(ctx, optCredWithProfile.get());
+                            if (userProfile.isPresent()) {
+                                optCredWithProfile.get().setUserProfile(userProfile.get());
+                                return optCredWithProfile;
+                            }
+                        }
+                    }
                     return optCredentials;
                 }
             }
