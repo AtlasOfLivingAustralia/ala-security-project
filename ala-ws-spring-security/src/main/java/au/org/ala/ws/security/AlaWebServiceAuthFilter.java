@@ -62,9 +62,6 @@ public class AlaWebServiceAuthFilter extends OncePerRequestFilter {
                 Credentials credentials = optCredentials.get();
 
                 Optional<UserProfile> optProfile = alaAuthClient.getUserProfile(callContext, credentials);
-                if (optProfile.isEmpty() && credentials.getUserProfile() != null) {
-                    optProfile = Optional.of(credentials.getUserProfile());
-                }
                 if (optProfile.isPresent()) {
 
                     UserProfile userProfile = optProfile.get();
@@ -76,10 +73,6 @@ public class AlaWebServiceAuthFilter extends OncePerRequestFilter {
                     profileManager.setConfig(config);
 
                     profileManager.save(alaAuthClient.getSaveProfileInSession(context, userProfile), userProfile, alaAuthClient.isMultiProfile(context, userProfile));
-                } else {
-                    log.warn("Credentials were accepted but no user profile could be created");
-                    response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unable to create user profile");
-                    return;
                 }
             }
         } catch (CredentialsException e) {
