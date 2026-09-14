@@ -13,14 +13,12 @@
  * rights and limitations under the License.
  */
 
-package au.org.ala.ws.security;
+package au.org.ala.ws.tokens;
 
 import okhttp3.Interceptor;
 import okhttp3.Response;
 
 import java.io.IOException;
-
-// TODO: move this and related classes into ala-security-project
 
 /**
  * okhttp interceptor that inserts a bearer token into the request

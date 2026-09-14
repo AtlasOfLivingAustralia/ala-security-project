@@ -78,7 +78,7 @@ dependencies {
     implementation project(':userdetails-service-client')
     implementation 'au.org.ala.grails:interceptor-annotation-matcher:2.0.0'
     implementation 'au.org.ala:ala-cas-client:4.0.0'
-    implementation(project(':ala-security-common'))
+    api(project(':ala-security-common'))
 
     // Not required but this plugin can react to the presence of Spring Session
     compileOnly 'org.springframework.session:spring-session-core'
