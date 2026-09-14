@@ -43,7 +43,8 @@ public class AlaAuthClient extends BaseClient {
 
                 final Optional<Credentials> optCredentials = authClient.getCredentials(ctx);
                 if (optCredentials.isPresent()) {
-                    return authClient.validateCredentials(ctx, optCredentials.get());
+                    this.checkCredentials(ctx, optCredentials.get());
+                    return optCredentials;
                 }
             }
         } catch (CredentialsException e) {
