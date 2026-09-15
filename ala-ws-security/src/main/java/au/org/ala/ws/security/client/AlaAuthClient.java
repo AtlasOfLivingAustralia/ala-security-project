@@ -40,21 +40,33 @@ public class AlaAuthClient extends BaseClient {
             for (BaseClient authClient : authClients) {
                 final Optional<Credentials> optCredentials = authClient.getCredentials(ctx);
                 if (optCredentials.isPresent()) {
-                    this.checkCredentials(ctx, optCredentials.get());
+                    Credentials credentials = optCredentials.get();
 
-                    // DirectBearerAuthClient requires the following to get the user profile
-                    if (optCredentials.get().getUserProfile() == null) {
-                        Optional<Credentials> optCredWithProfile = authClient.validateCredentials(ctx, optCredentials.get());
-                        if (optCredWithProfile.isPresent()) {
-                            // convert the profile to AlaOidcUserProfile
-                            Optional<UserProfile> userProfile = authClient.getUserProfile(ctx, optCredWithProfile.get());
-                            if (userProfile.isPresent()) {
-                                optCredWithProfile.get().setUserProfile(userProfile.get());
-                                return optCredWithProfile;
-                            }
+                    // If credentials already have a profile, validate and return
+                    if (credentials.getUserProfile() != null) {
+                        this.checkCredentials(ctx, credentials);
+                        return Optional.of(credentials);
+                    }
+
+                    // DirectBearerAuthClient requires validation and profile resolution
+                    Optional<Credentials> optCredWithProfile = authClient.validateCredentials(ctx, credentials);
+                    if (optCredWithProfile.isPresent()) {
+                        Credentials validatedCredentials = optCredWithProfile.get();
+
+                        // Try to resolve/enrich user profile via profileCreator (e.g. AlaJwtProfileCreator)
+                        Optional<UserProfile> userProfile = authClient.getUserProfile(ctx, validatedCredentials);
+                        if (userProfile.isPresent()) {
+                            validatedCredentials.setUserProfile(userProfile.get());
+                        }
+
+                        // As long as the credentials now carry a profile (either from authenticator or profileCreator),
+                        // authentication succeeded
+                        if (validatedCredentials.getUserProfile() != null) {
+                            this.checkCredentials(ctx, validatedCredentials);
+                            return Optional.of(validatedCredentials);
                         }
                     }
-                    return optCredentials;
+                    // Validation or profile creation failed for this client; continue to next client
                 }
             }
         } catch (CredentialsException e) {
