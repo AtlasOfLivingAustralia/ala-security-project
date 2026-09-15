@@ -114,14 +114,20 @@ public class TokenService {
 
     public TokenService(OidcConfiguration oidcConfiguration, SessionStore sessionStore, TokenClient tokenClient,
                         String clientId, String clientSecret, String jwtScopes, boolean cacheTokens) {
-        this(oidcConfiguration, (SessionStoreFactory) null, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens);
+        this(oidcConfiguration, sessionStore, null, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens);
     }
 
     public TokenService(OidcConfiguration oidcConfiguration, SessionStoreFactory sessionStoreFactory, TokenClient tokenClient,
                         String clientId, String clientSecret, String jwtScopes, boolean cacheTokens) {
+        this(oidcConfiguration, null, sessionStoreFactory, tokenClient, clientId, clientSecret, jwtScopes, cacheTokens);
+    }
+
+    private TokenService(OidcConfiguration oidcConfiguration, SessionStore sessionStore,
+                         SessionStoreFactory sessionStoreFactory, TokenClient tokenClient,
+                         String clientId, String clientSecret, String jwtScopes, boolean cacheTokens) {
         this.cacheTokens = cacheTokens;
         this.oidcConfiguration = oidcConfiguration;
-        this.sessionStore = null;
+        this.sessionStore = sessionStore;
         this.sessionStoreFactory = sessionStoreFactory;
         this.tokenClient = tokenClient;
 
