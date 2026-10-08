@@ -42,6 +42,7 @@ dependencies {
     implementation 'org.springframework:spring-web'
     implementation 'org.springframework:spring-context-support'
     compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+    compileOnly 'com.squareup.okhttp3:okhttp:3.14.9'
 
 //    api project(':userdetails-service-client')
 
