@@ -90,6 +90,7 @@ dependencies {
     implementation 'au.org.ala.grails:interceptor-annotation-matcher:1.0.0'
 
     implementation project(':ala-security-common')
+    implementation project(':pac4j-oidc-state-pool')
 
     implementation(pac4j.oidc)
     implementation(pac4j.jee)

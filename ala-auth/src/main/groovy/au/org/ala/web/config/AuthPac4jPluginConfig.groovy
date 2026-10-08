@@ -2,6 +2,9 @@ package au.org.ala.web.config
 
 import au.org.ala.pac4j.core.logout.RemoveCookieLogoutActionBuilder
 import au.org.ala.pac4j.oidc.credentials.extractor.CognitoOidcExtractor
+import au.org.ala.pac4j.oidc.statepool.SessionStatePoolStore
+import au.org.ala.pac4j.oidc.statepool.StatePoolOidcClient
+import au.org.ala.pac4j.oidc.statepool.StatePoolStore
 import au.org.ala.web.AffiliationSurveyFilter
 import au.org.ala.web.AuthCookieProperties
 import au.org.ala.web.CasClientProperties
@@ -155,11 +158,18 @@ class AuthPac4jPluginConfig {
         config
     }
 
+    @ConditionalOnProperty(prefix = 'security.oidc', name = 'enabled')
+    @ConditionalOnMissingBean(StatePoolStore)
+    @Bean
+    StatePoolStore statePoolStore() {
+        new SessionStatePoolStore()
+    }
+
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
     @Primary
-    OidcClient oidcClient(OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator) {
-        def client = createOidcClientFromConfig(oidcConfiguration, authCookieGenerator)
+    OidcClient oidcClient(OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator, StatePoolStore statePoolStore) {
+        def client = createOidcClientFromConfig(oidcConfiguration, authCookieGenerator, statePoolStore)
         client.setName(DEFAULT_CLIENT)
         client.setCredentialsExtractor(new CognitoOidcExtractor(oidcConfiguration, client))
 //        client.init()
@@ -168,19 +178,32 @@ class AuthPac4jPluginConfig {
 
     @ConditionalOnProperty(prefix= 'security.oidc', name='enabled')
     @Bean
-    OidcClient oidcPromptNoneClient(CookieGenerator authCookieGenerator, @Qualifier('oidcResourceRetriever') ResourceRetriever resourceRetriever) {
+    OidcClient oidcPromptNoneClient(CookieGenerator authCookieGenerator, @Qualifier('oidcResourceRetriever') ResourceRetriever resourceRetriever, StatePoolStore statePoolStore) {
         def config = generateBaseOidcClientConfiguration(resourceRetriever)
         // select prompt mode: none, consent, select_account
         config.addCustomParam("prompt", "none")
         config.init()
-        def client = createOidcClientFromConfig(config, authCookieGenerator)
+        def client = createOidcClientFromConfig(config, authCookieGenerator, statePoolStore)
         client.setName(PROMPT_NONE_CLIENT)
 //        client.init()
         return client
     }
 
-    private OidcClient createOidcClientFromConfig(OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator) {
-        def client = new OidcClient(oidcConfiguration)
+    private OidcClient createOidcClientFromConfig(OidcConfiguration oidcConfiguration, CookieGenerator authCookieGenerator, StatePoolStore statePoolStore = null) {
+        OidcClient client
+        if (oidcClientProperties.statePool?.enabled) {
+            StatePoolOidcClient spClient = new StatePoolOidcClient(
+                    oidcConfiguration,
+                    statePoolStore ?: new SessionStatePoolStore(),
+                    oidcClientProperties.statePool.ttlMillis,
+                    oidcClientProperties.statePool.maxSize
+            )
+            spClient.pkcePoolingEnabled = oidcClientProperties.statePool.pkcePoolingEnabled
+            spClient.noncePoolingEnabled = oidcClientProperties.statePool.noncePoolingEnabled
+            client = spClient
+        } else {
+            client = new OidcClient(oidcConfiguration)
+        }
         client.addAuthorizationGenerator(new ConvertingFromAttributesAuthorizationGenerator([coreAuthProperties.roleAttribute ?: casClientProperties.roleAttribute],coreAuthProperties.permissionAttributes, oidcClientProperties.rolePrefix, oidcClientProperties.convertRolesToUpperCase))
         client.addAuthorizationGenerator(new DefaultRolesAuthorizationGenerator(['ROLE_USER']))
         client.setUrlResolver(new DefaultUrlResolver(true))

@@ -1,0 +1,108 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group 'au.org.ala'
+
+repositories {
+    mavenLocal()
+    maven { url 'https://nexus.ala.org.au/content/groups/public/' }
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.withType(Javadoc).configureEach {
+    failOnError = false
+}
+
+dependencies {
+    api pac4j.oidc
+    api 'org.pac4j:pac4j-core:6.3.3'
+    api 'org.slf4j:slf4j-api:2.0.17'
+
+    compileOnly 'org.projectlombok:lombok:1.18.48'
+    annotationProcessor 'org.projectlombok:lombok:1.18.48'
+    testCompileOnly 'org.projectlombok:lombok:1.18.48'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.48'
+
+    testImplementation 'org.pac4j:pac4j-core:6.3.3:tests'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.14.1'
+    testImplementation 'org.slf4j:slf4j-simple:2.0.17'
+}
+
+processResources {
+    // Package only the license under META-INF; copying the whole projectDir would recurse
+    // into the build output directory on every run.
+    from(projectDir) {
+        include 'LICENSE*'
+        into 'META-INF'
+    }
+}
+
+test {
+    useJUnit()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'Atlas of Living Australia'
+        )
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name 'Nexus'
+            url "https://nexus.ala.org.au/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases'}"
+            credentials {
+                username = System.getenv('TRAVIS_DEPLOY_USERNAME')
+                password = System.getenv('TRAVIS_DEPLOY_PASSWORD')
+            }
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            pom {
+                name = 'ALA pac4j OIDC State Pool'
+                description = 'Session-backed OIDC state pool for pac4j'
+                url = 'https://github.com/AtlasOfLivingAustralia/pac4j-oidc-state-pool'
+                licenses {
+                    license {
+                        name = 'Apache-2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        name = 'Atlas of Living Australia'
+                        organization = 'Atlas of Living Australia'
+                        organizationUrl = 'https://www.ala.org.au'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/AtlasOfLivingAustralia/pac4j-oidc-state-pool.git'
+                    developerConnection = 'scm:git:ssh://git@github.com/AtlasOfLivingAustralia/pac4j-oidc-state-pool.git'
+                    url = 'https://github.com/AtlasOfLivingAustralia/pac4j-oidc-state-pool'
+                }
+            }
+        }
+    }
+}

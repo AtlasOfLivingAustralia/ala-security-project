@@ -4,6 +4,7 @@ import org.pac4j.core.context.HttpConstants;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.profile.OidcProfileDefinition;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -85,6 +86,9 @@ public class OidcClientProperties {
 
     private boolean cacheLastDiscoveryDocument = false;
     private String discoveryDocumentCache =  "/tmp/oidc-discovery-doc.json";
+
+    @NestedConfigurationProperty
+    private StatePoolProperties statePool = new StatePoolProperties();
 
     public boolean isEnabled() {
         return enabled;
@@ -292,5 +296,85 @@ public class OidcClientProperties {
 
     public void setCallUserInfoEndpoint(boolean callUserInfoEndpoint) {
         this.callUserInfoEndpoint = callUserInfoEndpoint;
+    }
+
+    public StatePoolProperties getStatePool() {
+        return statePool;
+    }
+
+    public void setStatePool(StatePoolProperties statePool) {
+        this.statePool = statePool;
+    }
+
+    public static class StatePoolProperties {
+        private boolean enabled = true;
+        private Duration ttl = Duration.ofMinutes(5);
+        private int maxSize = 20;
+        private boolean pkcePoolingEnabled = true;
+        private boolean noncePoolingEnabled = false;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public Duration getTtl() {
+            return ttl;
+        }
+
+        public void setTtl(Duration ttl) {
+            this.ttl = ttl;
+        }
+
+        public long getTtlMillis() {
+            return ttl != null ? ttl.toMillis() : 300_000L;
+        }
+
+        public void setTtlMillis(long ttlMillis) {
+            this.ttl = Duration.ofMillis(ttlMillis);
+        }
+
+        public int getMaxSize() {
+            return maxSize;
+        }
+
+        public void setMaxSize(int maxSize) {
+            this.maxSize = maxSize;
+        }
+
+        public boolean isPkcePoolingEnabled() {
+            return pkcePoolingEnabled;
+        }
+
+        public void setPkcePoolingEnabled(boolean pkcePoolingEnabled) {
+            this.pkcePoolingEnabled = pkcePoolingEnabled;
+        }
+
+        public boolean isPkcePooling() {
+            return pkcePoolingEnabled;
+        }
+
+        public void setPkcePooling(boolean pkcePooling) {
+            this.pkcePoolingEnabled = pkcePooling;
+        }
+
+        public boolean isNoncePoolingEnabled() {
+            return noncePoolingEnabled;
+        }
+
+        public void setNoncePoolingEnabled(boolean noncePoolingEnabled) {
+            this.noncePoolingEnabled = noncePoolingEnabled;
+        }
+
+        public boolean isNoncePooling() {
+            return noncePoolingEnabled;
+        }
+
+        public void setNoncePooling(boolean noncePooling) {
+            this.noncePoolingEnabled = noncePooling;
+        }
     }
 }
