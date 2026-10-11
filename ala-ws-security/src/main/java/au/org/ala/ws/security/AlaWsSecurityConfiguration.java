@@ -32,6 +32,7 @@ import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.profile.creator.OidcProfileCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -57,6 +58,12 @@ public class AlaWsSecurityConfiguration {
     private ApiKeyProperties apiKeyProperties;
     @Autowired
     private IpWhitelistProperties ipWhitelistProperties;
+
+    // This has been made configurable as when used in a Grails 7 application, the filter needs to be applied
+    // before the Grails request wrapper filter.  The default value of 27 has been preserved for backwards compatibility
+    // with existing applications that use the ala-auth-plugin but not Grails.
+    @Value("${security.jwt.requestWrapperFilterOrder:27}")
+    private int filterOrder;
 
     @Bean
     @ConditionalOnMissingBean
@@ -220,15 +227,9 @@ public class AlaWsSecurityConfiguration {
     public FilterRegistrationBean<Pac4jProfileManagerHttpRequestWrapperFilter> pac4jHttpRequestWrapper(Config config) {
         FilterRegistrationBean<Pac4jProfileManagerHttpRequestWrapperFilter> filterRegistrationBean = new FilterRegistrationBean<>();
         filterRegistrationBean.setFilter(new Pac4jProfileManagerHttpRequestWrapperFilter(config));
-        filterRegistrationBean.setOrder(filterOrder() + 6);// This is to place this filter after the request wrapper filter in the ala-auth-plugin
+        filterRegistrationBean.setOrder(filterOrder);// This is to place this filter after the request wrapper filter in the ala-auth-plugin
         filterRegistrationBean.setInitParameters(new LinkedHashMap<String, String>());
         filterRegistrationBean.addUrlPatterns("/*");
         return filterRegistrationBean;
     }
-
-    public static int filterOrder() {
-
-        return 21;// FilterRegistrationBean.REQUEST_WRAPPER_FILTER_MAX_ORDER + 21
-    }
-
 }

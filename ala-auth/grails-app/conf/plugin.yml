@@ -20,6 +20,12 @@ security:
     secret: 'ChangeMe'
     discoveryUri: 'https://auth.ala.org.au/cas/oidc/.well-known'
     scope: 'openid profile email ala roles'
+    state-pool:
+      enabled: true
+      ttl: 5m
+      max-size: 20
+      pkce-pooling-enabled: true
+      nonce-pooling-enabled: false
   cas:
     casServerName: 'https://auth.ala.org.au'
     casServerUrlPrefix: 'https://auth.ala.org.au/cas'
