@@ -98,6 +98,7 @@ dependencies {
     }
     implementation project(':ala-auth')
     implementation project(':userdetails-service-client')
+    implementation project(':ala-security-common')
     implementation(pac4j.oidc)
     implementation(pac4j.jakartaee)
 
