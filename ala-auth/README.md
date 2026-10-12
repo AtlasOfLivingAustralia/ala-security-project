@@ -1,7 +1,7 @@
 # ala-auth-plugin
 ## Usage
 ```
-compile "org.grails.plugins:ala-auth:6.0.0-SNAPSHOT"
+compile "org.grails.plugins:ala-auth:8.0.0"
 ```
 
 ## Description

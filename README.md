@@ -8,18 +8,18 @@ ALA plugins
 Usage
 -----
 
-The latest version of these libraries is: `8.0.0 - SNAPSHOT`, which supports Grails 7.1.1.
+The latest version of these libraries is: `8.0.0`, which supports Grails 7.1.1.
 NOTES:
     Grails 7.1.1 is not compatible with Grails 6
 
-The current version of these libraries is: `7.1.0`.
+The Grails 6 version of these libraries is: `7.1.0`.
 
 To ensure that various plugins and libraries and self-consistent, a project should use the same version for
 each of the plugins and libraries that it consumes, eg for a Grails project:
 
 `gradle.properties`:
 ```gradle.properties
-alaSecurityLibsVersion=7.1.0
+alaSecurityLibsVersion=8.0.0
 ```
 
 `build.gradle`:

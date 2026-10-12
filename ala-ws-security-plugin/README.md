@@ -6,8 +6,8 @@ Web service specific security code, e.g. API Key filters
 
 ## Usage
 ```
-compile "org.grails.plugins:ala-ws-security-plugin:4.4.0-SNAPSHOT" // Grails
-compile "au.org.ala.ala-ws-spring-security:4.4.0-SNAPSHOT" // Spring Boot w/ Spring Security
+compile "org.grails.plugins:ala-ws-security-plugin:8.0.0" // Grails
+compile "au.org.ala.ala-ws-spring-security:8.0.0" // Spring Boot w/ Spring Security
 ```
 
 ### JWT Usage
