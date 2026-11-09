@@ -121,7 +121,32 @@ class AlaSecurityInterceptorSpec extends Specification implements InterceptorUni
         config.custom.app.scopes = ['read:userdetails']
         config.custom.app.scopes2 = []
         config.custom.app.roles = ['ROLE_USER']
+        config.custom.flags.disabled = true
+        config.custom.flags.enabled = false
     }}
+
+    void "RequireApiKey can be disabled with a feature flag"() {
+        setup:
+        grailsApplication.addArtefact("Controller", FeatureFlagController)
+        interceptor.clientList = [ oidcClient, apiKeyClient, ipAllowListClient ]
+
+        when:
+        request.addHeader("apiKey", "invalid")
+        request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, 'featureFlag')
+        request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, action)
+        withRequest(controller: "featureFlag", action: action)
+        def result = interceptor.before()
+
+        then:
+        result == before
+        response.status == responseCode
+
+        where:
+        action           | responseCode | before
+        "flagDisabled"   | OK           | true
+        "flagEnabled"    | UNAUTHORISED | false
+        "flagMissing"    | UNAUTHORISED | false
+    }
 
     void "All methods of a controller annotated with RequireApiKey at the class level should be protected"() {
         setup:
@@ -927,5 +952,22 @@ class AnnotatedMethodController {
 
     def publicAction() {
 
+    }
+}
+
+class FeatureFlagController {
+    @RequireApiKey(disabledByFeatureFlag = 'custom.flags.disabled')
+    def flagDisabled() {
+        render "flagDisabled"
+    }
+
+    @RequireApiKey(disabledByFeatureFlag = 'custom.flags.enabled')
+    def flagEnabled() {
+        render "flagEnabled"
+    }
+
+    @RequireApiKey(disabledByFeatureFlag = 'custom.flags.missing')
+    def flagMissing() {
+        render "flagMissing"
     }
 }

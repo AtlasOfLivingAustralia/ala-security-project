@@ -187,6 +187,9 @@ The `@SSO` annotation also supports the following arguments:
 
  - `gateway` - Use a CAS gateway request
  - `cookie` - Only force authentication if the ALA Auth cookie is present
+ - `disabledByFeatureFlag` - Name of a boolean config property; if it is `true` the annotation is ignored.  If the
+   property is missing or `false` the annotation is enforced.  The same argument is also supported by `@AlaSecured`
+   and `@RequireApiKey`.
 
 If `@SSO` is applied to a controller and an action within the controller doesn't require authentication
 then a corresponding `@NoSSO` annotation may be used to opt out of the authentication for that action, eg:
