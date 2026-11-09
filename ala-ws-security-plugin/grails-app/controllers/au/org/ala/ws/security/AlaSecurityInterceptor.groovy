@@ -75,7 +75,7 @@ class AlaSecurityInterceptor {
         def effectiveAnnotation = matchResult.effectiveAnnotation()
         def skipAnnotation = matchResult.overrideAnnotation
 
-        if (effectiveAnnotation && !skipAnnotation && clientList) {
+        if (effectiveAnnotation && !skipAnnotation && clientList && !isDisabledByFeatureFlag(effectiveAnnotation.disabledByFeatureFlag())) {
 
             boolean authenticated = false
             boolean authorised = true
@@ -256,6 +256,9 @@ class AlaSecurityInterceptor {
         return  retArr ?: EMPTY_STRING_ARRAY
     }
 
+    private boolean isDisabledByFeatureFlag(String featureFlag) {
+        featureFlag && grailsApplication.config.getProperty(featureFlag, Boolean, false)
+    }
 
     private String[] rolesFromProperty(String[] propertyRoles) {
         def retVal = propertyRoles?.collectMany {
