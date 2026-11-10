@@ -28,7 +28,7 @@ class AlaSecuredInterceptor {
         def annotations = AnnotationMatcher.getAnnotation(grailsApplication, controllerNamespace, controllerName, actionName, AlaSecured, SkipAlaSecured)
         def effectiveAnnotation = annotations.effectiveAnnotation()
 
-        if (effectiveAnnotation) {
+        if (effectiveAnnotation && !isDisabledByFeatureFlag(effectiveAnnotation.disabledByFeatureFlag())) {
 
             boolean error = false
 
@@ -105,6 +105,10 @@ class AlaSecuredInterceptor {
 
 
     private static final String[] EMPTY_STRING_ARRAY = []
+
+    private boolean isDisabledByFeatureFlag(String featureFlag) {
+        featureFlag && grailsApplication.config.getProperty(featureFlag, Boolean, false)
+    }
 
     private String[] rolesFromProperty(String[] propertyRoles) {
         def retVal = propertyRoles?.collectMany {
