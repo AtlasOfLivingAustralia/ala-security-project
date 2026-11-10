@@ -63,6 +63,11 @@ class SsoInterceptor {
 
         if (!effectiveAnnotation) return true
 
+        if (isDisabledByFeatureFlag(effectiveAnnotation.disabledByFeatureFlag())) {
+            log.debug("{}.{}.{} skipping SSO because it is disabled by feature flag {}", controllerNamespace, controllerName, actionName, effectiveAnnotation.disabledByFeatureFlag())
+            return true
+        }
+
         if (effectiveAnnotation.cookie() && !cookieExists(request)) {
             log.debug("{}.{}.{} requested the presence of a {} cookie but none was found", controllerNamespace, controllerName, actionName, authCookieName)
             return true
@@ -85,6 +90,10 @@ class SsoInterceptor {
 
     protected boolean cookieExists(final HttpServletRequest request) {
         return request.cookies.any { Cookie cookie -> cookie.name == this.authCookieName && cookie.value}
+    }
+
+    private boolean isDisabledByFeatureFlag(String featureFlag) {
+        featureFlag && grailsApplication.config.getProperty(featureFlag, Boolean, false)
     }
 
     private String getAuthCookieName() {

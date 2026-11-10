@@ -84,4 +84,12 @@ public @interface AlaSecured {
      * @return
      */
     String[] rolesFromProperty() default {};
+
+    /**
+     * Name of a Grails configuration property acting as a feature flag that disables this annotation.  If the
+     * property resolves to {@code true} the annotation is ignored for the request.  If the property is missing or
+     * false the annotation is enforced as normal.
+     * @return the configuration property name, or empty to always enforce the annotation
+     */
+    String disabledByFeatureFlag() default "";
 }
